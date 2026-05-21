@@ -11,7 +11,7 @@ import { evaluateAlertsForSignal, filterAlertsForSubscription } from '@/domain/a
 import type { AlertSubscriptionRow, AlertEventRow, InsertAlertEvent } from '@/lib/db/types'
 import { dispatchBulkAlerts } from './notification'
 
-const DEDUP_WINDOW_HOURS = 0.1 // DEBUG: force re-trigger — restore to 6 after test
+const DEDUP_WINDOW_HOURS = 6
 
 export interface AlertEvaluationResult {
   created: number
