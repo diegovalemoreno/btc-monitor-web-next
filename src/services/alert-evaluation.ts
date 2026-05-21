@@ -102,10 +102,12 @@ export async function evaluateAndDispatchAlerts(
     }
   }
 
-  // Dispatch notifications for all newly created events (non-blocking)
-  dispatchBulkAlerts(insertedEvents, subscriptions as AlertSubscriptionRow[]).catch((err) =>
+  // Dispatch notifications — awaited so serverless function doesn't terminate early
+  try {
+    await dispatchBulkAlerts(insertedEvents, subscriptions as AlertSubscriptionRow[])
+  } catch (err) {
     console.error('[alert-evaluation] notification dispatch error:', err)
-  )
+  }
 
   return { created, skipped, subscribers: subscriptions.length }
 }
