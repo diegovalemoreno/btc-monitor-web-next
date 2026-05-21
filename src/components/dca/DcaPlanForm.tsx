@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { DcaPlanRow, RiskProfile } from '@/lib/db/types'
+import Tooltip from '@/components/shared/Tooltip'
 
 const PROFILES: { value: RiskProfile; label: string; desc: string }[] = [
   { value: 'CONSERVATIVE', label: 'Conservador', desc: 'DCA máximo: NORMAL. Protege contra entradas em topo.' },
@@ -67,7 +68,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
         Configuração do plano DCA
       </h2>
 
-      <div style={{ background: '#111111', border: '1px solid rgba(224,138,58,0.13)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: '#111111', border: '1px solid rgba(224,138,58,0.13)', borderRadius: '12px' }}>
 
         {/* Enabled */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -80,9 +81,12 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
         {/* Monthly amount */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)' }}>
-          <label style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090', display: 'block', marginBottom: '8px' }}>
-            Valor mensal disponível (R$)
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>
+              Valor mensal disponível (R$)
+            </label>
+            <Tooltip text="Quanto você tem disponível por mês para investir em Bitcoin. Não precisa ser exato — é um guia para calcular o aporte recomendado." />
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
             <span style={{ fontSize: '14px', color: '#5a5040' }}>R$</span>
             <input
@@ -103,9 +107,12 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
         {/* Reserve percentage */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-            <label style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>
-              Reserva estratégica
-            </label>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <label style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>
+                Reserva estratégica
+              </label>
+              <Tooltip text="Parte do valor mensal guardada para momentos raros de queda brusca. Ex: 30% de R$1.000 = R$300 de reserva, usada apenas em DCA Agressivo." />
+            </div>
             <span style={{ fontSize: '13px', color: '#e08a3a', fontWeight: 600 }}>{reservePct}%</span>
           </div>
           <input
@@ -122,7 +129,10 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
         {/* Risk profile */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090', marginBottom: '12px' }}>Perfil de risco</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Perfil de risco</span>
+            <Tooltip text="Define até onde o sistema pode ir nas recomendações. Conservador = mais proteção. Agressivo = aproveita ao máximo as oportunidades de compra." />
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {PROFILES.map(({ value, label, desc }) => (
               <label key={value} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
@@ -145,9 +155,12 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
         {/* Default buy day */}
         <div style={{ padding: '20px 24px' }}>
-          <label style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090', display: 'block', marginBottom: '8px' }}>
-            Dia padrão de compra (opcional)
-          </label>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+            <label style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>
+              Dia padrão de compra (opcional)
+            </label>
+            <Tooltip text="Dia do mês em que você costuma fazer seu aporte. Apenas informativo — não afeta o cálculo da recomendação." position="top" />
+          </div>
           <input
             type="number"
             value={defaultBuyDay}

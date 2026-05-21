@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { AlertSubscriptionRow, RiskProfile, Severity } from '@/lib/db/types'
+import Tooltip from '@/components/shared/Tooltip'
 
 const PROFILES: { value: RiskProfile; label: string; desc: string }[] = [
   { value: 'CONSERVATIVE', label: 'Conservador', desc: 'Apenas alertas críticos — euforia, risco extremo, capitulação' },
@@ -67,7 +68,7 @@ export default function SubscriptionSettings({ initial }: Props) {
         Configuração de alertas
       </h2>
 
-      <div style={{ background: '#111111', border: '1px solid rgba(224,138,58,0.13)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: '#111111', border: '1px solid rgba(224,138,58,0.13)', borderRadius: '12px' }}>
 
         {/* Enabled toggle */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -80,7 +81,10 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Profile */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090', marginBottom: '12px' }}>Perfil de alerta</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Perfil de alerta</span>
+            <Tooltip text="Define quais tipos de alerta você quer receber.\n\nConservador = só o essencial: euforia, risco extremo, capitulação.\nModerado = alertas importantes e oportunidades agressivas.\nAgressivo = todas as movimentações relevantes, incluindo janelas táticas menores." />
+          </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {PROFILES.map(({ value, label, desc }) => (
               <label key={value} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
@@ -103,7 +107,10 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Min severity */}
         <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Severidade mínima</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Severidade mínima</span>
+            <Tooltip text="Filtro de importância dos alertas.\n\nBaixa = todos os alertas, inclusive informativos.\nMédia = alertas relevantes sem te sobrecarregar (recomendado).\nAlta = só situações sérias.\nCrítica = apenas emergências de mercado." position="left" />
+          </div>
           <select
             value={minSeverity}
             onChange={(e) => setMinSeverity(e.target.value as Severity)}
@@ -144,9 +151,10 @@ export default function SubscriptionSettings({ initial }: Props) {
 
           {telegramEnabled && (
             <div>
-              <label style={{ fontSize: '12px', color: '#5a5040', display: 'block', marginBottom: '6px' }}>
-                Chat ID
-              </label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
+                <label style={{ fontSize: '12px', color: '#5a5040' }}>Chat ID</label>
+                <Tooltip text="Número que identifica você no Telegram. O bot precisa disso para te enviar mensagens diretamente.\n\nComo obter: abra o Telegram, inicie uma conversa com @userinfobot e ele te responde com seu Chat ID." position="right" wide />
+              </div>
               <input
                 type="text"
                 value={telegramChatId}
