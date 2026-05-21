@@ -14,10 +14,5 @@
     {
       "path": "/api/cron/daily-dca-summary",
       "schedule": "0 8 * * *"
-    },
-    {
-      "path": "/api/cron/evaluate-alerts",
-      "schedule": "0 * * * *"
-    }
   ]
 }
