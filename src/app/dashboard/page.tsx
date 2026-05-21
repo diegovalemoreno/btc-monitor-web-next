@@ -36,12 +36,7 @@ export default async function DashboardPage() {
             <div style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.15em', color: '#e08a3a', textTransform: 'uppercase', marginBottom: '4px' }}>
               Análise tática
             </div>
-            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '10px' }}>
-              Dashboard
-              <span style={{ fontSize: '11px', fontWeight: 600, background: '#1a3a1a', color: '#4caf50', border: '1px solid #2d6e2d', borderRadius: '6px', padding: '2px 8px', letterSpacing: '0.05em' }}>
-                v2.1 ✓
-              </span>
-            </h1>
+            <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>Dashboard</h1>
           </div>
           <div style={{ fontSize: '11px', color: '#5a5040' }}>Atualizado {updatedAt}</div>
         </div>
