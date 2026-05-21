@@ -43,6 +43,11 @@ export async function dispatchAlertNotification({
   // ── Telegram ─────────────────────────────────────────────────
   if (subscription.telegram_enabled && subscription.telegram_chat_id) {
     const result = await sendTelegramAlert(subscription.telegram_chat_id, sharedParams)
+    if (result.ok) {
+      console.log('[notification] telegram sent', { userId: event.user_id, eventId: event.id, chatId: subscription.telegram_chat_id })
+    } else {
+      console.error('[notification] telegram failed', { userId: event.user_id, eventId: event.id, error: result.error })
+    }
     logs.push({
       user_id:        event.user_id,
       alert_event_id: event.id,
@@ -51,11 +56,22 @@ export async function dispatchAlertNotification({
       error_message:  result.ok ? null : result.error,
       sent_at:        result.ok ? sentAt : null,
     })
+  } else {
+    console.warn('[notification] telegram skipped', {
+      userId:          event.user_id,
+      telegram_enabled: subscription.telegram_enabled,
+      has_chat_id:      Boolean(subscription.telegram_chat_id),
+    })
   }
 
   // ── Email ─────────────────────────────────────────────────────
   if (subscription.email_enabled && userEmail) {
     const result = await sendEmailAlert(userEmail, sharedParams)
+    if (result.ok) {
+      console.log('[notification] email sent', { userId: event.user_id, eventId: event.id })
+    } else {
+      console.error('[notification] email failed', { userId: event.user_id, eventId: event.id, error: result.error })
+    }
     logs.push({
       user_id:        event.user_id,
       alert_event_id: event.id,
@@ -63,6 +79,12 @@ export async function dispatchAlertNotification({
       status:         result.ok ? 'sent' : 'failed',
       error_message:  result.ok ? null : result.error,
       sent_at:        result.ok ? sentAt : null,
+    })
+  } else {
+    console.warn('[notification] email skipped', {
+      userId:        event.user_id,
+      email_enabled: subscription.email_enabled,
+      has_email:     Boolean(userEmail),
     })
   }
 
@@ -98,7 +120,14 @@ export async function dispatchBulkAlerts(
     events.map(async (event) => {
       const subscription = subByUser.get(event.user_id)
       const userEmail    = emailMap.get(event.user_id)
-      if (!subscription || !userEmail) return
+      if (!subscription) {
+        console.warn('[notification] no subscription for user', event.user_id)
+        return
+      }
+      if (!userEmail) {
+        console.warn('[notification] no email found for user', event.user_id)
+        return
+      }
 
       try {
         await dispatchAlertNotification({ event, subscription, userEmail })
