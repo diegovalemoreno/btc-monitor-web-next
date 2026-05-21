@@ -1,0 +1,22 @@
+name: Cron — Evaluate Alerts
+
+on:
+  schedule:
+    - cron: '0 * * * *'   # hourly
+  workflow_dispatch:        # manual trigger for testing
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Call evaluate-alerts endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -X GET "${{ secrets.APP_URL }}/api/cron/evaluate-alerts" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}")
+          echo "HTTP status: $response"
+          if [ "$response" != "200" ]; then
+            echo "Unexpected status $response"
+            exit 1
+          fi

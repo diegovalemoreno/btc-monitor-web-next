@@ -1,0 +1,78 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0a0a0a;
+  --color-surface: #111111;
+  --color-surface2: #161616;
+  --color-surface3: #1e1e1e;
+  --color-border: rgba(224, 138, 58, 0.13);
+  --color-text: #e8e0d5;
+  --color-text-sec: #b0a090;
+  --color-text-muted: #5a5040;
+  --color-orange: #e08a3a;
+  --color-orange-dim: rgba(224, 138, 58, 0.15);
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  background-color: #0a0a0a;
+  color: #e8e0d5;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Layout ─────────────────────────────────────────────────── */
+
+.page-main {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 40px 24px;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+
+/* ── Nav ─────────────────────────────────────────────────────── */
+
+.nav-links {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+.nav-links::-webkit-scrollbar { display: none; }
+
+/* ── Skeleton pulse ──────────────────────────────────────────── */
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.4; }
+}
+.skeleton {
+  background: #161616;
+  border-radius: 6px;
+  animation: skeleton-pulse 1.6s ease-in-out infinite;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .page-main          { padding: 24px 16px; }
+  .grid-2             { grid-template-columns: 1fr; }
+  .grid-4             { grid-template-columns: 1fr 1fr; }
+  .hide-mobile        { display: none !important; }
+  .mobile-stack       { flex-direction: column !important; align-items: flex-start !important; }
+  .mobile-full        { width: 100% !important; }
+  .mobile-text-sm     { font-size: 12px !important; }
+}
