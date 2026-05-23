@@ -109,6 +109,7 @@ export function calculateTotalScore(indicators: AllIndicators): ScoreResult {
     stablecoinRatio: indicators.stablecoinRatio,
     marketRegime:    indicators.marketRegime,
     compositeSignal: indicators.compositeSignal,
+    liquidationHeatmap: indicators.liquidationHeatmap,
   };
 
   let rawTotal = 0;
@@ -161,10 +162,12 @@ export function scoreFundingRate(rate: number): number {
 
 export function scoreMovingAverages(
   belowMa200d: boolean,
-  belowMa50w: boolean
+  belowMa50w:  boolean,
+  belowMa50d:  boolean,
 ): number {
   let score = 0;
   if (belowMa200d) score += 1;
   if (belowMa50w)  score += 1;
+  if (belowMa50d)  score += 1;
   return score;
 }
