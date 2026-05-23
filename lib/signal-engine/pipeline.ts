@@ -33,7 +33,7 @@ const INDICATOR_GROUPS: Array<{
   {
     key: "derivatives",
     label: "Derivativos",
-    names: ["Taxa de Funding", "Open Interest", "Liq. de Longs", "Stablecoin Ratio"],
+    names: ["Taxa de Funding", "Open Interest", "Liq. de Longs", "Stablecoin Ratio", "Heatmap Liquidações"],
   },
   {
     key: "onchain",
@@ -97,6 +97,7 @@ function indicatorsToScores(ind: AllIndicators): IndicatorScore[] {
     ["DXY (Dólar Index)", ind.dxy],
     ["Long/Short Ratio",  ind.longShortRatio],
     ["BTC Dominância",    ind.btcDominance],
+    ["Heatmap Liquidações", ind.liquidationHeatmap],
     ["Stablecoin Ratio",  ind.stablecoinRatio],
     ["Regime de Mercado", ind.marketRegime],
     ["Sinais Compostos",  ind.compositeSignal],
