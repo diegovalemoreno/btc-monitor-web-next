@@ -39,11 +39,13 @@ export interface SellerPressureValue {
 }
 
 export interface MovingAveragesValue {
-  ma200d: number;
-  ma50w: number;
+  ma50d:       number;
+  ma200d:      number;
+  ma50w:       number;
   currentPrice: number;
+  belowMa50d:  boolean;
   belowMa200d: boolean;
-  belowMa50w: boolean;
+  belowMa50w:  boolean;
 }
 
 export interface OpenInterestValue {
@@ -186,6 +188,15 @@ export interface StablecoinRatioValue {
 }
 export type StablecoinRatioResult = IndicatorResult<StablecoinRatioValue>;
 
+export interface LiquidationHeatmapValue {
+  volumeAboveUsd: number;
+  volumeBelowUsd: number;
+  ratio:          number;
+  bias:           'squeeze' | 'cascade' | 'neutral';
+  source:         'coinglass';
+}
+export type LiquidationHeatmapResult = IndicatorResult<LiquidationHeatmapValue>;
+
 // ─── Agregado de todos os indicadores ────────────────────────
 
 export interface AllIndicators {
@@ -208,6 +219,7 @@ export interface AllIndicators {
   longShortRatio: LongShortRatioResult;
   btcDominance: BtcDominanceResult;
   stablecoinRatio: StablecoinRatioResult;
+  liquidationHeatmap: LiquidationHeatmapResult;
   marketRegime: MarketRegimeResult;
   compositeSignal: CompositeSignalResult;
 }
