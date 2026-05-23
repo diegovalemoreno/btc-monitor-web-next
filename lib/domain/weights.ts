@@ -16,6 +16,7 @@ export type IndicatorKey =
   | "hashRibbon"
   | "mayerMultiple"
   | "liquidations"
+  | "liquidationHeatmap"
   | "etfFlow"
   | "piCycle"
   | "bollinger"
@@ -37,6 +38,7 @@ export const WEIGHTS: Record<IndicatorKey, number> = {
   fundingRate:      1.5,
   openInterest:     1.5,
   liquidations:     1.5,
+  liquidationHeatmap: 1.5,
   fearGreed:        1.5,
   marketRegime:     1.5,
   etfFlow:          1.5,
