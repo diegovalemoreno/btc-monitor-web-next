@@ -56,8 +56,8 @@ async function fetchWithTimeout(url: string, apiKey: string): Promise<CoinglassL
   try {
     const res = await fetch(url, {
       headers: {
-        coinglassSecret: apiKey,
-        Accept:          "application/json",
+        "CG-API-KEY": apiKey,
+        Accept:        "application/json",
       },
       signal: controller.signal,
     });
