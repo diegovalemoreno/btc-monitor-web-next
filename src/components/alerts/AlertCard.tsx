@@ -7,14 +7,21 @@ const SEVERITY_COLOR: Record<string, string> = {
   CRITICAL: '#FF1744',
 }
 
-const TYPE_ICON: Record<string, string> = {
-  TACTICAL_OPPORTUNITY:   '🎯',
-  AGGRESSIVE_OPPORTUNITY: '🚀',
-  HIGH_RISK:              '⚠️',
-  EUPHORIA_WARNING:       '🔴',
-  CAPITULATION_SIGNAL:    '📉',
-  DELEVERAGING_SIGNAL:    '📊',
-  REGIME_CHANGE:          '🔄',
+const SEVERITY_LABEL: Record<string, string> = {
+  LOW:      'Baixa',
+  MEDIUM:   'Média',
+  HIGH:     'Alta',
+  CRITICAL: 'Crítica',
+}
+
+const TYPE_LABEL: Record<string, string> = {
+  TACTICAL_OPPORTUNITY:   'Oportunidade tática',
+  AGGRESSIVE_OPPORTUNITY: 'Oportunidade agressiva',
+  HIGH_RISK:              'Risco elevado',
+  EUPHORIA_WARNING:       'Alerta de euforia',
+  CAPITULATION_SIGNAL:    'Sinal de capitulação',
+  DELEVERAGING_SIGNAL:    'Desalavancagem',
+  REGIME_CHANGE:          'Mudança de regime',
 }
 
 function formatDate(iso: string): string {
@@ -28,43 +35,71 @@ function formatDate(iso: string): string {
   }).format(new Date(iso))
 }
 
+function relativeTime(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime()
+  const h = Math.floor(diff / 3_600_000)
+  const d = Math.floor(diff / 86_400_000)
+  if (h < 1)  return 'há menos de 1h'
+  if (h === 1) return 'há 1h'
+  if (h < 24)  return `há ${h}h`
+  if (d === 1) return 'há 1 dia'
+  if (d < 30)  return `há ${d} dias`
+  return formatDate(iso)
+}
+
 export default function AlertCard({ alert }: { alert: AlertEventRow }) {
-  const color = SEVERITY_COLOR[alert.severity] ?? '#b0a090'
-  const icon  = TYPE_ICON[alert.type] ?? '📌'
+  const color     = SEVERITY_COLOR[alert.severity] ?? '#b0a090'
+  const sevLabel  = SEVERITY_LABEL[alert.severity] ?? alert.severity
+  const typeLabel = TYPE_LABEL[alert.type] ?? alert.type
 
   return (
     <div style={{
       padding:      '16px 20px',
       background:   '#111111',
-      border:       `1px solid ${color}33`,
+      border:       `1px solid ${color}1a`,
       borderLeft:   `3px solid ${color}`,
       borderRadius: '8px',
     }}>
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '16px' }}>{icon}</span>
-          <span style={{ fontSize: '14px', fontWeight: 600, color: '#e8e0d5' }}>{alert.title}</span>
-        </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-          <span style={{
-            padding:         '2px 8px',
-            background:      `${color}22`,
-            border:          `1px solid ${color}55`,
-            borderRadius:    '4px',
-            fontSize:        '10px',
-            fontWeight:      600,
-            color,
-            textTransform:   'uppercase',
-            letterSpacing:   '0.08em',
-          }}>
-            {alert.severity}
-          </span>
-          <span style={{ fontSize: '11px', color: '#5a5040' }}>{formatDate(alert.created_at)}</span>
-        </div>
+      {/* Title + severity badge */}
+      <div style={{
+        display:        'flex',
+        alignItems:     'flex-start',
+        justifyContent: 'space-between',
+        gap:            '12px',
+        flexWrap:       'wrap',
+        marginBottom:   '4px',
+      }}>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: '#e8e0d5', flex: 1, minWidth: '160px', lineHeight: 1.3 }}>
+          {alert.title}
+        </span>
+        <span style={{
+          padding:       '2px 8px',
+          background:    `${color}18`,
+          border:        `1px solid ${color}44`,
+          borderRadius:  '4px',
+          fontSize:      '10px',
+          fontWeight:    600,
+          color,
+          textTransform: 'uppercase',
+          letterSpacing: '0.08em',
+          flexShrink:    0,
+          alignSelf:     'flex-start',
+        }}>
+          {sevLabel}
+        </span>
       </div>
 
-      <p style={{ margin: 0, fontSize: '13px', color: '#b0a090', lineHeight: 1.6 }}>
+      {/* Type + relative time */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '11px', color: '#4a4040' }}>{typeLabel}</span>
+        <span style={{ fontSize: '11px', color: '#2a2020' }}>·</span>
+        <span style={{ fontSize: '11px', color: '#4a4040' }} title={formatDate(alert.created_at)}>
+          {relativeTime(alert.created_at)}
+        </span>
+      </div>
+
+      <p style={{ margin: 0, fontSize: '13px', color: '#b0a090', lineHeight: 1.65 }}>
         {alert.message}
       </p>
 
