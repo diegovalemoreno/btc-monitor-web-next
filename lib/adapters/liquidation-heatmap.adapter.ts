@@ -1,44 +1,45 @@
 // ============================================================
 // adapters/liquidation-heatmap.adapter.ts
-// Fonte: Coinglass free-tier API (coinglassSecret header).
-// Estima volume de liquidações acima vs abaixo do preço atual.
+// Fonte: Coinglass v4 API — /api/futures/liquidation/history
+// Agrega últimos 7 períodos de liquidações BTC (long vs short).
 //
 // Score:
-//   volumeAbove >> volumeBelow → squeeze potencial (+1 a +3)
-//   volumeBelow >> volumeAbove → cascata risk (−1 a −2)
+//   shorts liquidados >> longs → squeeze ativo (+1 a +3)
+//   longs liquidados >> shorts → cascata de venda (−1 a −2)
 //   balanceado                 → 0
 //
 // Fallback: se COINGLASS_API_KEY ausente ou API falhar → score 0.
-// ⚠️  Verificar endpoint exato em https://coinglass.com/api após obter key.
 // ============================================================
 
 import { LiquidationHeatmapResult } from "../types/indicator";
 
-const COINGLASS_BASE    = "https://open-api.coinglass.com";
-const TIMEOUT_MS        = 8_000;
+const COINGLASS_BASE = "https://open-api-v4.coinglass.com";
+const TIMEOUT_MS     = 8_000;
+const WINDOW_PERIODS = 7;
 
-interface CoinglassHeatmapEntry {
-  price:  number;
-  amount: number;
+interface CoinglassLiqEntry {
+  time:                 number;
+  long_liquidation_usd:  string;
+  short_liquidation_usd: string;
 }
 
-interface CoinglassHeatmapResponse {
+interface CoinglassLiqResponse {
   code: string;
   msg:  string;
-  data: CoinglassHeatmapEntry[] | null;
+  data: CoinglassLiqEntry[] | null;
 }
 
-function scoreBias(volumeAbove: number, volumeBelow: number): number {
-  if (volumeAbove <= 0 && volumeBelow <= 0) return 0;
+function scoreBias(shortsUsd: number, longsUsd: number): number {
+  if (shortsUsd <= 0 && longsUsd <= 0) return 0;
 
-  const ratioAbove = volumeAbove / Math.max(volumeBelow, 1);
-  const ratioBelow = volumeBelow / Math.max(volumeAbove, 1);
+  const ratioShorts = shortsUsd / Math.max(longsUsd, 1);
+  const ratioLongs  = longsUsd  / Math.max(shortsUsd, 1);
 
-  if (ratioAbove > 3)   return 3;
-  if (ratioAbove > 1.5) return 2;
-  if (ratioAbove > 1.1) return 1;
-  if (ratioBelow > 3)   return -2;
-  if (ratioBelow > 1.5) return -1;
+  if (ratioShorts > 3)   return 3;
+  if (ratioShorts > 1.5) return 2;
+  if (ratioShorts > 1.1) return 1;
+  if (ratioLongs  > 3)   return -2;
+  if (ratioLongs  > 1.5) return -1;
   return 0;
 }
 
@@ -49,26 +50,26 @@ function fmtM(usd: number): string {
   return `$${usd.toFixed(0)}`;
 }
 
-async function fetchWithTimeout(url: string, apiKey: string): Promise<CoinglassHeatmapResponse> {
+async function fetchWithTimeout(url: string, apiKey: string): Promise<CoinglassLiqResponse> {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
   try {
     const res = await fetch(url, {
       headers: {
         coinglassSecret: apiKey,
-        Accept: "application/json",
+        Accept:          "application/json",
       },
       signal: controller.signal,
     });
     if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-    return await res.json() as CoinglassHeatmapResponse;
+    return await res.json() as CoinglassLiqResponse;
   } finally {
     clearTimeout(timer);
   }
 }
 
 export async function fetchLiquidationHeatmap(
-  currentPrice: number
+  _currentPrice: number
 ): Promise<LiquidationHeatmapResult> {
   const apiKey = process.env.COINGLASS_API_KEY;
 
@@ -82,44 +83,44 @@ export async function fetchLiquidationHeatmap(
   }
 
   try {
-    // ⚠️  Verificar parâmetros exatos na documentação Coinglass após obter key.
-    const url  = `${COINGLASS_BASE}/public/v2/liquidation_chart?symbol=BTC&timeType=all`;
+    const url  = `${COINGLASS_BASE}/api/futures/liquidation/history?symbol=BTC&interval=1d`;
     const resp = await fetchWithTimeout(url, apiKey);
 
     if (resp.code !== "0" || !resp.data?.length) {
       throw new Error(`Coinglass code ${resp.code}: ${resp.msg ?? "no data"}`);
     }
 
-    let volumeAboveUsd = 0;
-    let volumeBelowUsd = 0;
+    // Últimos N períodos
+    const recent = resp.data.slice(-WINDOW_PERIODS);
 
-    for (const entry of resp.data) {
-      if (!isFinite(entry.price) || !isFinite(entry.amount)) continue;
-      if (entry.price > currentPrice) {
-        volumeAboveUsd += entry.amount;
-      } else {
-        volumeBelowUsd += entry.amount;
-      }
+    let shortsUsd = 0;
+    let longsUsd  = 0;
+
+    for (const entry of recent) {
+      const s = parseFloat(entry.short_liquidation_usd);
+      const l = parseFloat(entry.long_liquidation_usd);
+      if (isFinite(s)) shortsUsd += s;
+      if (isFinite(l)) longsUsd  += l;
     }
 
-    const ratio = volumeAboveUsd / Math.max(volumeBelowUsd, 1);
-    const score = scoreBias(volumeAboveUsd, volumeBelowUsd);
+    const ratio      = shortsUsd / Math.max(longsUsd, 1);
+    const score      = scoreBias(shortsUsd, longsUsd);
     const scoreLabel = score > 0 ? `+${score}` : `${score}`;
 
     const bias: "squeeze" | "cascade" | "neutral" =
       score > 0 ? "squeeze" : score < 0 ? "cascade" : "neutral";
 
     const biasLabel =
-      bias === "squeeze" ? "squeeze potencial" :
-      bias === "cascade" ? "risco cascata" : "neutro";
+      bias === "squeeze" ? "squeeze ativo" :
+      bias === "cascade" ? "cascata longs" : "neutro";
 
     return {
       status: "success",
       score,
-      summary: `Acima ${fmtM(volumeAboveUsd)} · Abaixo ${fmtM(volumeBelowUsd)} → ${biasLabel} (${scoreLabel})`,
+      summary: `Shorts liq ${fmtM(shortsUsd)} · Longs liq ${fmtM(longsUsd)} → ${biasLabel} (${scoreLabel})`,
       value: {
-        volumeAboveUsd,
-        volumeBelowUsd,
+        volumeAboveUsd: shortsUsd,
+        volumeBelowUsd: longsUsd,
         ratio,
         bias,
         source: "coinglass",
