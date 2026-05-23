@@ -1,7 +1,7 @@
 import type { AlertEventRow } from '@/lib/db/types'
 
 const SEVERITY_COLOR: Record<string, string> = {
-  LOW:      '#b0a090',
+  LOW:      'var(--text-sec)',
   MEDIUM:   '#FFD600',
   HIGH:     '#FF6D00',
   CRITICAL: '#FF1744',
@@ -48,14 +48,14 @@ function relativeTime(iso: string): string {
 }
 
 export default function AlertCard({ alert }: { alert: AlertEventRow }) {
-  const color     = SEVERITY_COLOR[alert.severity] ?? '#b0a090'
+  const color     = SEVERITY_COLOR[alert.severity] ?? 'var(--text-sec)'
   const sevLabel  = SEVERITY_LABEL[alert.severity] ?? alert.severity
   const typeLabel = TYPE_LABEL[alert.type] ?? alert.type
 
   return (
     <div style={{
       padding:      '16px 20px',
-      background:   '#111111',
+      background:   'var(--surface)',
       border:       `1px solid ${color}1a`,
       borderLeft:   `3px solid ${color}`,
       borderRadius: '8px',
@@ -70,7 +70,7 @@ export default function AlertCard({ alert }: { alert: AlertEventRow }) {
         flexWrap:       'wrap',
         marginBottom:   '4px',
       }}>
-        <span style={{ fontSize: '14px', fontWeight: 600, color: '#e8e0d5', flex: 1, minWidth: '160px', lineHeight: 1.3 }}>
+        <span style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)', flex: 1, minWidth: '160px', lineHeight: 1.3 }}>
           {alert.title}
         </span>
         <span style={{
@@ -92,14 +92,14 @@ export default function AlertCard({ alert }: { alert: AlertEventRow }) {
 
       {/* Type + relative time */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '11px', color: '#4a4040' }}>{typeLabel}</span>
-        <span style={{ fontSize: '11px', color: '#2a2020' }}>·</span>
-        <span style={{ fontSize: '11px', color: '#4a4040' }} title={formatDate(alert.created_at)}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{typeLabel}</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>·</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }} title={formatDate(alert.created_at)}>
           {relativeTime(alert.created_at)}
         </span>
       </div>
 
-      <p style={{ margin: 0, fontSize: '13px', color: '#b0a090', lineHeight: 1.65 }}>
+      <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-sec)', lineHeight: 1.65 }}>
         {alert.message}
       </p>
 

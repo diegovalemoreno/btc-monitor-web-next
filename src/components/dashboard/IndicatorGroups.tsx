@@ -6,7 +6,7 @@ const GROUP_COLOR: Record<string, string> = {
   derivatives: '#FF6D00',
   onchain:     '#00C853',
   trend:       '#00BCD4',
-  macro:       '#b0a090',
+  macro:       'var(--text-sec)',
   synthesis:   '#FFD600',
 }
 
@@ -45,10 +45,10 @@ function ScoreBar({ value, color }: { value: number; color: string }) {
   const pct = Math.min(100, Math.max(0, (value + 10) / 20 * 100))
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1 }}>
-      <div style={{ flex: 1, background: '#1e1e1e', borderRadius: '3px', height: '4px', overflow: 'hidden' }}>
+      <div style={{ flex: 1, background: 'var(--surface3)', borderRadius: '3px', height: '4px', overflow: 'hidden' }}>
         <div style={{ width: `${pct}%`, height: '4px', background: color, borderRadius: '3px' }} />
       </div>
-      <span style={{ fontSize: '11px', color: '#5a5040', width: '28px', textAlign: 'right', flexShrink: 0 }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)', width: '28px', textAlign: 'right', flexShrink: 0 }}>
         {value > 0 ? `+${value.toFixed(1)}` : value.toFixed(1)}
       </span>
     </div>
@@ -56,13 +56,13 @@ function ScoreBar({ value, color }: { value: number; color: string }) {
 }
 
 function GroupRow({ group }: { group: IndicatorGroup }) {
-  const color   = GROUP_COLOR[group.key] ?? '#b0a090'
+  const color   = GROUP_COLOR[group.key] ?? 'var(--text-sec)'
   const tooltip = GROUP_TOOLTIP[group.key]
   return (
-    <div style={{ borderBottom: '1px solid rgba(224,138,58,0.04)' }}>
+    <div style={{ borderBottom: '1px solid var(--border-dim)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '16px', padding: '12px 20px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', width: '120px', flexShrink: 0 }}>
-          <span style={{ fontSize: '12px', color: '#b0a090' }}>{group.label}</span>
+          <span style={{ fontSize: '12px', color: 'var(--text-sec)' }}>{group.label}</span>
           {tooltip && <Tooltip text={tooltip} position="right" wide />}
         </div>
         <ScoreBar value={group.score} color={color} />
@@ -82,10 +82,10 @@ function GroupRow({ group }: { group: IndicatorGroup }) {
                 marginBottom: '2px',
               }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '104px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '11px', color: '#5a5040' }}>{ind.name}</span>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ind.name}</span>
                   {indTip && <Tooltip text={indTip} position="right" wide />}
                 </div>
-                <span style={{ fontSize: '11px', color: '#b0a090', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ind.summary}</span>
+                <span style={{ fontSize: '11px', color: 'var(--text-sec)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ind.summary}</span>
                 <span style={{ fontSize: '11px', color, flexShrink: 0, minWidth: '40px', textAlign: 'right' }}>
                   {ind.score > 0 ? `+${ind.score.toFixed(1)}` : ind.score.toFixed(1)}
                 </span>
@@ -103,14 +103,14 @@ export default function IndicatorGroups({ signal }: { signal: TacticalSignal }) 
 
   return (
     <div style={{
-      background:   '#111111',
-      border:       '1px solid rgba(224,138,58,0.1)',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border-dim)',
       borderRadius: '12px',
       overflow:     'hidden',
       marginBottom: '24px',
     }}>
-      <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(224,138,58,0.07)' }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: '#5a5040', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+      <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border-dim)' }}>
+        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Indicadores por dimensão
         </span>
       </div>

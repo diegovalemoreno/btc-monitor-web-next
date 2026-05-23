@@ -24,26 +24,26 @@ export default async function DcaPage() {
     : [null, []]
 
   return (
-    <div style={{ minHeight: '100dvh', backgroundColor: '#0a0a0a', color: '#e8e0d5' }}>
+    <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
       <AppNav userEmail={user.email ?? ''} />
 
       <main style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 24px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '40px' }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.15em', color: '#e08a3a', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Acumulação inteligente
           </div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700 }}>DCA Intelligence</h1>
-          <p style={{ margin: '8px 0 0', fontSize: '14px', color: '#5a5040' }}>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>DCA Intelligence</h1>
+          <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
             Orientação de aporte baseada em contexto de mercado — não em previsão de preço.
           </p>
         </div>
 
         {/* No plan yet */}
         {!plan && (
-          <div style={{ padding: '20px 24px', background: 'rgba(224,138,58,0.06)', border: '1px solid rgba(224,138,58,0.2)', borderRadius: '10px', marginBottom: '32px' }}>
-            <p style={{ margin: 0, fontSize: '13px', color: '#b0a090' }}>
+          <div style={{ padding: '20px 24px', background: 'var(--orange-subtle)', border: '1px solid var(--border-strong)', borderRadius: '10px', marginBottom: '32px' }}>
+            <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-sec)' }}>
               Configure seu plano abaixo para receber recomendações diárias de aporte.
             </p>
           </div>

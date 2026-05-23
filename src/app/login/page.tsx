@@ -31,21 +31,21 @@ function LoginForm() {
   }
 
   return (
-    <div style={{ minHeight: '100dvh', backgroundColor: '#0a0a0a', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
+    <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '24px' }}>
       <div style={{ width: '100%', maxWidth: '360px', display: 'flex', flexDirection: 'column', gap: '32px' }}>
 
         {/* Logo */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', fontWeight: 600, letterSpacing: '0.15em', color: '#e08a3a', textTransform: 'uppercase', marginBottom: '12px' }}>
+          <div style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '12px', textShadow: 'var(--brand-glow)' }}>
             BTC Monitor
           </div>
-          <h1 style={{ fontSize: '24px', fontWeight: 700, color: '#e8e0d5', margin: 0, lineHeight: 1.2 }}>
+          <h1 style={{ fontSize: '22px', fontWeight: 700, color: 'var(--text)', margin: 0, lineHeight: 1.3 }}>
             Leitura inteligente<br />do mercado Bitcoin
           </h1>
         </div>
 
         {/* Divider */}
-        <div style={{ borderTop: '1px solid rgba(224,138,58,0.13)' }} />
+        <div style={{ borderTop: '1px solid var(--border)' }} />
 
         {/* Auth */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -58,20 +58,20 @@ function LoginForm() {
           <button
             onClick={handleGoogleLogin}
             style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: '12px',
-              width: '100%',
-              padding: '14px 24px',
-              backgroundColor: '#e08a3a',
-              color: '#0a0a0a',
-              border: 'none',
-              borderRadius: '8px',
-              fontSize: '15px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              transition: 'opacity 0.15s',
+              display:         'flex',
+              alignItems:      'center',
+              justifyContent:  'center',
+              gap:             '12px',
+              width:           '100%',
+              padding:         '14px 24px',
+              backgroundColor: 'var(--orange)',
+              color:           'var(--bg)',
+              border:          'none',
+              borderRadius:    '8px',
+              fontSize:        '14px',
+              fontWeight:      600,
+              cursor:          'pointer',
+              transition:      'opacity 0.15s',
             }}
             onMouseEnter={(e) => (e.currentTarget.style.opacity = '0.9')}
             onMouseLeave={(e) => (e.currentTarget.style.opacity = '1')}
@@ -82,7 +82,7 @@ function LoginForm() {
         </div>
 
         {/* Disclaimer */}
-        <p style={{ fontSize: '11px', color: '#5a5040', textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
+        <p style={{ fontSize: '11px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.6, margin: 0 }}>
           As informações exibidas possuem caráter educacional e analítico.
           Nada neste sistema constitui recomendação financeira ou promessa de retorno.
         </p>

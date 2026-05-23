@@ -36,7 +36,7 @@ export default function RegimeCard({ signal }: { signal: TacticalSignal }) {
 
   return (
     <div style={{
-      background:   '#111111',
+      background:   'var(--surface)',
       border:       `1px solid ${color}33`,
       borderRadius: '12px',
       padding:      '24px',
@@ -45,15 +45,15 @@ export default function RegimeCard({ signal }: { signal: TacticalSignal }) {
       <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
 
         <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: '#5a5040', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '6px' }}>
             Regime de mercado
           </div>
           <div style={{ fontSize: '22px', fontWeight: 700, color }}>{label}</div>
-          <div style={{ fontSize: '28px', fontWeight: 700, color: '#e8e0d5', marginTop: '8px' }}>
+          <div style={{ fontSize: '28px', fontWeight: 700, color: 'var(--text)', marginTop: '8px' }}>
             {formatBTC(signal.btcPrice)}
           </div>
           {signal.reading && (
-            <p style={{ margin: '10px 0 0', fontSize: '13px', color: '#b0a090', lineHeight: 1.6, maxWidth: '480px' }}>
+            <p style={{ margin: '10px 0 0', fontSize: '13px', color: 'var(--text-sec)', lineHeight: 1.6, maxWidth: '480px' }}>
               {signal.reading}
             </p>
           )}
@@ -67,11 +67,11 @@ export default function RegimeCard({ signal }: { signal: TacticalSignal }) {
             borderRadius: '8px',
             textAlign:    'center',
           }}>
-            <div style={{ fontSize: '11px', color: '#5a5040', marginBottom: '2px' }}>Score</div>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '2px' }}>Score</div>
             <div style={{ fontSize: '24px', fontWeight: 700, color }}>{score > 0 ? `+${score}` : score}</div>
           </div>
-          <div style={{ fontSize: '11px', color: '#5a5040' }}>
-            Risco: <span style={{ color: '#b0a090' }}>{signal.riskLevel}</span>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+            Risco: <span style={{ color: 'var(--text-sec)' }}>{signal.riskLevel}</span>
           </div>
         </div>
 

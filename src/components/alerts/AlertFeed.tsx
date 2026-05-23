@@ -28,10 +28,10 @@ export default function AlertFeed({ alerts }: { alerts: AlertEventRow[] }) {
 
       {/* Section header */}
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: '12px' }}>
-        <span style={{ fontSize: '12px', fontWeight: 600, color: '#5a5040', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+        <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
           Histórico de alertas
         </span>
-        <span style={{ fontSize: '11px', color: '#2a2a2a' }}>últimos 30 disparos</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-dim)' }}>últimos 30 disparos</span>
       </div>
 
       {/* Stats strip */}
@@ -41,13 +41,13 @@ export default function AlertFeed({ alerts }: { alerts: AlertEventRow[] }) {
           alignItems:   'center',
           gap:          '20px',
           padding:      '10px 16px',
-          background:   '#0e0e0e',
+          background:   'var(--surface2)',
           border:       '1px solid rgba(224,138,58,0.08)',
           borderRadius: '8px',
           marginBottom: '12px',
           flexWrap:     'wrap',
         }}>
-          <span style={{ fontSize: '11px', color: '#5a5040', fontWeight: 500 }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>
             {alerts.length} {alerts.length === 1 ? 'alerta' : 'alertas'}
           </span>
           <div style={{ display: 'flex', gap: '14px', flexWrap: 'wrap' }}>
@@ -61,7 +61,7 @@ export default function AlertFeed({ alerts }: { alerts: AlertEventRow[] }) {
                   display:      'inline-block',
                   flexShrink:   0,
                 }} />
-                <span style={{ fontSize: '11px', color: '#5a5040' }}>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
                   {counts[s]} {SEV_LABEL[s]}
                 </span>
               </span>
@@ -75,7 +75,7 @@ export default function AlertFeed({ alerts }: { alerts: AlertEventRow[] }) {
         <div style={{
           padding:      '56px 24px',
           textAlign:    'center',
-          background:   '#111111',
+          background:   'var(--surface)',
           border:       '1px solid rgba(224,138,58,0.07)',
           borderRadius: '12px',
         }}>
@@ -83,7 +83,7 @@ export default function AlertFeed({ alerts }: { alerts: AlertEventRow[] }) {
             width:        '36px',
             height:       '36px',
             borderRadius: '50%',
-            background:   '#161616',
+            background:   'var(--surface2)',
             border:       '1px solid rgba(224,138,58,0.1)',
             margin:       '0 auto 16px',
             display:      'flex',
@@ -92,10 +92,10 @@ export default function AlertFeed({ alerts }: { alerts: AlertEventRow[] }) {
           }}>
             <span style={{ fontSize: '15px', color: '#3a3a3a', lineHeight: 1 }}>—</span>
           </div>
-          <p style={{ margin: 0, fontSize: '13px', color: '#5a5040', fontWeight: 500 }}>
+          <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)', fontWeight: 500 }}>
             Nenhum alerta registrado
           </p>
-          <p style={{ margin: '6px 0 0', fontSize: '12px', color: '#3a3030', lineHeight: 1.6 }}>
+          <p style={{ margin: '6px 0 0', fontSize: '12px', color: 'var(--text-dim)', lineHeight: 1.6 }}>
             Alertas aparecem aqui quando o mercado atingir os critérios configurados.
           </p>
         </div>

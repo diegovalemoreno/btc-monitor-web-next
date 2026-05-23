@@ -19,20 +19,20 @@ export default async function AlertsPage() {
   ])
 
   return (
-    <div style={{ minHeight: '100dvh', backgroundColor: '#0a0a0a', color: '#e8e0d5' }}>
+    <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
       <AppNav userEmail={user.email ?? ''} />
 
       <main style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 20px' }}>
 
         {/* Page header */}
         <div style={{ marginBottom: '40px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: '#e08a3a', textTransform: 'uppercase', marginBottom: '6px' }}>
+          <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Monitoramento
           </div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: '#e8e0d5' }}>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700, color: 'var(--text)' }}>
             Alertas de mercado
           </h1>
-          <p style={{ margin: '6px 0 0', fontSize: '13px', color: '#4a4040', lineHeight: 1.5 }}>
+          <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
             Notificações automáticas quando condições relevantes de mercado são detectadas.
           </p>
         </div>
@@ -41,7 +41,7 @@ export default async function AlertsPage() {
         <AlertFeed alerts={alerts} />
 
         {/* Notification settings — seção secundária */}
-        <div style={{ borderTop: '1px solid rgba(224,138,58,0.07)', paddingTop: '40px' }}>
+        <div style={{ borderTop: '1px solid var(--border-dim)', paddingTop: '40px' }}>
           <SubscriptionSettings initial={subscription} />
         </div>
 

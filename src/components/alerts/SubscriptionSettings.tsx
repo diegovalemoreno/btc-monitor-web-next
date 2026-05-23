@@ -64,23 +64,23 @@ export default function SubscriptionSettings({ initial }: Props) {
 
   return (
     <section style={{ marginBottom: '40px' }}>
-      <h2 style={{ fontSize: '13px', fontWeight: 600, color: '#5a5040', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>
+      <h2 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>
         Configuração de alertas
       </h2>
 
-      <div style={{ background: '#111111', border: '1px solid rgba(224,138,58,0.13)', borderRadius: '12px' }}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
 
         {/* Enabled toggle */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: '#e8e0d5' }}>Alertas ativos</div>
-            <div style={{ fontSize: '12px', color: '#5a5040', marginTop: '2px' }}>Receber notificações quando condições forem atingidas</div>
+            <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Alertas ativos</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Receber notificações quando condições forem atingidas</div>
           </div>
           <Toggle value={enabled} onChange={setEnabled} />
         </div>
 
         {/* Profile */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Perfil de alerta</span>
             <Tooltip text={"Define quais tipos de alerta você quer receber.\n\nConservador = só o essencial: euforia, risco extremo, capitulação.\nModerado = alertas importantes e oportunidades agressivas.\nAgressivo = todas as movimentações relevantes, incluindo janelas táticas menores."} />
@@ -94,11 +94,11 @@ export default function SubscriptionSettings({ initial }: Props) {
                   value={value}
                   checked={profile === value}
                   onChange={() => setProfile(value)}
-                  style={{ marginTop: '3px', accentColor: '#e08a3a' }}
+                  style={{ marginTop: '3px', accentColor: 'var(--orange)' }}
                 />
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: '#e8e0d5' }}>{label}</div>
-                  <div style={{ fontSize: '12px', color: '#5a5040' }}>{desc}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{label}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{desc}</div>
                 </div>
               </label>
             ))}
@@ -106,7 +106,7 @@ export default function SubscriptionSettings({ initial }: Props) {
         </div>
 
         {/* Min severity */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
             <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Severidade mínima</span>
             <Tooltip text={"Filtro de importância dos alertas.\n\nBaixa = todos os alertas, inclusive informativos.\nMédia = alertas relevantes sem te sobrecarregar (recomendado).\nAlta = só situações sérias.\nCrítica = apenas emergências de mercado."} position="left" />
@@ -116,10 +116,10 @@ export default function SubscriptionSettings({ initial }: Props) {
             onChange={(e) => setMinSeverity(e.target.value as Severity)}
             style={{
               padding:         '6px 12px',
-              background:      '#161616',
-              border:          '1px solid rgba(224,138,58,0.2)',
+              background:      'var(--surface2)',
+              border:          '1px solid var(--border-strong)',
               borderRadius:    '6px',
-              color:           '#e8e0d5',
+              color:           'var(--text)',
               fontSize:        '13px',
               cursor:          'pointer',
             }}
@@ -131,10 +131,10 @@ export default function SubscriptionSettings({ initial }: Props) {
         </div>
 
         {/* Email */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(224,138,58,0.07)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: '#e8e0d5' }}>Notificações por e-mail</div>
-            <div style={{ fontSize: '12px', color: '#5a5040', marginTop: '2px' }}>Enviado para o e-mail da sua conta Google</div>
+            <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Notificações por e-mail</div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Enviado para o e-mail da sua conta Google</div>
           </div>
           <Toggle value={emailEnabled} onChange={setEmailEnabled} />
         </div>
@@ -143,8 +143,8 @@ export default function SubscriptionSettings({ initial }: Props) {
         <div style={{ padding: '20px 24px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: telegramEnabled ? '16px' : 0 }}>
             <div>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: '#e8e0d5' }}>Telegram</div>
-              <div style={{ fontSize: '12px', color: '#5a5040', marginTop: '2px' }}>Alertas via bot no Telegram</div>
+              <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Telegram</div>
+              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Alertas via bot no Telegram</div>
             </div>
             <Toggle value={telegramEnabled} onChange={setTelegramEnabled} />
           </div>
@@ -152,7 +152,7 @@ export default function SubscriptionSettings({ initial }: Props) {
           {telegramEnabled && (
             <div>
               <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
-                <label style={{ fontSize: '12px', color: '#5a5040' }}>Chat ID</label>
+                <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Chat ID</label>
                 <Tooltip text={"Número que identifica você no Telegram. O bot precisa disso para te enviar mensagens diretamente.\n\nComo obter: abra o Telegram, inicie uma conversa com @userinfobot e ele te responde com seu Chat ID."} position="right" wide />
               </div>
               <input
@@ -163,16 +163,16 @@ export default function SubscriptionSettings({ initial }: Props) {
                 style={{
                   width:        '100%',
                   padding:      '8px 12px',
-                  background:   '#161616',
-                  border:       '1px solid rgba(224,138,58,0.2)',
+                  background:   'var(--surface2)',
+                  border:       '1px solid var(--border-strong)',
                   borderRadius: '6px',
-                  color:        '#e8e0d5',
+                  color:        'var(--text)',
                   fontSize:     '13px',
                   boxSizing:    'border-box',
                 }}
               />
-              <p style={{ margin: '8px 0 0', fontSize: '11px', color: '#5a5040' }}>
-                Inicie uma conversa com <code style={{ color: '#e08a3a' }}>@userinfobot</code> no Telegram para obter seu Chat ID.
+              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--text-muted)' }}>
+                Inicie uma conversa com <code style={{ color: 'var(--orange)' }}>@userinfobot</code> no Telegram para obter seu Chat ID.
               </p>
             </div>
           )}
@@ -187,7 +187,7 @@ export default function SubscriptionSettings({ initial }: Props) {
           disabled={saving}
           style={{
             padding:         '10px 24px',
-            background:      saving ? 'rgba(224,138,58,0.4)' : '#e08a3a',
+            background:      saving ? 'rgba(224,138,58,0.4)' : 'var(--orange)',
             color:           '#0a0a0a',
             border:          'none',
             borderRadius:    '8px',
@@ -216,7 +216,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         height:          '24px',
         borderRadius:    '12px',
         border:          'none',
-        background:      value ? '#e08a3a' : '#1e1e1e',
+        background:      value ? 'var(--orange)' : 'var(--surface3)',
         cursor:          'pointer',
         flexShrink:      0,
         transition:      'background 0.2s',
@@ -229,7 +229,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         width:       '18px',
         height:      '18px',
         borderRadius: '50%',
-        background:   '#e8e0d5',
+        background:   'var(--text)',
         transition:  'left 0.2s',
       }} />
     </button>

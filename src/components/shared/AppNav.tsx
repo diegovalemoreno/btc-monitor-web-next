@@ -29,8 +29,8 @@ export default function AppNav({ userEmail }: AppNavProps) {
       position:        'sticky',
       top:             0,
       zIndex:          50,
-      backgroundColor: '#0a0a0a',
-      borderBottom:    '1px solid rgba(224,138,58,0.1)',
+      backgroundColor: 'var(--nav-bg)',
+      borderBottom:    '1px solid var(--border)',
     }}>
       <div style={{
         maxWidth:      '960px',
@@ -44,7 +44,7 @@ export default function AppNav({ userEmail }: AppNavProps) {
 
         {/* Brand + links */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', color: '#e08a3a', textTransform: 'uppercase' }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', textShadow: 'var(--brand-glow)' }}>
             BTC Monitor
           </span>
           <div className="nav-links">
@@ -59,10 +59,9 @@ export default function AppNav({ userEmail }: AppNavProps) {
                     borderRadius:    '6px',
                     fontSize:        '13px',
                     fontWeight:      active ? 600 : 400,
-                    color:           active ? '#e8e0d5' : '#5a5040',
-                    backgroundColor: active ? 'rgba(224,138,58,0.1)' : 'transparent',
+                    color:           active ? 'var(--text)' : 'var(--text-muted)',
+                    backgroundColor: active ? 'var(--orange-subtle)' : 'transparent',
                     textDecoration:  'none',
-                    transition:      'color 0.15s',
                     whiteSpace:      'nowrap',
                     flexShrink:      0,
                   }}
@@ -76,7 +75,7 @@ export default function AppNav({ userEmail }: AppNavProps) {
 
         {/* User + sign out */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-          <span className="hide-mobile" style={{ fontSize: '12px', color: '#5a5040', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+          <span className="hide-mobile" style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '160px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {userEmail}
           </span>
           <button
@@ -84,8 +83,8 @@ export default function AppNav({ userEmail }: AppNavProps) {
             style={{
               padding:         '6px 12px',
               backgroundColor: 'transparent',
-              color:           '#5a5040',
-              border:          '1px solid rgba(224,138,58,0.15)',
+              color:           'var(--text-muted)',
+              border:          '1px solid var(--border)',
               borderRadius:    '6px',
               fontSize:        '12px',
               cursor:          'pointer',

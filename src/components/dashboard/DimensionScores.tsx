@@ -41,7 +41,7 @@ function arc(pct: number, color: string) {
   const dash = (pct / 100) * circ
   return (
     <svg width="56" height="56" viewBox="0 0 56 56">
-      <circle cx="28" cy="28" r={r} fill="none" stroke="#1e1e1e" strokeWidth="5" />
+      <circle cx="28" cy="28" r={r} fill="none" stroke="var(--surface3)" strokeWidth="5" />
       <circle
         cx="28" cy="28" r={r}
         fill="none"
@@ -62,8 +62,8 @@ export default function DimensionScores({ scores }: { scores: SnapshotScores }) 
         const val = Math.round(scores[key] ?? 0)
         return (
           <div key={key} style={{
-            background:    '#111111',
-            border:        '1px solid rgba(224,138,58,0.1)',
+            background:    'var(--surface)',
+            border:        '1px solid var(--border-dim)',
             borderRadius:  '10px',
             padding:       '16px',
             display:       'flex',
@@ -76,7 +76,7 @@ export default function DimensionScores({ scores }: { scores: SnapshotScores }) 
               <span style={{ position: 'absolute', fontSize: '12px', fontWeight: 700, color }}>{val}</span>
             </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <span style={{ fontSize: '11px', color: '#b0a090', textAlign: 'center' }}>{label}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-sec)', textAlign: 'center' }}>{label}</span>
               <Tooltip text={tooltip} position="bottom" />
             </div>
           </div>

@@ -1,55 +1,120 @@
 @import "tailwindcss";
 
+/* ── Tailwind theme tokens (static, non-themed) ─────────────── */
+
 @theme {
-  --color-bg: #0a0a0a;
-  --color-surface: #111111;
-  --color-surface2: #161616;
-  --color-surface3: #1e1e1e;
-  --color-border: rgba(224, 138, 58, 0.13);
-  --color-text: #e8e0d5;
-  --color-text-sec: #b0a090;
-  --color-text-muted: #5a5040;
-  --color-orange: #e08a3a;
-  --color-orange-dim: rgba(224, 138, 58, 0.15);
+  --color-green-signal:  #00C853;
+  --color-red-signal:    #FF1744;
+  --color-yellow-signal: #FFD600;
 }
+
+/* ── Theme: dark (default) ───────────────────────────────────── */
+
+:root,
+[data-theme="dark"] {
+  --bg:             #0a0a0a;
+  --surface:        #111111;
+  --surface2:       #161616;
+  --surface3:       #1e1e1e;
+  --border:         rgba(224, 138, 58, 0.13);
+  --border-dim:     rgba(224, 138, 58, 0.07);
+  --border-strong:  rgba(224, 138, 58, 0.25);
+  --text:           #e8e0d5;
+  --text-sec:       #b0a090;
+  --text-muted:     #5a5040;
+  --text-dim:       #2a2420;
+  --orange:         #e08a3a;
+  --orange-dim:     rgba(224, 138, 58, 0.15);
+  --orange-subtle:  rgba(224, 138, 58, 0.08);
+  --nav-bg:         #0a0a0a;
+  --brand-glow:     none;
+  --skeleton-base:  #161616;
+}
+
+/* ── Theme: light ────────────────────────────────────────────── */
+
+[data-theme="light"] {
+  --bg:             #f4f2ee;
+  --surface:        #ffffff;
+  --surface2:       #f0ece6;
+  --surface3:       #e8e3dc;
+  --border:         rgba(150, 90, 20, 0.16);
+  --border-dim:     rgba(150, 90, 20, 0.08);
+  --border-strong:  rgba(150, 90, 20, 0.28);
+  --text:           #1c1710;
+  --text-sec:       #4a3a28;
+  --text-muted:     #9a8a78;
+  --text-dim:       #d0c8bc;
+  --orange:         #c87028;
+  --orange-dim:     rgba(200, 112, 40, 0.12);
+  --orange-subtle:  rgba(200, 112, 40, 0.06);
+  --nav-bg:         #ffffff;
+  --brand-glow:     none;
+  --skeleton-base:  #e8e3dc;
+}
+
+/* ── Theme: orange (premium bitcoiner) ───────────────────────── */
+
+[data-theme="orange"] {
+  --bg:             #0c0a02;
+  --surface:        #141004;
+  --surface2:       #1c1808;
+  --surface3:       #24200e;
+  --border:         rgba(240, 160, 60, 0.2);
+  --border-dim:     rgba(240, 160, 60, 0.1);
+  --border-strong:  rgba(240, 160, 60, 0.4);
+  --text:           #f2e8d0;
+  --text-sec:       #c8a878;
+  --text-muted:     #786848;
+  --text-dim:       #3a2e18;
+  --orange:         #f09830;
+  --orange-dim:     rgba(240, 152, 48, 0.22);
+  --orange-subtle:  rgba(240, 152, 48, 0.1);
+  --nav-bg:         #0c0a02;
+  --brand-glow:     0 0 14px rgba(240, 152, 48, 0.35);
+  --skeleton-base:  #1c1808;
+}
+
+/* ── Base ────────────────────────────────────────────────────── */
 
 * { box-sizing: border-box; }
 
 html, body {
-  background-color: #0a0a0a;
-  color: #e8e0d5;
+  background-color: var(--bg);
+  color:            var(--text);
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   -webkit-font-smoothing: antialiased;
+  transition: background-color 0.2s, color 0.2s;
 }
 
 /* ── Layout ─────────────────────────────────────────────────── */
 
 .page-main {
   max-width: 960px;
-  margin: 0 auto;
-  padding: 40px 24px;
+  margin:    0 auto;
+  padding:   40px 24px;
 }
 
 .grid-2 {
-  display: grid;
+  display:               grid;
   grid-template-columns: 1fr 1fr;
-  gap: 16px;
+  gap:                   16px;
 }
 
 .grid-4 {
-  display: grid;
+  display:               grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 12px;
+  gap:                   12px;
 }
 
 /* ── Nav ─────────────────────────────────────────────────────── */
 
 .nav-links {
-  display: flex;
-  gap: 4px;
-  overflow-x: auto;
+  display:                   flex;
+  gap:                       4px;
+  overflow-x:                auto;
   -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
+  scrollbar-width:           none;
 }
 .nav-links::-webkit-scrollbar { display: none; }
 
@@ -59,8 +124,9 @@ html, body {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0.4; }
 }
+
 .skeleton {
-  background: #161616;
+  background: var(--skeleton-base);
   border-radius: 6px;
   animation: skeleton-pulse 1.6s ease-in-out infinite;
 }
@@ -68,11 +134,11 @@ html, body {
 /* ── Responsive ──────────────────────────────────────────────── */
 
 @media (max-width: 640px) {
-  .page-main          { padding: 24px 16px; }
-  .grid-2             { grid-template-columns: 1fr; }
-  .grid-4             { grid-template-columns: 1fr 1fr; }
-  .hide-mobile        { display: none !important; }
-  .mobile-stack       { flex-direction: column !important; align-items: flex-start !important; }
-  .mobile-full        { width: 100% !important; }
-  .mobile-text-sm     { font-size: 12px !important; }
+  .page-main      { padding: 24px 16px; }
+  .grid-2         { grid-template-columns: 1fr; }
+  .grid-4         { grid-template-columns: 1fr 1fr; }
+  .hide-mobile    { display: none !important; }
+  .mobile-stack   { flex-direction: column !important; align-items: flex-start !important; }
+  .mobile-full    { width: 100% !important; }
+  .mobile-text-sm { font-size: 12px !important; }
 }
