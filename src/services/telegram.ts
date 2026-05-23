@@ -57,6 +57,8 @@ function buildAlertHtml(params: {
     `• Convicção: ${params.convictionScore}/100`,
     `• Regime: ${esc(params.regime)}`,
     '',
+    `🔗 <a href="${params.appUrl}">Ver dashboard completo</a>`,
+    '',
     `<i>${esc(now)}</i>`,
     `<blockquote>⚠️ Não é recomendação financeira.</blockquote>`,
   ].join('\n')
@@ -82,7 +84,7 @@ export async function sendTelegramAlert(
         chat_id:                  chatId,
         text,
         parse_mode:               'HTML',
-        disable_web_page_preview: true,
+        disable_web_page_preview: false,
       }),
       signal: controller.signal,
     })

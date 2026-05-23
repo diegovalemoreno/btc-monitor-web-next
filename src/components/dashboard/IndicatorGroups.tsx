@@ -75,7 +75,7 @@ function GroupRow({ group }: { group: IndicatorGroup }) {
                 display:      'flex',
                 alignItems:   'center',
                 gap:          '10px',
-                padding:      '4px 0 4px 16px',
+                padding:      '4px 20px 4px 16px',
                 borderLeft:   `2px solid ${color}33`,
                 marginLeft:   '8px',
                 marginBottom: '2px',
@@ -85,7 +85,7 @@ function GroupRow({ group }: { group: IndicatorGroup }) {
                   {indTip && <Tooltip text={indTip} position="right" wide />}
                 </div>
                 <span style={{ fontSize: '11px', color: '#b0a090', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ind.summary}</span>
-                <span style={{ fontSize: '11px', color, flexShrink: 0 }}>
+                <span style={{ fontSize: '11px', color, flexShrink: 0, minWidth: '40px', textAlign: 'right' }}>
                   {ind.score > 0 ? `+${ind.score.toFixed(1)}` : ind.score.toFixed(1)}
                 </span>
               </div>
