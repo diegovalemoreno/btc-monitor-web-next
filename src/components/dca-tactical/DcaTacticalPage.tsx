@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import type { DcaPlanRow, RiskProfile } from '@/lib/db/types'
+import type { DcaPlanRow, RiskProfile, DcaContributionRow, ContributionType } from '@/lib/db/types'
 import type { DcaTacticalConfig, DcaAllocation, DcaIndicatorSignal } from '@/lib/dca-tactical/types'
 import { DEFAULT_TACTICAL_CONFIG } from '@/lib/dca-tactical/types'
 import type { DcaStrategyProfile } from '@/lib/dca-tactical/types'
@@ -9,11 +9,11 @@ import { calculateDcaOpportunityScore, classifyDcaMarketState, buildIndicatorSig
 import { calculateDcaAllocation } from '@/lib/dca-tactical/allocation'
 import type { IndicatorGroup } from '@lib/shared/types/signal'
 
-import DcaConfigCard            from './DcaConfigCard'
-import DcaRecommendationCard    from './DcaRecommendationCard'
-import DcaIndicatorBreakdown    from './DcaIndicatorBreakdown'
-import DcaCapitalAllocationCard from './DcaCapitalAllocationCard'
-import DcaEducationalNotice     from './DcaEducationalNotice'
+import DcaConfigCard         from './DcaConfigCard'
+import DcaRecommendationCard from './DcaRecommendationCard'
+import DcaIndicatorBreakdown from './DcaIndicatorBreakdown'
+import DcaStatusDoMesCard    from './DcaStatusDoMesCard'
+import DcaEducationalNotice  from './DcaEducationalNotice'
 
 const STORAGE_KEY = 'btcm_dca_tac_cfg_v1'
 
@@ -39,11 +39,17 @@ interface Props {
   plan: DcaPlanRow | null
 }
 
+function currentYearMonth() {
+  const n = new Date()
+  return { year: n.getFullYear(), month: n.getMonth() + 1 }
+}
+
 export default function DcaTacticalPage({ plan }: Props) {
-  const [config,  setConfig]  = useState<DcaTacticalConfig>(DEFAULT_TACTICAL_CONFIG)
-  const [market,  setMarket]  = useState<MarketSnapshot | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error,   setError]   = useState<string | null>(null)
+  const [config,        setConfig]        = useState<DcaTacticalConfig>(DEFAULT_TACTICAL_CONFIG)
+  const [market,        setMarket]        = useState<MarketSnapshot | null>(null)
+  const [contributions, setContributions] = useState<DcaContributionRow[]>([])
+  const [loading,       setLoading]       = useState(true)
+  const [error,         setError]         = useState<string | null>(null)
 
   // Load config from localStorage after hydration
   useEffect(() => {
@@ -71,6 +77,23 @@ export default function DcaTacticalPage({ plan }: Props) {
       .catch(err => { setError(err instanceof Error ? err.message : 'Erro desconhecido'); setLoading(false) })
   }, [])
 
+  // Fetch this month's contributions
+  const fetchContributions = useCallback(() => {
+    fetch('/api/dca/contributions?limit=100')
+      .then(r => r.json())
+      .then(({ contributions: all }: { contributions: DcaContributionRow[] }) => {
+        const { year, month } = currentYearMonth()
+        const thisMonth = (all ?? []).filter(c => {
+          const d = new Date(c.contribution_date + 'T00:00:00')
+          return d.getFullYear() === year && d.getMonth() + 1 === month
+        })
+        setContributions(thisMonth)
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => { fetchContributions() }, [fetchContributions])
+
   const updateConfig = useCallback((updates: Partial<DcaTacticalConfig>) => {
     setConfig(prev => {
       const next = { ...prev, ...updates }
@@ -79,9 +102,15 @@ export default function DcaTacticalPage({ plan }: Props) {
     })
   }, [])
 
-  const monthlyAmount = config.monthlyAmountOverride ?? plan?.monthly_amount_brl ?? 0
+  // plan.monthly_amount_brl takes precedence over localStorage override
+  const monthlyAmount = plan?.monthly_amount_brl ?? config.monthlyAmountOverride ?? 0
 
-  // Derived values
+  // usedThisMonth derived from real contributions (TACTICAL + MANUAL, not STRUCTURAL_DCA)
+  const usedThisMonth = contributions
+    .filter(c => c.contribution_type !== 'STRUCTURAL_DCA')
+    .reduce((sum, c) => sum + c.amount, 0)
+
+  // Derived score / state / allocation
   const score = market
     ? calculateDcaOpportunityScore({
         opportunityScore:  market.opportunityScore,
@@ -94,13 +123,44 @@ export default function DcaTacticalPage({ plan }: Props) {
 
   const marketState = classifyDcaMarketState(score)
 
+  const configWithDerived: DcaTacticalConfig = { ...config, usedThisMonth }
+
   const allocation: DcaAllocation | null = monthlyAmount > 0
-    ? calculateDcaAllocation(monthlyAmount, config, score, marketState)
+    ? calculateDcaAllocation(monthlyAmount, configWithDerived, score, marketState)
     : null
 
   const indicators: DcaIndicatorSignal[] = market?.indicatorGroups
     ? buildIndicatorSignals(market.indicatorGroups)
     : []
+
+  // Contribution handlers
+  const handleRegister = useCallback(async (data: {
+    amount: number
+    contribution_date: string
+    contribution_type: ContributionType
+    notes: string | null
+  }) => {
+    const res = await fetch('/api/dca/contributions', {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        ...data,
+        market_score_snapshot: score,
+        market_state_snapshot: marketState,
+      }),
+    })
+    if (!res.ok) {
+      const { error: msg } = await res.json().catch(() => ({ error: 'Erro ao registrar' }))
+      throw new Error(msg ?? 'Erro ao registrar')
+    }
+    fetchContributions()
+  }, [score, marketState, fetchContributions])
+
+  const handleDelete = useCallback(async (id: string) => {
+    const res = await fetch(`/api/dca/contributions/${id}`, { method: 'DELETE' })
+    if (!res.ok) throw new Error('Erro ao remover aporte')
+    fetchContributions()
+  }, [fetchContributions])
 
   // ── Loading ────────────────────────────────────────────────
   if (loading) {
@@ -160,10 +220,13 @@ export default function DcaTacticalPage({ plan }: Props) {
     )
   }
 
+  const tacticalPool = monthlyAmount - (allocation?.structuralDcaAmount ?? 0)
+
   // ── Main render ────────────────────────────────────────────
   return (
     <div>
-      {/* Recommendation (score + gauge + amounts) */}
+
+      {/* §1 + §2 — Cenário Atual + Ação Recomendada */}
       {allocation && (
         <DcaRecommendationCard
           allocation={allocation}
@@ -171,18 +234,36 @@ export default function DcaTacticalPage({ plan }: Props) {
         />
       )}
 
-      {/* Allocation bar */}
-      {allocation && (
-        <DcaCapitalAllocationCard allocation={allocation} />
-      )}
+      {/* §3 — Status do Mês */}
+      <DcaStatusDoMesCard
+        monthlyContribution={monthlyAmount}
+        structuralDcaAmount={allocation?.structuralDcaAmount ?? 0}
+        tacticalPool={tacticalPool}
+        contributions={contributions}
+        usedThisMonth={usedThisMonth}
+        score={score}
+        marketState={marketState}
+        onRegister={handleRegister}
+        onDelete={handleDelete}
+      />
 
-      {/* Config panel */}
-      <DcaConfigCard config={config} monthlyAmount={monthlyAmount} onUpdate={updateConfig} />
+      {/* Histórico completo link */}
+      <div style={{ marginBottom: '24px', textAlign: 'right' }}>
+        <a
+          href="/dca/historico"
+          style={{ fontSize: '12px', color: 'var(--orange)', textDecoration: 'none', fontWeight: 500 }}
+        >
+          Ver histórico completo →
+        </a>
+      </div>
 
-      {/* Indicator breakdown */}
+      {/* §4 — Indicadores */}
       {indicators.length > 0 && (
         <DcaIndicatorBreakdown signals={indicators} />
       )}
+
+      {/* Configuração */}
+      <DcaConfigCard config={config} monthlyAmount={monthlyAmount} onUpdate={updateConfig} />
 
       {/* Disclaimer */}
       <DcaEducationalNotice />

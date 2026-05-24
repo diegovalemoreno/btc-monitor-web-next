@@ -130,3 +130,25 @@ export interface DcaRecommendationRow {
 }
 
 export type InsertDcaRecommendation = Omit<DcaRecommendationRow, 'id' | 'created_at'>
+
+// ── dca_contributions ────────────────────────────────────────────
+
+export type ContributionType = 'STRUCTURAL_DCA' | 'TACTICAL' | 'MANUAL'
+export type MarketStateSnapshot = 'DEFENSIVE' | 'NEUTRAL' | 'FAVORABLE' | 'AGGRESSIVE'
+
+export interface DcaContributionRow {
+  id: string
+  user_id: string
+  amount: number
+  contribution_date: string
+  contribution_type: ContributionType
+  market_score_snapshot: number | null
+  market_state_snapshot: MarketStateSnapshot | null
+  notes: string | null
+  created_at: string
+  updated_at: string
+  deleted_at: string | null
+}
+
+export type InsertDcaContribution = Omit<DcaContributionRow, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
+export type UpdateDcaContribution = Partial<Pick<DcaContributionRow, 'amount' | 'contribution_date' | 'contribution_type' | 'notes'>>
