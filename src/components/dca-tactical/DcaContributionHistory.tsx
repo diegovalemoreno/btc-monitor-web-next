@@ -120,6 +120,8 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
   return rows.reverse()
 }
 
+type ActiveTab = 'historico' | 'evolucao'
+
 interface Props { initialContributions: DcaContributionRow[] }
 
 export default function DcaContributionHistory({ initialContributions }: Props) {
@@ -130,6 +132,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const [customFrom, setCustomFrom]       = useState('')
   const [customTo, setCustomTo]           = useState('')
   const [expandedId, setExpandedId]       = useState<string | null>(null)
+  const [activeTab, setActiveTab]         = useState<ActiveTab>('historico')
 
   const { from, to } = getPeriodRange(periodFilter, customFrom, customTo)
   const periodFiltered = contributions.filter(c => {
@@ -169,6 +172,12 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
     .reduce((s, c) => s + (c.effective_price_brl! - c.btc_price_brl!) * (c.sats_purchased! / 1e8), 0)
   const totalImpact   = totalFees + Math.max(0, totalSpread - totalFees)
 
+  // Period-filtered totals (drives the summary strip under filters)
+  const filteredPurchases   = filtered.filter(c => !c.notes?.includes('Venda'))
+  const periodTotalBRL      = filteredPurchases.reduce((s, c) => s + c.amount, 0)
+  const periodTotalSats     = filteredPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  const periodTotalFees     = filtered.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+
   const priceEvolution = buildPriceEvolution(contributions)
 
   async function handleDelete(id: string) {
@@ -206,86 +215,115 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         )}
       </div>
 
-      {/* Chart */}
-      <DcaPatrimonyChart contributions={periodFiltered} />
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '0', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
+        {([['historico', 'Histórico'], ['evolucao', 'Evolução do Preço Médio']] as const).map(([tab, label]) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            style={{
+              padding: '10px 20px',
+              background: 'none',
+              border: 'none',
+              borderBottom: `2px solid ${activeTab === tab ? 'var(--orange)' : 'transparent'}`,
+              color: activeTab === tab ? 'var(--orange)' : 'var(--text-muted)',
+              fontSize: '13px',
+              fontWeight: activeTab === tab ? 600 : 400,
+              cursor: 'pointer',
+              marginBottom: '-1px',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
 
-      {/* Fee analytics panel */}
-      {feesKnown.length > 0 && (
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: '12px', marginBottom: '24px', overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '12px 20px', borderBottom: '1px solid var(--border-dim)',
-            fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)',
-            textTransform: 'uppercase', letterSpacing: '0.08em',
-          }}>
-            Análise de custos · {periodFilter === 'all' ? 'histórico completo' : PERIOD_LABELS[periodFilter]}
-          </div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0' }}>
-            <FeeMetric label="Taxas pagas"           value={fmt(totalFees)}    color="#F59E0B" hint="Taxa explícita cobrada pela plataforma" />
-            <FeeMetric label="Spread acumulado"      value={fmt(Math.max(0, totalSpread - totalFees))} color="#F97316" hint="Diferença entre cotação e preço efetivo" />
-            <FeeMetric label="Impacto total"         value={fmt(totalImpact)}  color="#EF4444" hint="Custo total acima do preço de mercado" />
-            <FeeMetric label="Aportes analisados"    value={`${feesKnown.length}`} hint="Com dados de taxa da vempradig" />
-          </div>
+      {/* ── Tab: Evolução do Preço Médio ── */}
+      {activeTab === 'evolucao' && (
+        <div>
+          {priceEvolution.length > 0 ? (
+            <div style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: '12px', overflow: 'hidden',
+            }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-dim)' }}>
+                      {(['Mês', 'Preço médio acumulado', 'BTC acumulado', 'Total investido'] as const).map(h => (
+                        <th key={h} style={{
+                          padding: '10px 20px', fontSize: '10px', color: 'var(--text-muted)',
+                          fontWeight: 500, textAlign: h === 'Mês' ? 'left' : 'right',
+                          textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
+                        }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceEvolution.map((row, idx) => (
+                      <tr key={row.label} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
+                        <td style={{ padding: '10px 20px', fontSize: '13px', color: 'var(--text)', fontWeight: 500, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
+                          {row.label}
+                        </td>
+                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '13px', fontWeight: 700, color: '#22C55E', whiteSpace: 'nowrap' }}>
+                          {fmtK(row.cumAvg)}/BTC
+                          {row.trend && (
+                            <span style={{ marginLeft: '6px', fontSize: '11px', color: row.trend === 'up' ? '#EF4444' : row.trend === 'down' ? '#22C55E' : 'var(--text-muted)' }}>
+                              {row.trend === 'up' ? '↑' : row.trend === 'down' ? '↓' : '—'}
+                            </span>
+                          )}
+                        </td>
+                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: '#F7931A', whiteSpace: 'nowrap' }}>
+                          {fmtBTC(Math.round(row.cumBtc * 1e8))}
+                        </td>
+                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: 'var(--text-sec)', whiteSpace: 'nowrap' }}>
+                          {fmt(row.cumBrl)}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
+              Nenhum dado de preço disponível.
+            </div>
+          )}
         </div>
       )}
 
-      {/* Price evolution */}
-      {priceEvolution.length > 0 && (
-        <div style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: '12px', marginBottom: '24px', overflow: 'hidden',
-        }}>
-          <div style={{
-            padding: '14px 20px', borderBottom: '1px solid var(--border-dim)',
-            fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)',
-            textTransform: 'uppercase', letterSpacing: '0.08em',
-          }}>
-            Evolução do preço médio
-          </div>
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ borderBottom: '1px solid var(--border-dim)' }}>
-                  {(['Mês', 'Preço médio acumulado', 'BTC acumulado', 'Total investido'] as const).map(h => (
-                    <th key={h} style={{
-                      padding: '8px 20px', fontSize: '10px', color: 'var(--text-muted)',
-                      fontWeight: 500, textAlign: h === 'Mês' ? 'left' : 'right',
-                      textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-                    }}>{h}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {priceEvolution.map((row, idx) => (
-                  <tr key={row.label} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
-                    <td style={{ padding: '10px 20px', fontSize: '13px', color: 'var(--text)', fontWeight: 500, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
-                      {row.label}
-                    </td>
-                    <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '13px', fontWeight: 700, color: '#22C55E', whiteSpace: 'nowrap' }}>
-                      {fmtK(row.cumAvg)}/BTC
-                      {row.trend && (
-                        <span style={{ marginLeft: '6px', fontSize: '11px', color: row.trend === 'up' ? '#EF4444' : row.trend === 'down' ? '#22C55E' : 'var(--text-muted)' }}>
-                          {row.trend === 'up' ? '↑' : row.trend === 'down' ? '↓' : '—'}
-                        </span>
-                      )}
-                    </td>
-                    <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: '#F7931A', whiteSpace: 'nowrap' }}>
-                      {fmtBTC(Math.round(row.cumBtc * 1e8))}
-                    </td>
-                    <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: 'var(--text-sec)', whiteSpace: 'nowrap' }}>
-                      {fmt(row.cumBrl)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
+      {/* ── Tab: Histórico ── */}
+      {activeTab === 'historico' && (
+        <div>
 
-      {/* Period filter */}
+          {/* Chart */}
+          <DcaPatrimonyChart contributions={periodFiltered} />
+
+          {/* Fee analytics panel */}
+          {feesKnown.length > 0 && (
+            <div style={{
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: '12px', marginBottom: '24px', overflow: 'hidden',
+            }}>
+              <div style={{
+                padding: '12px 20px', borderBottom: '1px solid var(--border-dim)',
+                fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)',
+                textTransform: 'uppercase', letterSpacing: '0.08em',
+              }}>
+                Análise de custos · {periodFilter === 'all' ? 'histórico completo' : PERIOD_LABELS[periodFilter]}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0' }}>
+                <FeeMetric label="Taxas pagas"        value={fmt(totalFees)}    color="#F59E0B" hint="Taxa explícita cobrada pela plataforma" />
+                <FeeMetric label="Spread acumulado"   value={fmt(Math.max(0, totalSpread - totalFees))} color="#F97316" hint="Diferença entre cotação e preço efetivo" />
+                <FeeMetric label="Impacto total"      value={fmt(totalImpact)}  color="#EF4444" hint="Custo total acima do preço de mercado" />
+                <FeeMetric label="Aportes analisados" value={`${feesKnown.length}`} hint="Com dados de taxa da vempradig" />
+              </div>
+            </div>
+          )}
+
+          {/* Period filter */}
       <div style={{ marginBottom: '12px' }}>
         <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
           {(Object.keys(PERIOD_LABELS) as PeriodFilter[]).map(p => (
@@ -331,15 +369,33 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         ))}
       </div>
 
-      {/* No results */}
-      {monthKeys.length === 0 && (
-        <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-          Nenhum aporte encontrado{periodFilter !== 'all' ? ' no período selecionado' : ''}.
-        </div>
-      )}
+          {/* Period summary strip */}
+          {filtered.length > 0 && (
+            <div style={{
+              display: 'flex', gap: '0', flexWrap: 'wrap',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: '10px', marginBottom: '20px', overflow: 'hidden',
+            }}>
+              <PeriodStat label="Total no período" value={fmt(periodTotalBRL)} color="var(--orange)" />
+              {periodTotalSats > 0 && (
+                <PeriodStat label="Sats comprados" value={periodTotalSats.toLocaleString('pt-BR') + ' sats'} color="#F7931A" />
+              )}
+              {periodTotalFees > 0 && (
+                <PeriodStat label="Taxas pagas" value={fmt(periodTotalFees)} color="#F59E0B" />
+              )}
+              <PeriodStat label="Aportes" value={String(filtered.length)} />
+            </div>
+          )}
 
-      {/* Grouped list */}
-      {monthKeys.map(monthKey => {
+          {/* No results */}
+          {monthKeys.length === 0 && (
+            <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
+              Nenhum aporte encontrado{periodFilter !== 'all' ? ' no período selecionado' : ''}.
+            </div>
+          )}
+
+          {/* Grouped list */}
+          {monthKeys.map(monthKey => {
         const items      = groups[monthKey]
         const monthTotal = items.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + c.amount, 0)
         return (
@@ -493,6 +549,19 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
           </div>
         )
       })}
+
+        </div>
+      )}
+
+    </div>
+  )
+}
+
+function PeriodStat({ label, value, color }: { label: string; value: string; color?: string }) {
+  return (
+    <div style={{ padding: '10px 20px', flex: '1 1 120px', borderRight: '1px solid var(--border-dim)' }}>
+      <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>{label}</div>
+      <div style={{ fontSize: '14px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
     </div>
   )
 }
