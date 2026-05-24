@@ -1,6 +1,7 @@
 'use client'
 
 import type { DcaAllocation } from '@/lib/dca-tactical/types'
+import Tooltip from '@/components/shared/Tooltip'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -9,18 +10,22 @@ interface Props {
   allocation: DcaAllocation
 }
 
-function Bar({ label, amount, total, color, dim }: {
-  label:  string
-  amount: number
-  total:  number
-  color:  string
-  dim:    string
+function Bar({ label, tooltip, amount, total, color, dim }: {
+  label:   string
+  tooltip: string
+  amount:  number
+  total:   number
+  color:   string
+  dim:     string
 }) {
   const pct = total > 0 ? (amount / total) * 100 : 0
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '6px' }}>
-        <span style={{ fontSize: '12px', color: 'var(--text-sec)' }}>{label}</span>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-sec)' }}>{label}</span>
+          <Tooltip text={tooltip} position="right" wide />
+        </div>
         <span style={{ fontSize: '14px', fontWeight: 700, color, fontFamily: "'Courier New', monospace" }}>
           {fmt(amount)}
         </span>
@@ -124,6 +129,7 @@ export default function DcaCapitalAllocationCard({ allocation }: Props) {
       <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
         <Bar
           label="DCA estrutural"
+          tooltip="Aporte fixo recorrente, executado sempre independente das condições de mercado. É a base da disciplina de acumulação — compra na regularidade, não no timing."
           amount={structuralDcaAmount}
           total={monthlyContribution}
           color="var(--orange)"
@@ -131,6 +137,7 @@ export default function DcaCapitalAllocationCard({ allocation }: Props) {
         />
         <Bar
           label="Aporte tático sugerido agora"
+          tooltip="Capital do caixa tático que o sistema sugere alocar AGORA, baseado no score de oportunidade atual (0-100). Score alto = janela favorável = maior fração sugerida. É uma orientação, não uma ordem."
           amount={tacticalContributionAmount}
           total={monthlyContribution}
           color="#00BCD4"
@@ -138,6 +145,7 @@ export default function DcaCapitalAllocationCard({ allocation }: Props) {
         />
         <Bar
           label="Reserva tática sugerida"
+          tooltip="Parte do caixa tático que o sistema sugere preservar para oportunidades futuras mais favoráveis. Mantida em caixa (stablecoin ou fiat), aguardando janelas de score mais alto."
           amount={tacticalReserveAmount}
           total={monthlyContribution}
           color="var(--text-muted)"
@@ -155,9 +163,22 @@ export default function DcaCapitalAllocationCard({ allocation }: Props) {
           gap:        '24px',
           flexWrap:   'wrap',
         }}>
-          <Stat label="Caixa tático do mês" value={fmt(tacticalPool)} />
-          <Stat label="Usado no mês"         value={fmt(usedTacticalThisMonth)} color={usedTacticalThisMonth > 0 ? 'var(--orange)' : undefined} />
-          <Stat label="Restante"             value={fmt(remainingTactical)} />
+          <Stat
+            label="Caixa tático do mês"
+            tooltip="Total disponível para alocação tática neste mês = aporte mensal − DCA estrutural. É o capital que pode ser deployado com base em oportunidades de mercado."
+            value={fmt(tacticalPool)}
+          />
+          <Stat
+            label="Usado no mês"
+            tooltip="Quanto do caixa tático você já registrou como aportado neste mês. Atualizado manualmente no campo 'Usado este mês' da configuração."
+            value={fmt(usedTacticalThisMonth)}
+            color={usedTacticalThisMonth > 0 ? 'var(--orange)' : undefined}
+          />
+          <Stat
+            label="Restante"
+            tooltip="Caixa tático disponível ainda não aportado neste mês = Caixa tático − Usado no mês. É o capital que você ainda pode alocar taticamente."
+            value={fmt(remainingTactical)}
+          />
         </div>
       )}
     </div>
@@ -180,11 +201,14 @@ function Legend({ color, label, border }: { color: string; label: string; border
   )
 }
 
-function Stat({ label, value, color }: { label: string; value: string; color?: string }) {
+function Stat({ label, tooltip, value, color }: { label: string; tooltip: string; value: string; color?: string }) {
   return (
     <div>
-      <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '2px' }}>
-        {label}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '2px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          {label}
+        </span>
+        <Tooltip text={tooltip} position="top" wide />
       </div>
       <div style={{ fontSize: '13px', fontWeight: 600, color: color ?? 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
         {value}

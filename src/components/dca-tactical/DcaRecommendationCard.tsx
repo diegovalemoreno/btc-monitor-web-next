@@ -2,6 +2,7 @@
 
 import type { DcaAllocation } from '@/lib/dca-tactical/types'
 import DcaScoreGauge, { STATE_COLOR, STATE_LABEL } from './DcaScoreGauge'
+import Tooltip from '@/components/shared/Tooltip'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -76,8 +77,15 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
         <div style={{ padding: '24px' }}>
           {/* Primary: tactical now */}
           <div style={{ marginBottom: '20px' }}>
-            <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '4px' }}>
-              Aporte tático sugerido agora
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+              <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                Aporte tático sugerido agora
+              </span>
+              <Tooltip
+                text="Capital do caixa tático que o sistema sugere alocar AGORA com base no score de oportunidade atual. Quanto maior o score, maior a fração sugerida. Não precisa executar exatamente esse valor — é uma orientação."
+                position="right"
+                wide
+              />
             </div>
             <div style={{ fontSize: '32px', fontWeight: 700, color, fontFamily: "'Courier New', monospace", lineHeight: 1 }}>
               {fmt(tacticalContributionAmount)}
@@ -88,11 +96,13 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
           <div style={{ display: 'flex', gap: '24px', flexWrap: 'wrap', marginBottom: '20px' }}>
             <AmountItem
               label="DCA estrutural"
+              tooltip="Parcela fixa do aporte mensal executada sempre, independente das condições de mercado. Garante a disciplina de acumulação recorrente. Configurável em % do aporte mensal."
               value={fmt(structuralDcaAmount)}
               color="var(--orange)"
             />
             <AmountItem
               label="Reserva tática"
+              tooltip="Parte do caixa tático que o sistema sugere preservar para oportunidades futuras mais favoráveis. Quanto menor o score, maior a reserva sugerida. Mantido em caixa, não aportado agora."
               value={fmt(tacticalReserveAmount)}
               color="var(--text-muted)"
             />
@@ -146,6 +156,10 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
         }}>
           {fmt(structuralDcaAmount + tacticalContributionAmount)}
         </span>
+        <Tooltip
+          text="Soma do DCA estrutural (sempre) + aporte tático sugerido (baseado no score). É o valor total que o sistema orienta aportar neste momento."
+          position="top"
+        />
         <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: 'auto' }}>
           de {fmt(monthlyContribution)} planejados
         </span>
@@ -154,11 +168,14 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
   )
 }
 
-function AmountItem({ label, value, color }: { label: string; value: string; color: string }) {
+function AmountItem({ label, tooltip, value, color }: { label: string; tooltip: string; value: string; color: string }) {
   return (
     <div>
-      <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>
-        {label}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '3px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          {label}
+        </span>
+        <Tooltip text={tooltip} position="top" wide />
       </div>
       <div style={{ fontSize: '16px', fontWeight: 600, color, fontFamily: "'Courier New', monospace" }}>
         {value}
