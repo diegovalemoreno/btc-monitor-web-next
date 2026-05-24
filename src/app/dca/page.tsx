@@ -1,7 +1,9 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getDcaPlan } from '@/repositories/dca-plans'
-import { getLatestRecommendation, getRecentRecommendations } from '@/repositories/dca-recommendations'
+import { getLatestRecommendation, getRecentRecommendations, insertDcaRecommendation } from '@/repositories/dca-recommendations'
+import { getCurrentMarketData } from '@/services/market-data'
+import { getOrCreateDcaRecommendation } from '@/services/dca'
 import AppNav from '@/components/shared/AppNav'
 import RecommendationCard from '@/components/dca/RecommendationCard'
 import DcaPlanForm from '@/components/dca/DcaPlanForm'
@@ -28,6 +30,19 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
         getRecentRecommendations(supabase, user.id, 10),
       ])
     : [null, []]
+
+  // If plan was updated after the latest recommendation was generated (e.g. user changed
+  // monthly amount), regenerate so the displayed amounts reflect the current plan.
+  let displayRec = latestRec
+  if (plan && latestRec && plan.updated_at > latestRec.created_at) {
+    try {
+      const { signal, snapshot } = await getCurrentMarketData()
+      const fresh = await getOrCreateDcaRecommendation(signal, plan, snapshot?.id ?? null)
+      displayRec = await insertDcaRecommendation(supabase, fresh)
+    } catch {
+      // non-fatal — fall back to stale latestRec
+    }
+  }
 
   const tabs: Array<{ id: string; label: string; tooltip: string }> = [
     {
@@ -110,15 +125,15 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
               </div>
             )}
 
-            {latestRec && (
+            {displayRec && (
               <RecommendationCard rec={{
-                action:                 latestRec.action,
-                recommended_amount_brl: latestRec.recommended_amount_brl,
-                reserve_amount_brl:     latestRec.reserve_amount_brl,
-                confidence:             latestRec.confidence,
-                rationale:              latestRec.rationale,
-                context:                latestRec.context,
-                created_at:             latestRec.created_at,
+                action:                 displayRec.action,
+                recommended_amount_brl: displayRec.recommended_amount_brl,
+                reserve_amount_brl:     displayRec.reserve_amount_brl,
+                confidence:             displayRec.confidence,
+                rationale:              displayRec.rationale,
+                context:                displayRec.context,
+                created_at:             displayRec.created_at,
               }} />
             )}
 
