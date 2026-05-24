@@ -44,15 +44,18 @@ export function calculateDcaAllocation(
   const maxDeploy  = 1.0 - minResFrac
   const deployFrac = Math.min(maxDeploy, rawDeploy)
 
-  const tactNow     = tactPool * deployFrac
-  const tactReserve = tactPool - tactNow
   const remaining   = Math.max(0, tactPool - usedThisMonth)
+
+  // Cap suggested tactical amount by what's actually left in the pool this month.
+  // If the user already deployed R$400 and the pool is R$500, suggest at most R$100.
+  const tactNow     = Math.min(tactPool * deployFrac, remaining)
+  const tactReserve = tactPool - tactNow - usedThisMonth
 
   return {
     monthlyContribution:        r2(monthlyContribution),
     structuralDcaAmount:        r2(structAmount),
     tacticalContributionAmount: r2(tactNow),
-    tacticalReserveAmount:      r2(tactReserve),
+    tacticalReserveAmount:      r2(Math.max(0, tactReserve)),
     usedTacticalThisMonth:      r2(usedThisMonth),
     remainingTactical:          r2(remaining),
     score,
