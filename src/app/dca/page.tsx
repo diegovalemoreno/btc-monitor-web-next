@@ -7,6 +7,7 @@ import RecommendationCard from '@/components/dca/RecommendationCard'
 import DcaPlanForm from '@/components/dca/DcaPlanForm'
 import RecommendationHistory from '@/components/dca/RecommendationHistory'
 import DcaTacticalPage from '@/components/dca-tactical/DcaTacticalPage'
+import Tooltip from '@/components/shared/Tooltip'
 
 export const metadata = { title: 'DCA — BTC Monitor' }
 
@@ -28,9 +29,17 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
       ])
     : [null, []]
 
-  const tabs = [
-    { id: 'intelligence', label: 'DCA Intelligence' },
-    { id: 'tactical',     label: 'DCA Tático'       },
+  const tabs: Array<{ id: string; label: string; tooltip: string }> = [
+    {
+      id:      'intelligence',
+      label:   'DCA Intelligence',
+      tooltip: 'Recomendação diária gerada pelo motor de análise. Sugere ação (aguardar, DCA normal, reforçado ou agressivo) com base no perfil de risco configurado e snapshot de mercado mais recente.',
+    },
+    {
+      id:      'tactical',
+      label:   'DCA Tático',
+      tooltip: 'Divide seu aporte mensal entre DCA estrutural (recorrência fixa) e caixa tático (capital para janelas favoráveis). Usa indicadores em tempo real para sugerir a intensidade de alocação ideal no momento atual.',
+    },
   ]
 
   return (
@@ -68,19 +77,23 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
                 key={t.id}
                 href={`/dca?tab=${t.id}`}
                 style={{
-                  padding:         '7px 18px',
-                  borderRadius:    '7px',
-                  fontSize:        '13px',
-                  fontWeight:      active ? 600 : 400,
-                  color:           active ? 'var(--text)' : 'var(--text-muted)',
-                  background:      active ? 'var(--orange-subtle)' : 'transparent',
-                  border:          active ? '1px solid var(--border-strong)' : '1px solid transparent',
-                  textDecoration:  'none',
-                  whiteSpace:      'nowrap',
-                  transition:      'all 0.15s',
+                  padding:        '7px 14px',
+                  borderRadius:   '7px',
+                  fontSize:       '13px',
+                  fontWeight:     active ? 600 : 400,
+                  color:          active ? 'var(--text)' : 'var(--text-muted)',
+                  background:     active ? 'var(--orange-subtle)' : 'transparent',
+                  border:         active ? '1px solid var(--border-strong)' : '1px solid transparent',
+                  textDecoration: 'none',
+                  whiteSpace:     'nowrap',
+                  transition:     'all 0.15s',
+                  display:        'flex',
+                  alignItems:     'center',
+                  gap:            '6px',
                 }}
               >
                 {t.label}
+                <Tooltip text={t.tooltip} position="bottom" wide />
               </a>
             )
           })}
