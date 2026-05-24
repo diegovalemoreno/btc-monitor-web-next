@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
+import DcaPatrimonyChart from './DcaPatrimonyChart'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -139,7 +140,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const [contributions, setContributions] = useState<DcaContributionRow[]>(initialContributions)
   const [deletingId, setDeletingId]       = useState<string | null>(null)
   const [filterType, setFilterType]       = useState<ContributionType | 'ALL'>('ALL')
-  const [periodFilter, setPeriodFilter]   = useState<PeriodFilter>('all')
+  const [periodFilter, setPeriodFilter]   = useState<PeriodFilter>('thisMonth')
   const [customFrom, setCustomFrom]       = useState('')
   const [customTo, setCustomTo]           = useState('')
 
@@ -225,6 +226,9 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
           color="#00BCD4"
         />
       </div>
+
+      {/* Patrimony evolution chart */}
+      <DcaPatrimonyChart contributions={contributions} />
 
       {/* Price evolution section */}
       {priceEvolution.length > 0 && (
