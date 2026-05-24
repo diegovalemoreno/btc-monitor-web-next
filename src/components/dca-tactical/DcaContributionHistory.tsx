@@ -100,10 +100,10 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         )}
         {avgPriceBrl !== null && (
           <SummaryItem
-            label="Preço médio ponderado"
+            label="Custo médio de aquisição"
             value={fmtBRL0(avgPriceBrl) + '/BTC'}
             color="#22C55E"
-            hint={`${withSats.length} aporte${withSats.length !== 1 ? 's' : ''} com BTC informado`}
+            hint={`Quanto você pagou por BTC em média — total R$ ÷ total BTC (${withSats.length} aporte${withSats.length !== 1 ? 's' : ''})`}
           />
         )}
         <SummaryItem
