@@ -396,17 +396,30 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
 
           {/* Grouped list */}
           {monthKeys.map(monthKey => {
-        const items      = groups[monthKey]
-        const monthTotal = items.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + c.amount, 0)
-        return (
+            const items      = groups[monthKey]
+            const purchases  = items.filter(c => !c.notes?.includes('Venda'))
+            const monthTotal = purchases.reduce((s, c) => s + c.amount, 0)
+            const monthSats  = purchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+            const monthFees  = items.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+            return (
           <div key={monthKey} style={{ marginBottom: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', padding: '0 4px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', padding: '0 4px', gap: '8px', flexWrap: 'wrap' }}>
               <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'capitalize' }}>
                 {monthKey}
               </span>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>
-                {fmt(monthTotal)}
-              </span>
+              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>{fmt(monthTotal)}</span>
+                {monthSats > 0 && (
+                  <span style={{ fontSize: '11px', color: '#F7931A', fontFamily: "'Courier New', monospace" }}>
+                    {monthSats.toLocaleString('pt-BR')} sats
+                  </span>
+                )}
+                {monthFees > 0 && (
+                  <span style={{ fontSize: '11px', color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>
+                    taxa {fmt(monthFees)}
+                  </span>
+                )}
+              </div>
             </div>
 
             <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
@@ -429,22 +442,20 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                   <div key={c.id} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
                     {/* Main row */}
                     <div
+                      className="contrib-row"
                       style={{
-                        display: 'flex', alignItems: 'flex-start', gap: '16px',
-                        padding: '14px 20px',
                         cursor: hasPriceData ? 'pointer' : 'default',
                         background: isExpanded ? 'rgba(99,102,241,0.04)' : 'transparent',
-                        transition: 'background 0.15s',
                       }}
                       onClick={() => hasPriceData && setExpandedId(isExpanded ? null : c.id)}
                     >
                       {/* Date */}
-                      <div style={{ minWidth: '120px', flexShrink: 0 }}>
+                      <div className="contrib-date" style={{ minWidth: '110px', flexShrink: 0 }}>
                         <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{dateStr}</div>
                       </div>
 
                       {/* Notes + context */}
-                      <div style={{ flex: 1, minWidth: 0 }}>
+                      <div className="contrib-notes" style={{ flex: 1, minWidth: 0 }}>
                         {c.notes && (
                           <div style={{ fontSize: '12px', color: 'var(--text-sec)', marginBottom: '2px', wordBreak: 'break-word' }}>
                             {c.notes.split(' · taxa')[0]}
@@ -461,7 +472,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                       </div>
 
                       {/* BTC + prices */}
-                      <div style={{ minWidth: '140px', flexShrink: 0, textAlign: 'right' }}>
+                      <div className="contrib-btc" style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
                         {c.sats_purchased && !isVenda
                           ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '3px' }}>
                               {fmtBTC(c.sats_purchased)}
@@ -477,31 +488,32 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                       </div>
 
                       {/* Type badge */}
-                      <span style={{
+                      <span className="contrib-badge" style={{
                         padding: '2px 8px', background: `${typeMeta.color}20`, color: typeMeta.color,
-                        borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap',
+                        borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
                       }}>
                         {typeMeta.label}
                       </span>
 
                       {/* Amount */}
-                      <span style={{
+                      <span className="contrib-amount" style={{
                         fontSize: '14px', fontWeight: 700,
                         color: isVenda ? '#22C55E' : 'var(--text)',
-                        fontFamily: "'Courier New', monospace", textAlign: 'right', whiteSpace: 'nowrap',
+                        fontFamily: "'Courier New', monospace", textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0,
                       }}>
                         {isVenda ? '+' : ''}{fmt(c.amount)}
                       </span>
 
                       {/* Expand indicator */}
                       {hasPriceData && (
-                        <span style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0, alignSelf: 'center' }}>
+                        <span className="contrib-expand" style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0 }}>
                           {isExpanded ? '▲' : '▼'}
                         </span>
                       )}
 
                       {/* Delete */}
                       <button
+                        className="contrib-delete"
                         onClick={e => { e.stopPropagation(); handleDelete(c.id) }}
                         disabled={deletingId === c.id}
                         title="Remover aporte"
@@ -509,7 +521,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                           background: 'none', border: 'none',
                           color: deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.5)',
                           cursor: deletingId === c.id ? 'not-allowed' : 'pointer',
-                          fontSize: '16px', padding: '0 4px', borderRadius: '4px', lineHeight: 1,
+                          fontSize: '16px', padding: '0 4px', borderRadius: '4px', lineHeight: 1, flexShrink: 0,
                         }}
                       >
                         {deletingId === c.id ? '…' : '×'}
@@ -519,7 +531,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                     {/* Expanded fee breakdown */}
                     {isExpanded && hasPriceData && (
                       <div style={{
-                        padding: '12px 20px 16px 140px',
+                        padding: '12px 20px 16px 20px',
                         background: 'rgba(99,102,241,0.04)',
                         borderTop: '1px solid var(--border-dim)',
                       }}>

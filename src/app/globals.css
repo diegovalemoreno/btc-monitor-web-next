@@ -142,3 +142,28 @@ html, body {
   .mobile-full    { width: 100% !important; }
   .mobile-text-sm { font-size: 12px !important; }
 }
+
+/* ── Contribution history row ─────────────────────────────── */
+
+.contrib-row {
+  display:    flex;
+  align-items: flex-start;
+  gap:        16px;
+  padding:    14px 20px;
+  transition: background 0.15s;
+}
+
+@media (max-width: 640px) {
+  .contrib-row {
+    flex-wrap: wrap;
+    gap:       6px;
+    padding:   12px 14px;
+  }
+  .contrib-date   { flex: 1 1 auto; min-width: auto !important; }
+  .contrib-notes  { order: 5; flex: 0 0 100%; }
+  .contrib-btc    { display: none !important; }
+  .contrib-badge  { order: 6; font-size: 9px !important; align-self: center; }
+  .contrib-amount { margin-left: auto; align-self: center; }
+  .contrib-expand { align-self: center; order: 7; }
+  .contrib-delete { align-self: center; order: 8; }
+}
