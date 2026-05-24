@@ -327,50 +327,60 @@ export default function DcaStatusDoMesCard({
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {contributions.map(c => {
               const typeMeta = TYPE_META[c.contribution_type]
+              const dateLabel = new Date(c.contribution_date + 'T00:00:00')
+                .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
               return (
                 <div key={c.id} style={{
                   display:     'flex',
-                  alignItems:  'center',
+                  alignItems:  'flex-start',
                   gap:         '12px',
                   padding:     '10px 14px',
                   background:  'var(--surface2)',
                   borderRadius: '8px',
                   border:      '1px solid var(--border-dim)',
                 }}>
-                  <span style={{
-                    padding:    '2px 8px',
-                    background: `${typeMeta.color}20`,
-                    color:      typeMeta.color,
-                    borderRadius: '12px',
-                    fontSize:   '10px',
-                    fontWeight: 600,
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {typeMeta.label}
-                  </span>
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', fontFamily: "'Courier New', monospace", minWidth: '80px' }}>
+                  {/* Date + type stacked */}
+                  <div style={{ minWidth: '90px', flexShrink: 0 }}>
+                    <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500, marginBottom: '4px' }}>
+                      {dateLabel}
+                    </div>
+                    <span style={{
+                      padding:    '1px 7px',
+                      background: `${typeMeta.color}20`,
+                      color:      typeMeta.color,
+                      borderRadius: '10px',
+                      fontSize:   '10px',
+                      fontWeight: 600,
+                    }}>
+                      {typeMeta.label}
+                    </span>
+                  </div>
+
+                  {/* Notes — grows */}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    {c.notes
+                      ? <span style={{ fontSize: '12px', color: 'var(--text-muted)', wordBreak: 'break-word' }}>{c.notes}</span>
+                      : <span style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
+                    }
+                  </div>
+
+                  {/* Amount */}
+                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', fontFamily: "'Courier New', monospace", flexShrink: 0 }}>
                     {fmt(c.amount)}
                   </span>
-                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', flexShrink: 0 }}>
-                    {new Date(c.contribution_date + 'T00:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
-                  </span>
-                  {c.notes && (
-                    <span style={{ fontSize: '11px', color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {c.notes}
-                    </span>
-                  )}
+
+                  {/* Delete */}
                   <button
                     onClick={() => handleDelete(c.id)}
                     disabled={deletingId === c.id}
                     title="Remover aporte"
                     style={{
-                      marginLeft:  'auto',
                       background:  'none',
                       border:      'none',
                       color:       deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.6)',
                       cursor:      deletingId === c.id ? 'not-allowed' : 'pointer',
                       fontSize:    '13px',
-                      padding:     '2px 6px',
+                      padding:     '2px 4px',
                       borderRadius: '4px',
                       flexShrink:  0,
                     }}

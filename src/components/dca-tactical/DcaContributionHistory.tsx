@@ -156,30 +156,34 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                   <div
                     key={c.id}
                     style={{
-                      display:     'grid',
-                      gridTemplateColumns: '80px 1fr auto auto auto',
-                      alignItems:  'center',
-                      gap:         '12px',
-                      padding:     '14px 20px',
-                      borderTop:   idx > 0 ? '1px solid var(--border-dim)' : 'none',
+                      display:   'flex',
+                      alignItems: 'flex-start',
+                      gap:       '16px',
+                      padding:   '14px 20px',
+                      borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none',
                     }}
                   >
                     {/* Date */}
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                      {dateStr}
-                    </span>
+                    <div style={{ minWidth: '120px', flexShrink: 0 }}>
+                      <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>
+                        {dateStr}
+                      </div>
+                    </div>
 
-                    {/* Notes + context */}
-                    <div>
+                    {/* Notes + context — grows to fill */}
+                    <div style={{ flex: 1, minWidth: 0 }}>
                       {c.notes && (
-                        <div style={{ fontSize: '13px', color: 'var(--text)', marginBottom: '2px' }}>
+                        <div style={{ fontSize: '13px', color: 'var(--text)', marginBottom: '3px', wordBreak: 'break-word' }}>
                           {c.notes}
                         </div>
                       )}
                       {c.market_state_snapshot && (
-                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: c.notes ? 0 : '2px' }}>
                           Score {c.market_score_snapshot ?? '—'} · {STATE_LABEL[c.market_state_snapshot] ?? c.market_state_snapshot}
                         </div>
+                      )}
+                      {!c.notes && !c.market_state_snapshot && (
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
                       )}
                     </div>
 
