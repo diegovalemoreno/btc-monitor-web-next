@@ -56,7 +56,7 @@ interface Props {
   usedThisMonth:       number
   score:               number
   marketState:         DcaMarketState
-  onRegister:          (data: { amount: number; contribution_date: string; contribution_type: ContributionType; notes: string | null; sats_purchased: number | null; btc_price_brl: number | null }) => Promise<void>
+  onRegister:          (data: { amount: number; contribution_date: string; contribution_type: ContributionType; notes: string | null; sats_purchased: number | null; btc_price_brl: number | null; effective_price_brl: number | null }) => Promise<void>
   onDelete:            (id: string) => Promise<void>
 }
 
@@ -81,8 +81,9 @@ export default function DcaStatusDoMesCard({
   const [date,          setDate]         = useState(today)
   const [type,          setType]         = useState<ContributionType>('TACTICAL')
   const [notes,         setNotes]        = useState('')
-  const [btcAmount,     setBtcAmount]    = useState('')   // BTC decimal, e.g. "0.00244283"
-  const [btcPriceMask,  setBtcPriceMask] = useState('')   // formatted "R$ 386.380,00"
+  const [btcAmount,         setBtcAmount]        = useState('')
+  const [btcPriceMask,      setBtcPriceMask]      = useState('')   // cotação do mercado
+  const [effectivePriceMask, setEffectivePriceMask] = useState('')  // preço efetivo (com spread/taxa)
 
   const status = getMonthStatus(usedThisMonth, tacticalPool)
   const meta   = STATUS_META[status]
@@ -98,14 +99,16 @@ export default function DcaStatusDoMesCard({
     try {
       const btcFloat    = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
       const parsedSats  = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
-      const parsedPrice = parseBRLMask(btcPriceMask)
+      const parsedMarketPrice    = parseBRLMask(btcPriceMask)
+      const parsedEffectivePrice = parseBRLMask(effectivePriceMask)
       await onRegister({
-        amount:            parsed,
-        contribution_date: date,
-        contribution_type: type,
-        notes:             notes.trim() || null,
-        sats_purchased:    parsedSats,
-        btc_price_brl:     parsedPrice,
+        amount:              parsed,
+        contribution_date:   date,
+        contribution_type:   type,
+        notes:               notes.trim() || null,
+        sats_purchased:      parsedSats,
+        btc_price_brl:       parsedMarketPrice,
+        effective_price_brl: parsedEffectivePrice,
       })
       setAmount('')
       setDate(today)
@@ -113,6 +116,7 @@ export default function DcaStatusDoMesCard({
       setNotes('')
       setBtcAmount('')
       setBtcPriceMask('')
+      setEffectivePriceMask('')
       setShowForm(false)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Erro ao registrar')
@@ -293,7 +297,7 @@ export default function DcaStatusDoMesCard({
             </div>
           </div>
 
-          {/* BTC amount + price */}
+          {/* BTC + prices */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <div>
               <div style={labelStyle}>BTC comprado (opcional)</div>
@@ -312,7 +316,7 @@ export default function DcaStatusDoMesCard({
               )}
             </div>
             <div>
-              <div style={labelStyle}>Preço BTC em R$ (opcional)</div>
+              <div style={labelStyle}>Cotação do mercado (opcional)</div>
               <input
                 type="text"
                 inputMode="numeric"
@@ -321,6 +325,19 @@ export default function DcaStatusDoMesCard({
                 placeholder="R$ 386.380,00"
                 style={inputStyle}
               />
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Preço de referência da corretora</div>
+            </div>
+            <div>
+              <div style={labelStyle}>Preço efetivo (opcional)</div>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={effectivePriceMask}
+                onChange={e => setEffectivePriceMask(applyBRLMask(e.target.value))}
+                placeholder="R$ 387.900,00"
+                style={inputStyle}
+              />
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Com spread e taxas incluídos</div>
             </div>
           </div>
 

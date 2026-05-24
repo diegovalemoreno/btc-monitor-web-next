@@ -39,6 +39,7 @@ export async function POST(req: NextRequest) {
     notes = null,
     sats_purchased = null,
     btc_price_brl = null,
+    effective_price_brl = null,
   } = body
 
   if (typeof amount !== 'number' || amount <= 0) {
@@ -62,6 +63,9 @@ export async function POST(req: NextRequest) {
   if (btc_price_brl !== null && (typeof btc_price_brl !== 'number' || btc_price_brl <= 0)) {
     return NextResponse.json({ error: 'btc_price_brl must be a positive number' }, { status: 422 })
   }
+  if (effective_price_brl !== null && (typeof effective_price_brl !== 'number' || effective_price_brl <= 0)) {
+    return NextResponse.json({ error: 'effective_price_brl must be a positive number' }, { status: 422 })
+  }
 
   const contribution = await insertDcaContribution(supabase, {
     user_id:               user.id,
@@ -73,6 +77,7 @@ export async function POST(req: NextRequest) {
     notes:                 notes as string | null,
     sats_purchased:        sats_purchased as number | null,
     btc_price_brl:         btc_price_brl as number | null,
+    effective_price_brl:   effective_price_brl as number | null,
   })
 
   return NextResponse.json({ contribution }, { status: 201 })

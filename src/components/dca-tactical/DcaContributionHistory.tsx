@@ -100,7 +100,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         )}
         {avgPriceBrl !== null && (
           <SummaryItem
-            label="Custo médio de aquisição"
+            label="Preço médio acumulado"
             value={fmtBRL0(avgPriceBrl) + '/BTC'}
             color="#22C55E"
             hint={`Quanto você pagou por BTC em média — total R$ ÷ total BTC (${withSats.length} aporte${withSats.length !== 1 ? 's' : ''})`}
@@ -219,20 +219,26 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                       )}
                     </div>
 
-                    {/* BTC amount + price stacked */}
-                    <div style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
+                    {/* BTC amount + prices stacked */}
+                    <div style={{ minWidth: '150px', flexShrink: 0, textAlign: 'right' }}>
                       {c.sats_purchased
-                        ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace" }}>
+                        ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '4px' }}>
                             {fmtBTC(c.sats_purchased)}
                           </div>
-                        : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3 }}>—</div>
+                        : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3, marginBottom: '4px' }}>—</div>
                       }
-                      {c.btc_price_brl
-                        ? <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: "'Courier New', monospace" }}>
-                            {fmtBRL0(c.btc_price_brl)}/BTC
-                          </div>
-                        : null
-                      }
+                      {c.effective_price_brl && (
+                        <div style={{ fontSize: '11px', color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
+                          <span style={{ color: 'var(--text-muted)', fontFamily: 'sans-serif', fontSize: '10px' }}>efetivo </span>
+                          {fmtBRL0(c.effective_price_brl)}/BTC
+                        </div>
+                      )}
+                      {c.btc_price_brl && (
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>
+                          <span style={{ fontFamily: 'sans-serif', fontSize: '10px' }}>cotação </span>
+                          {fmtBRL0(c.btc_price_brl)}/BTC
+                        </div>
+                      )}
                     </div>
 
                     {/* Type badge */}

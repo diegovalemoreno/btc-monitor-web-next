@@ -147,10 +147,11 @@ export interface DcaContributionRow {
   notes: string | null
   sats_purchased: number | null
   btc_price_brl: number | null
+  effective_price_brl: number | null
   created_at: string
   updated_at: string
   deleted_at: string | null
 }
 
 export type InsertDcaContribution = Omit<DcaContributionRow, 'id' | 'created_at' | 'updated_at' | 'deleted_at'>
-export type UpdateDcaContribution = Partial<Pick<DcaContributionRow, 'amount' | 'contribution_date' | 'contribution_type' | 'notes' | 'sats_purchased' | 'btc_price_brl'>>
+export type UpdateDcaContribution = Partial<Pick<DcaContributionRow, 'amount' | 'contribution_date' | 'contribution_type' | 'notes' | 'sats_purchased' | 'btc_price_brl' | 'effective_price_brl'>>

@@ -58,6 +58,13 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
     }
     patch.btc_price_brl = (v as number | null) ?? null
   }
+  if ('effective_price_brl' in body) {
+    const v = body.effective_price_brl
+    if (v !== null && (typeof v !== 'number' || v <= 0)) {
+      return NextResponse.json({ error: 'effective_price_brl must be a positive number or null' }, { status: 422 })
+    }
+    patch.effective_price_brl = (v as number | null) ?? null
+  }
 
   try {
     const contribution = await updateDcaContribution(supabase, id, user.id, patch)

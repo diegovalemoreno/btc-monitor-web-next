@@ -141,6 +141,7 @@ export default function DcaTacticalPage({ plan }: Props) {
     notes: string | null
     sats_purchased: number | null
     btc_price_brl: number | null
+    effective_price_brl: number | null
   }) => {
     const res = await fetch('/api/dca/contributions', {
       method:  'POST',
