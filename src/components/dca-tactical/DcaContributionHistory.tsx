@@ -6,6 +6,16 @@ import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
+const fmtBTC = (sats: number) => {
+  const btc = sats / 1e8
+  // Show up to 8 sig decimals, trim trailing zeros
+  const str = btc.toFixed(8).replace(/\.?0+$/, '')
+  return str + ' BTC'
+}
+
+const fmtBRL0 = (n: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
+
 const TYPE_META: Record<ContributionType, { label: string; color: string }> = {
   TACTICAL:       { label: 'Tático',          color: '#00BCD4' },
   STRUCTURAL_DCA: { label: 'DCA Estrutural',   color: 'var(--orange)' },
@@ -83,17 +93,17 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         <SummaryItem label="Volume total" value={fmt(totalAmount)} color="var(--orange)" />
         {totalSats > 0 && (
           <SummaryItem
-            label="Total em sats"
-            value={`${totalSats.toLocaleString('pt-BR')} sats`}
+            label="Total acumulado"
+            value={fmtBTC(totalSats)}
             color="#F7931A"
           />
         )}
         {avgPriceBrl !== null && (
           <SummaryItem
             label="Preço médio ponderado"
-            value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(avgPriceBrl) + '/BTC'}
+            value={fmtBRL0(avgPriceBrl) + '/BTC'}
             color="#22C55E"
-            hint={`Baseado em ${withSats.length} aporte${withSats.length !== 1 ? 's' : ''} com sats informados`}
+            hint={`${withSats.length} aporte${withSats.length !== 1 ? 's' : ''} com BTC informado`}
           />
         )}
         <SummaryItem
@@ -209,17 +219,17 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                       )}
                     </div>
 
-                    {/* Sats + price stacked */}
-                    <div style={{ minWidth: '110px', flexShrink: 0, textAlign: 'right' }}>
+                    {/* BTC amount + price stacked */}
+                    <div style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
                       {c.sats_purchased
                         ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace" }}>
-                            {c.sats_purchased.toLocaleString('pt-BR')} sats
+                            {fmtBTC(c.sats_purchased)}
                           </div>
-                        : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.4 }}>— sats</div>
+                        : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3 }}>—</div>
                       }
                       {c.btc_price_brl
-                        ? <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
-                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(c.btc_price_brl)}/BTC
+                        ? <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px', fontFamily: "'Courier New', monospace" }}>
+                            {fmtBRL0(c.btc_price_brl)}/BTC
                           </div>
                         : null
                       }

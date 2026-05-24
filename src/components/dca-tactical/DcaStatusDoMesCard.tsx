@@ -8,6 +8,24 @@ import Tooltip from '@/components/shared/Tooltip'
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
+const fmtBTC = (sats: number) =>
+  (sats / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' BTC'
+
+function applyBRLMask(raw: string): string {
+  const digits = raw.replace(/\D/g, '')
+  if (!digits) return ''
+  const num = parseInt(digits, 10) / 100
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num)
+}
+
+function parseBRLMask(masked: string): number | null {
+  // "R$ 386.380,00" → 386380.00
+  const digits = masked.replace(/\D/g, '')
+  if (!digits) return null
+  const num = parseInt(digits, 10) / 100
+  return num > 0 ? num : null
+}
+
 type MonthStatus = 'not_started' | 'partial' | 'completed' | 'exceeded'
 
 function getMonthStatus(usedTotal: number, tacticalPool: number): MonthStatus {
@@ -59,12 +77,12 @@ export default function DcaStatusDoMesCard({
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const today = new Date().toISOString().slice(0, 10)
-  const [amount,    setAmount]    = useState('')
-  const [date,      setDate]      = useState(today)
-  const [type,      setType]      = useState<ContributionType>('TACTICAL')
-  const [notes,     setNotes]     = useState('')
-  const [sats,      setSats]      = useState('')
-  const [btcPrice,  setBtcPrice]  = useState('')
+  const [amount,        setAmount]       = useState('')
+  const [date,          setDate]         = useState(today)
+  const [type,          setType]         = useState<ContributionType>('TACTICAL')
+  const [notes,         setNotes]        = useState('')
+  const [btcAmount,     setBtcAmount]    = useState('')   // BTC decimal, e.g. "0.00244283"
+  const [btcPriceMask,  setBtcPriceMask] = useState('')   // formatted "R$ 386.380,00"
 
   const status = getMonthStatus(usedThisMonth, tacticalPool)
   const meta   = STATUS_META[status]
@@ -78,22 +96,23 @@ export default function DcaStatusDoMesCard({
     setSubmitting(true)
     setFormError(null)
     try {
-      const parsedSats     = sats.trim()     ? Math.round(parseFloat(sats))     : null
-      const parsedBtcPrice = btcPrice.trim() ? parseFloat(btcPrice.replace(/\./g, '').replace(',', '.')) : null
+      const btcFloat    = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
+      const parsedSats  = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
+      const parsedPrice = parseBRLMask(btcPriceMask)
       await onRegister({
         amount:            parsed,
         contribution_date: date,
         contribution_type: type,
         notes:             notes.trim() || null,
-        sats_purchased:    parsedSats && parsedSats > 0    ? parsedSats    : null,
-        btc_price_brl:     parsedBtcPrice && parsedBtcPrice > 0 ? parsedBtcPrice : null,
+        sats_purchased:    parsedSats,
+        btc_price_brl:     parsedPrice,
       })
       setAmount('')
       setDate(today)
       setType('TACTICAL')
       setNotes('')
-      setSats('')
-      setBtcPrice('')
+      setBtcAmount('')
+      setBtcPriceMask('')
       setShowForm(false)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Erro ao registrar')
@@ -274,27 +293,32 @@ export default function DcaStatusDoMesCard({
             </div>
           </div>
 
-          {/* Sats + BTC price */}
+          {/* BTC amount + price */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <div>
-              <div style={labelStyle}>Sats comprados (opcional)</div>
+              <div style={labelStyle}>BTC comprado (opcional)</div>
               <input
-                type="number"
-                value={sats}
-                onChange={e => setSats(e.target.value)}
-                placeholder="ex: 125000"
-                min="1"
-                step="1"
+                type="text"
+                inputMode="decimal"
+                value={btcAmount}
+                onChange={e => setBtcAmount(e.target.value)}
+                placeholder="0.00244283"
                 style={inputStyle}
               />
+              {btcAmount && parseFloat(btcAmount.replace(',', '.')) > 0 && (
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                  = {Math.round(parseFloat(btcAmount.replace(',', '.')) * 1e8).toLocaleString('pt-BR')} sats
+                </div>
+              )}
             </div>
             <div>
               <div style={labelStyle}>Preço BTC em R$ (opcional)</div>
               <input
                 type="text"
-                value={btcPrice}
-                onChange={e => setBtcPrice(e.target.value)}
-                placeholder="ex: 580000"
+                inputMode="numeric"
+                value={btcPriceMask}
+                onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))}
+                placeholder="R$ 386.380,00"
                 style={inputStyle}
               />
             </div>
