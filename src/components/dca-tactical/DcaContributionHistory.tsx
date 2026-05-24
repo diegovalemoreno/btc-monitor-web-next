@@ -227,8 +227,8 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         />
       </div>
 
-      {/* Patrimony evolution chart */}
-      <DcaPatrimonyChart contributions={contributions} />
+      {/* Patrimony evolution chart — follows period filter */}
+      <DcaPatrimonyChart contributions={periodFiltered} />
 
       {/* Price evolution section */}
       {priceEvolution.length > 0 && (
