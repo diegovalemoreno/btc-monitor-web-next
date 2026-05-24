@@ -44,6 +44,20 @@ export async function PATCH(req: NextRequest, { params }: Ctx) {
   if ('notes' in body) {
     patch.notes = body.notes ?? null
   }
+  if ('sats_purchased' in body) {
+    const v = body.sats_purchased
+    if (v !== null && (typeof v !== 'number' || v <= 0 || !Number.isInteger(v))) {
+      return NextResponse.json({ error: 'sats_purchased must be a positive integer or null' }, { status: 422 })
+    }
+    patch.sats_purchased = (v as number | null) ?? null
+  }
+  if ('btc_price_brl' in body) {
+    const v = body.btc_price_brl
+    if (v !== null && (typeof v !== 'number' || v <= 0)) {
+      return NextResponse.json({ error: 'btc_price_brl must be a positive number or null' }, { status: 422 })
+    }
+    patch.btc_price_brl = (v as number | null) ?? null
+  }
 
   try {
     const contribution = await updateDcaContribution(supabase, id, user.id, patch)

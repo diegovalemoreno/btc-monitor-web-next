@@ -37,6 +37,8 @@ export async function POST(req: NextRequest) {
     market_score_snapshot = null,
     market_state_snapshot = null,
     notes = null,
+    sats_purchased = null,
+    btc_price_brl = null,
   } = body
 
   if (typeof amount !== 'number' || amount <= 0) {
@@ -54,6 +56,12 @@ export async function POST(req: NextRequest) {
   if (market_score_snapshot !== null && (typeof market_score_snapshot !== 'number' || market_score_snapshot < 0 || market_score_snapshot > 100)) {
     return NextResponse.json({ error: 'market_score_snapshot must be 0–100' }, { status: 422 })
   }
+  if (sats_purchased !== null && (typeof sats_purchased !== 'number' || sats_purchased <= 0 || !Number.isInteger(sats_purchased))) {
+    return NextResponse.json({ error: 'sats_purchased must be a positive integer' }, { status: 422 })
+  }
+  if (btc_price_brl !== null && (typeof btc_price_brl !== 'number' || btc_price_brl <= 0)) {
+    return NextResponse.json({ error: 'btc_price_brl must be a positive number' }, { status: 422 })
+  }
 
   const contribution = await insertDcaContribution(supabase, {
     user_id:               user.id,
@@ -63,6 +71,8 @@ export async function POST(req: NextRequest) {
     market_score_snapshot: market_score_snapshot as number | null,
     market_state_snapshot: market_state_snapshot as MarketStateSnapshot | null,
     notes:                 notes as string | null,
+    sats_purchased:        sats_purchased as number | null,
+    btc_price_brl:         btc_price_brl as number | null,
   })
 
   return NextResponse.json({ contribution }, { status: 201 })

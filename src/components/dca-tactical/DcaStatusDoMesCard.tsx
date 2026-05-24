@@ -38,7 +38,7 @@ interface Props {
   usedThisMonth:       number
   score:               number
   marketState:         DcaMarketState
-  onRegister:          (data: { amount: number; contribution_date: string; contribution_type: ContributionType; notes: string | null }) => Promise<void>
+  onRegister:          (data: { amount: number; contribution_date: string; contribution_type: ContributionType; notes: string | null; sats_purchased: number | null; btc_price_brl: number | null }) => Promise<void>
   onDelete:            (id: string) => Promise<void>
 }
 
@@ -59,10 +59,12 @@ export default function DcaStatusDoMesCard({
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const today = new Date().toISOString().slice(0, 10)
-  const [amount, setAmount]   = useState('')
-  const [date, setDate]       = useState(today)
-  const [type, setType]       = useState<ContributionType>('TACTICAL')
-  const [notes, setNotes]     = useState('')
+  const [amount,    setAmount]    = useState('')
+  const [date,      setDate]      = useState(today)
+  const [type,      setType]      = useState<ContributionType>('TACTICAL')
+  const [notes,     setNotes]     = useState('')
+  const [sats,      setSats]      = useState('')
+  const [btcPrice,  setBtcPrice]  = useState('')
 
   const status = getMonthStatus(usedThisMonth, tacticalPool)
   const meta   = STATUS_META[status]
@@ -76,11 +78,22 @@ export default function DcaStatusDoMesCard({
     setSubmitting(true)
     setFormError(null)
     try {
-      await onRegister({ amount: parsed, contribution_date: date, contribution_type: type, notes: notes.trim() || null })
+      const parsedSats     = sats.trim()     ? Math.round(parseFloat(sats))     : null
+      const parsedBtcPrice = btcPrice.trim() ? parseFloat(btcPrice.replace(/\./g, '').replace(',', '.')) : null
+      await onRegister({
+        amount:            parsed,
+        contribution_date: date,
+        contribution_type: type,
+        notes:             notes.trim() || null,
+        sats_purchased:    parsedSats && parsedSats > 0    ? parsedSats    : null,
+        btc_price_brl:     parsedBtcPrice && parsedBtcPrice > 0 ? parsedBtcPrice : null,
+      })
       setAmount('')
       setDate(today)
       setType('TACTICAL')
       setNotes('')
+      setSats('')
+      setBtcPrice('')
       setShowForm(false)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Erro ao registrar')
@@ -258,6 +271,32 @@ export default function DcaStatusDoMesCard({
                 <option value="STRUCTURAL_DCA">DCA Estrutural</option>
                 <option value="MANUAL">Manual</option>
               </select>
+            </div>
+          </div>
+
+          {/* Sats + BTC price */}
+          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
+            <div>
+              <div style={labelStyle}>Sats comprados (opcional)</div>
+              <input
+                type="number"
+                value={sats}
+                onChange={e => setSats(e.target.value)}
+                placeholder="ex: 125000"
+                min="1"
+                step="1"
+                style={inputStyle}
+              />
+            </div>
+            <div>
+              <div style={labelStyle}>Preço BTC em R$ (opcional)</div>
+              <input
+                type="text"
+                value={btcPrice}
+                onChange={e => setBtcPrice(e.target.value)}
+                placeholder="ex: 580000"
+                style={inputStyle}
+              />
             </div>
           </div>
 

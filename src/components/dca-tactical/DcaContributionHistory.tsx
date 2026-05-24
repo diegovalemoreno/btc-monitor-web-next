@@ -44,6 +44,13 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const monthKeys = Object.keys(groups)
 
   const totalAmount = contributions.reduce((s, c) => s + c.amount, 0)
+  const totalSats   = contributions.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+
+  // Weighted average price: sum(brl paid) / sum(BTC received) — only entries with sats filled
+  const withSats = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0)
+  const avgPriceBrl = withSats.length > 0
+    ? (withSats.reduce((s, c) => s + c.amount, 0) / withSats.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)) * 100_000_000
+    : null
 
   async function handleDelete(id: string) {
     setDeletingId(id)
@@ -74,6 +81,21 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
       }}>
         <SummaryItem label="Total de aportes" value={String(contributions.length)} />
         <SummaryItem label="Volume total" value={fmt(totalAmount)} color="var(--orange)" />
+        {totalSats > 0 && (
+          <SummaryItem
+            label="Total em sats"
+            value={`${totalSats.toLocaleString('pt-BR')} sats`}
+            color="#F7931A"
+          />
+        )}
+        {avgPriceBrl !== null && (
+          <SummaryItem
+            label="Preço médio ponderado"
+            value={new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(avgPriceBrl) + '/BTC'}
+            color="#22C55E"
+            hint={`Baseado em ${withSats.length} aporte${withSats.length !== 1 ? 's' : ''} com sats informados`}
+          />
+        )}
         <SummaryItem
           label="Táticos"
           value={String(contributions.filter(c => c.contribution_type === 'TACTICAL').length)}
@@ -187,6 +209,22 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                       )}
                     </div>
 
+                    {/* Sats + price stacked */}
+                    <div style={{ minWidth: '110px', flexShrink: 0, textAlign: 'right' }}>
+                      {c.sats_purchased
+                        ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace" }}>
+                            {c.sats_purchased.toLocaleString('pt-BR')} sats
+                          </div>
+                        : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.4 }}>— sats</div>
+                      }
+                      {c.btc_price_brl
+                        ? <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(c.btc_price_brl)}/BTC
+                          </div>
+                        : null
+                      }
+                    </div>
+
                     {/* Type badge */}
                     <span style={{
                       padding:    '2px 8px',
@@ -241,7 +279,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   )
 }
 
-function SummaryItem({ label, value, color }: { label: string; value: string; color?: string }) {
+function SummaryItem({ label, value, color, hint }: { label: string; value: string; color?: string; hint?: string }) {
   return (
     <div>
       <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>
@@ -250,6 +288,9 @@ function SummaryItem({ label, value, color }: { label: string; value: string; co
       <div style={{ fontSize: '18px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>
         {value}
       </div>
+      {hint && (
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{hint}</div>
+      )}
     </div>
   )
 }

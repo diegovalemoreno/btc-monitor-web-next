@@ -139,6 +139,8 @@ export default function DcaTacticalPage({ plan }: Props) {
     contribution_date: string
     contribution_type: ContributionType
     notes: string | null
+    sats_purchased: number | null
+    btc_price_brl: number | null
   }) => {
     const res = await fetch('/api/dca/contributions', {
       method:  'POST',
