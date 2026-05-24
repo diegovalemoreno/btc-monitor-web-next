@@ -114,10 +114,10 @@ export default function DcaStatusDoMesCard({
       }}>
         <div>
           <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Status do Mês
+            Status do Mês — Caixa Tático
           </div>
           <div style={{ fontSize: '13px', color: 'var(--text-sec)', marginTop: '2px' }}>
-            Acompanhe e registre seus aportes táticos
+            {fmt(structuralDcaAmount)} estrutural + {fmt(tacticalPool)} tático = {fmt(monthlyContribution)} total
           </div>
         </div>
         <div style={{
@@ -157,7 +157,7 @@ export default function DcaStatusDoMesCard({
       <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            {fmt(usedThisMonth)} usados de {fmt(tacticalPool)} táticos
+            <span style={{ fontWeight: 600, color: meta.color }}>{fmt(usedThisMonth)}</span> aportados de {fmt(tacticalPool)} no caixa tático
           </span>
           <span style={{ fontSize: '12px', fontWeight: 600, color: meta.color }}>
             {pctUsed.toFixed(0)}%
