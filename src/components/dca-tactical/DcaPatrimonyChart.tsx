@@ -2,31 +2,31 @@
 
 import type { DcaContributionRow } from '@/lib/db/types'
 
-interface MonthPoint {
-  label:    string  // "Jul/25"
-  cumBtc:   number  // BTC (decimal)
-  cumBrl:   number  // BRL
-  monthBrl: number  // BRL invested this month
-  monthBtc: number  // BTC acquired this month
+interface MonthBar {
+  label:    string   // "07/2025"
+  ym:       string   // "2025-07"
+  compras:  number   // BRL sum of purchases
+  vendas:   number   // BRL sum of sales (positive)
 }
 
-function buildChartData(contributions: DcaContributionRow[]): MonthPoint[] {
-  const withSats = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0)
-  if (withSats.length === 0) return []
+function isVenda(c: DcaContributionRow) {
+  return c.notes?.includes('Venda') || false
+}
 
-  const sorted = [...withSats].sort((a, b) => a.contribution_date.localeCompare(b.contribution_date))
+function buildBarData(contributions: DcaContributionRow[]): MonthBar[] {
+  if (contributions.length === 0) return []
 
-  // Collect unique YYYY-MM in order
+  // Collect all YYYY-MM present
   const ymSet = new Set<string>()
-  for (const c of sorted) {
+  for (const c of contributions) {
     const d = new Date(c.contribution_date + 'T00:00:00')
     ymSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
   }
 
-  // Fill every month between first and last (including months with no contributions)
-  const yms = Array.from(ymSet)
-  const [y0, m0] = yms[0].split('-').map(Number)
-  const [y1, m1] = yms[yms.length - 1].split('-').map(Number)
+  // Fill gap months between first and last
+  const sorted = Array.from(ymSet).sort()
+  const [y0, m0] = sorted[0].split('-').map(Number)
+  const [y1, m1] = sorted[sorted.length - 1].split('-').map(Number)
   const allYms: string[] = []
   let cy = y0, cm = m0
   while (cy < y1 || (cy === y1 && cm <= m1)) {
@@ -34,42 +34,24 @@ function buildChartData(contributions: DcaContributionRow[]): MonthPoint[] {
     cm++; if (cm > 12) { cm = 1; cy++ }
   }
 
-  let cumSats = 0, cumBrl = 0
   return allYms.map(ym => {
     const [y, m] = ym.split('-').map(Number)
-    const endOfMonth = new Date(y, m, 0)
-    const monthContribs = withSats.filter(c => {
+    const month = contributions.filter(c => {
       const d = new Date(c.contribution_date + 'T00:00:00')
       return d.getFullYear() === y && d.getMonth() + 1 === m
     })
-    const monthSats = monthContribs.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-    const monthBrl  = contributions.filter(c => {
-      const d = new Date(c.contribution_date + 'T00:00:00')
-      return d.getFullYear() === y && d.getMonth() + 1 === m
-    }).reduce((s, c) => s + c.amount, 0)
-
-    cumSats += monthSats
-    const allCumContribs = contributions.filter(c => {
-      const d = new Date(c.contribution_date + 'T00:00:00')
-      return d <= endOfMonth
-    })
-    cumBrl = allCumContribs.reduce((s, c) => s + c.amount, 0)
-
+    const compras = month.filter(c => !isVenda(c)).reduce((s, c) => s + c.amount, 0)
+    const vendas  = month.filter(c =>  isVenda(c)).reduce((s, c) => s + c.amount, 0)
     const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
     const label = `${MONTHS_PT[m - 1]}/${String(y).slice(2)}`
-
-    return { label, cumBtc: cumSats / 1e8, cumBrl, monthBrl, monthBtc: monthSats / 1e8 }
+    return { label, ym, compras, vendas }
   })
 }
 
-function fmtBTC4(n: number) {
-  return n.toFixed(4).replace(/\.?0+$/, '') + ' BTC'
-}
-
 function fmtK(n: number) {
-  if (n >= 1_000_000) return 'R$' + (n / 1_000_000).toFixed(2).replace('.', ',') + 'M'
-  if (n >= 1_000)     return 'R$' + Math.round(n / 1_000) + 'k'
-  return 'R$' + n.toFixed(0)
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1).replace('.', ',')}M`
+  if (n >= 1_000)     return `${Math.round(n / 1_000)}k`
+  return `${Math.round(n)}`
 }
 
 interface Props {
@@ -77,60 +59,35 @@ interface Props {
 }
 
 export default function DcaPatrimonyChart({ contributions }: Props) {
-  const data = buildChartData(contributions)
+  const data = buildBarData(contributions)
   if (data.length === 0) return null
 
-  // SVG dimensions
-  const W = 640, H = 220
-  const pad = { top: 20, right: 20, bottom: 40, left: 56 }
+  // SVG layout
+  const W = 700, H = 240
+  const pad = { top: 44, right: 20, bottom: 48, left: 62 }
   const plotW = W - pad.left - pad.right
   const plotH = H - pad.top - pad.bottom
 
-  const BAR_ZONE  = plotH * 0.30  // bottom 30%: monthly BRL bars
-  const GAP_ZONE  = plotH * 0.04  // tiny separator
-  const AREA_ZONE = plotH * 0.66  // top 66%: cumBTC area
-
-  const areaTop = pad.top
-  const areaBot = pad.top + AREA_ZONE
-  const barTop  = areaBot + GAP_ZONE
-  const barBot  = H - pad.bottom
+  const maxVal = Math.max(...data.map(d => Math.max(d.compras, d.vendas)), 1)
+  // Round up Y axis max to nice number
+  const yMax  = Math.ceil(maxVal / 1000) * 1000
+  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({
+    val: yMax * f,
+    y:   pad.top + plotH - f * plotH,
+  }))
 
   const n = data.length
   const slotW = plotW / n
+  const barW  = Math.min(slotW * 0.55, 32)
+  const zeroY = pad.top + plotH
 
-  const maxCumBtc  = Math.max(...data.map(d => d.cumBtc))
-  const maxMonthBrl = Math.max(...data.map(d => d.monthBrl))
+  const GREEN  = '#22C55E'
+  const PINK   = '#F87171'
+  const GREEN_DIM = 'rgba(34,197,94,0.15)'
+  const PINK_DIM  = 'rgba(248,113,113,0.15)'
 
-  // Area path for cumulative BTC
-  const pts = data.map((d, i) => {
-    const x = pad.left + (i + 0.5) * slotW
-    const y = areaBot - (d.cumBtc / maxCumBtc) * AREA_ZONE
-    return { x, y }
-  })
-
-  const areaPath = pts.length > 0
-    ? `M${pad.left},${areaBot} ` +
-      pts.map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ') +
-      ` L${pad.left + plotW},${areaBot} Z`
-    : ''
-
-  const linePath = pts.length > 0
-    ? `M${pts[0].x.toFixed(1)},${pts[0].y.toFixed(1)} ` +
-      pts.slice(1).map(p => `L${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(' ')
-    : ''
-
-  // Y axis ticks for cumBtc
-  const yTicks = [0, 0.25, 0.5, 0.75, 1].map(f => ({
-    val: maxCumBtc * f,
-    y:   areaBot - f * AREA_ZONE,
-  }))
-
-  // X axis: show label every N months to avoid crowding
-  const labelStep = n > 8 ? 2 : 1
-
-  const ORANGE = '#F7931A'
-  const ORANGE_DIM = 'rgba(247,147,26,0.15)'
-  const BLUE   = 'rgba(99,102,241,0.65)'
+  // Label step to avoid crowding
+  const labelStep = n > 18 ? 4 : n > 12 ? 2 : n > 8 ? 2 : 1
 
   return (
     <div style={{
@@ -142,170 +99,120 @@ export default function DcaPatrimonyChart({ contributions }: Props) {
     }}>
       {/* Header */}
       <div style={{
-        display:         'flex',
-        justifyContent:  'space-between',
-        alignItems:      'center',
-        padding:         '14px 20px',
-        borderBottom:    '1px solid var(--border-dim)',
+        display:        'flex',
+        justifyContent: 'space-between',
+        alignItems:     'center',
+        padding:        '14px 20px 0',
       }}>
-        <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          Evolução do patrimônio
+        <span style={{
+          fontSize:      '13px',
+          fontWeight:    600,
+          color:         'var(--text)',
+        }}>
+          Consolidação de aportes
         </span>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
-          <LegendDot color={ORANGE} label="BTC acumulado" />
-          <LegendDot color={BLUE} label="Aporte mensal" />
+          <LegendDot color={GREEN} label="Compras" />
+          <LegendDot color={PINK}  label="Vendas"  />
         </div>
       </div>
 
-      {/* SVG Chart */}
-      <div style={{ padding: '8px 0 0' }}>
-        <svg
-          viewBox={`0 0 ${W} ${H}`}
-          style={{ width: '100%', height: 'auto', display: 'block' }}
-          aria-label="Evolução do patrimônio em BTC"
-        >
-          <defs>
-            <linearGradient id="btcGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%"   stopColor={ORANGE} stopOpacity="0.30" />
-              <stop offset="100%" stopColor={ORANGE} stopOpacity="0.02" />
-            </linearGradient>
-          </defs>
+      {/* Chart */}
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        style={{ width: '100%', height: 'auto', display: 'block' }}
+        aria-label="Consolidação de aportes por mês"
+      >
+        {/* Y grid + labels */}
+        {yTicks.map((t, i) => (
+          <g key={i}>
+            <line
+              x1={pad.left} y1={t.y}
+              x2={pad.left + plotW} y2={t.y}
+              stroke={i === 0 ? 'var(--border)' : 'var(--border-dim)'}
+              strokeWidth={i === 0 ? 1.5 : 1}
+              strokeDasharray={i === 0 ? 'none' : '3,5'}
+            />
+            <text
+              x={pad.left - 8} y={t.y + 4}
+              textAnchor="end"
+              fontSize="9"
+              fill="var(--text-muted)"
+            >
+              {t.val === 0 ? '0' : `R$${fmtK(t.val)}`}
+            </text>
+          </g>
+        ))}
 
-          {/* Y axis grid lines + labels */}
-          {yTicks.map((t, i) => (
-            <g key={i}>
-              <line
-                x1={pad.left} y1={t.y}
-                x2={pad.left + plotW} y2={t.y}
-                stroke="var(--border-dim)" strokeWidth="1" strokeDasharray={i === 0 ? 'none' : '3,4'}
-              />
-              {i > 0 && (
-                <text
-                  x={pad.left - 6} y={t.y + 4}
-                  textAnchor="end"
-                  fontSize="9"
-                  fill="var(--text-muted)"
-                  fontFamily="'Courier New', monospace"
-                >
-                  {fmtBTC4(t.val)}
-                </text>
+        {/* Bars */}
+        {data.map((d, i) => {
+          const cx    = pad.left + (i + 0.5) * slotW
+          const bx    = cx - barW / 2
+
+          // Compras bar (green, up from zero)
+          const ch = (d.compras / yMax) * plotH
+          const cy = zeroY - ch
+
+          // Vendas bar (pink, down from zero)
+          const vh = (d.vendas / yMax) * plotH
+          const vy = zeroY
+
+          return (
+            <g key={d.ym}>
+              {d.compras > 0 && (
+                <rect x={bx} y={cy} width={barW} height={Math.max(ch, 1)} fill={GREEN} rx="2" opacity="0.85" />
+              )}
+              {d.vendas > 0 && (
+                <rect x={bx} y={vy} width={barW} height={Math.max(vh, 1)} fill={PINK} rx="2" opacity="0.85" />
               )}
             </g>
-          ))}
+          )
+        })}
 
-          {/* BRL bar divider line */}
-          <line
-            x1={pad.left} y1={barTop - 2}
-            x2={pad.left + plotW} y2={barTop - 2}
-            stroke="var(--border-dim)" strokeWidth="1"
-          />
+        {/* X axis labels */}
+        {data.map((d, i) => {
+          if (i % labelStep !== 0 && i !== data.length - 1) return null
+          const cx = pad.left + (i + 0.5) * slotW
+          return (
+            <text
+              key={d.ym}
+              x={cx}
+              y={H - 8}
+              textAnchor="middle"
+              fontSize="9"
+              fill="var(--text-muted)"
+            >
+              {d.label}
+            </text>
+          )
+        })}
 
-          {/* Monthly BRL bars */}
-          {data.map((d, i) => {
-            const bh  = maxMonthBrl > 0 ? (d.monthBrl / maxMonthBrl) * (barBot - barTop - 4) : 0
-            const bx  = pad.left + i * slotW + slotW * 0.15
-            const bw  = slotW * 0.70
-            const by  = barBot - bh
-            return (
-              <g key={`bar-${i}`}>
-                <rect
-                  x={bx} y={by} width={bw} height={bh}
-                  fill={BLUE} rx="2"
-                />
-                {bh > 14 && (
-                  <text
-                    x={bx + bw / 2} y={barBot - 2}
-                    textAnchor="middle"
-                    fontSize="7"
-                    fill="rgba(255,255,255,0.6)"
-                    fontFamily="'Courier New', monospace"
-                  >
-                    {fmtK(d.monthBrl)}
-                  </text>
-                )}
-              </g>
-            )
-          })}
+        {/* Zero line */}
+        <line
+          x1={pad.left} y1={zeroY}
+          x2={pad.left + plotW} y2={zeroY}
+          stroke="var(--border)"
+          strokeWidth="1.5"
+        />
+      </svg>
 
-          {/* BTC area fill */}
-          <path d={areaPath} fill="url(#btcGrad)" />
-
-          {/* BTC area line */}
-          <path d={linePath} fill="none" stroke={ORANGE} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
-
-          {/* BTC dots */}
-          {pts.map((p, i) => (
-            <circle key={i} cx={p.x} cy={p.y} r="3" fill={ORANGE} />
-          ))}
-
-          {/* Latest BTC value label */}
-          {pts.length > 0 && (() => {
-            const last = pts[pts.length - 1]
-            const d    = data[data.length - 1]
-            return (
-              <text
-                x={Math.min(last.x + 4, pad.left + plotW - 4)}
-                y={Math.max(last.y - 6, areaTop + 10)}
-                fontSize="9"
-                fill={ORANGE}
-                fontWeight="700"
-                fontFamily="'Courier New', monospace"
-                textAnchor={last.x > pad.left + plotW * 0.75 ? 'end' : 'start'}
-              >
-                {fmtBTC4(d.cumBtc)}
-              </text>
-            )
-          })()}
-
-          {/* X axis labels */}
-          {data.map((d, i) => {
-            if (i % labelStep !== 0 && i !== data.length - 1) return null
-            const x = pad.left + (i + 0.5) * slotW
-            return (
-              <text
-                key={i}
-                x={x} y={H - 4}
-                textAnchor="middle"
-                fontSize="9"
-                fill="var(--text-muted)"
-              >
-                {d.label}
-              </text>
-            )
-          })}
-
-          {/* Y axis label */}
-          <text
-            x={14} y={areaBot - AREA_ZONE / 2}
-            textAnchor="middle"
-            fontSize="8"
-            fill="var(--text-muted)"
-            transform={`rotate(-90, 14, ${areaBot - AREA_ZONE / 2})`}
-          >
-            BTC
-          </text>
-        </svg>
-      </div>
-
-      {/* Footer summary */}
+      {/* Footer totals */}
       <div style={{
         display:      'flex',
         gap:          '24px',
-        padding:      '10px 20px 14px',
-        borderTop:    '1px solid var(--border-dim)',
+        padding:      '4px 20px 14px',
         flexWrap:     'wrap',
+        borderTop:    '1px solid var(--border-dim)',
       }}>
         {(() => {
-          const last = data[data.length - 1]
-          const totalBrl = last?.cumBrl ?? 0
-          const totalBtc = last?.cumBtc ?? 0
-          const firstMonth = data[0]?.label ?? ''
-          const lastMonth  = last?.label ?? ''
+          const totalCompras = data.reduce((s, d) => s + d.compras, 0)
+          const totalVendas  = data.reduce((s, d) => s + d.vendas,  0)
+          const months = data.filter(d => d.compras > 0 || d.vendas > 0).length
           return (
             <>
-              <FooterStat label="BTC acumulado" value={fmtBTC4(totalBtc)} color={ORANGE} />
-              <FooterStat label="Total investido" value={fmtK(totalBrl)} color="var(--orange)" />
-              <FooterStat label="Período" value={`${firstMonth} → ${lastMonth}`} />
+              <FooterStat label="Total compras"  value={`R$ ${fmtK(totalCompras)}`}  color={GREEN} />
+              {totalVendas > 0 && <FooterStat label="Total vendas" value={`R$ ${fmtK(totalVendas)}`} color={PINK} />}
+              <FooterStat label="Meses ativos"   value={`${months}`} />
             </>
           )
         })()}
@@ -317,15 +224,15 @@ export default function DcaPatrimonyChart({ contributions }: Props) {
 function LegendDot({ color, label }: { color: string; label: string }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-      <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: color }} />
-      <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{label}</span>
+      <div style={{ width: '10px', height: '10px', borderRadius: '2px', background: color }} />
+      <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{label}</span>
     </div>
   )
 }
 
 function FooterStat({ label, value, color }: { label: string; value: string; color?: string }) {
   return (
-    <div>
+    <div style={{ paddingTop: '10px' }}>
       <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: '2px' }}>{label}</div>
       <div style={{ fontSize: '13px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
     </div>
