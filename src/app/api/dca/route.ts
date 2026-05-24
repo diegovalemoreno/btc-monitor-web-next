@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { getDcaPlan, upsertDcaPlan } from '@/repositories/dca-plans'
-import { getLatestRecommendation } from '@/repositories/dca-recommendations'
+import { getLatestRecommendation, insertDcaRecommendation } from '@/repositories/dca-recommendations'
 import { getCurrentMarketData } from '@/services/market-data'
 import { getOrCreateDcaRecommendation } from '@/services/dca'
 import type { RiskProfile } from '@/lib/db/types'
@@ -77,5 +77,16 @@ export async function POST(req: NextRequest) {
     enabled:             Boolean(enabled),
   })
 
-  return NextResponse.json({ plan })
+  // Regenerate recommendation immediately with the new plan values.
+  // This ensures DCA Intelligence shows correct amounts without waiting for next cron run.
+  let recommendation = null
+  try {
+    const { signal, snapshot } = await getCurrentMarketData()
+    const rec = await getOrCreateDcaRecommendation(signal, plan, snapshot?.id ?? null)
+    recommendation = await insertDcaRecommendation(supabase, rec)
+  } catch {
+    // non-fatal — plan saved; recommendation updates on next cron
+  }
+
+  return NextResponse.json({ plan, recommendation })
 }

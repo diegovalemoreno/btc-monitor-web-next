@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import type { DcaPlanRow, RiskProfile } from '@/lib/db/types'
 import Tooltip from '@/components/shared/Tooltip'
 
@@ -16,6 +17,7 @@ interface Props {
 }
 
 export default function DcaPlanForm({ initial, onSaved }: Props) {
+  const router = useRouter()
   const [monthlyAmount,    setMonthlyAmount]    = useState(initial?.monthly_amount_brl?.toString() ?? '')
   const [riskProfile,      setRiskProfile]      = useState<RiskProfile>(initial?.risk_profile ?? 'MODERATE')
   const [reservePct,       setReservePct]       = useState(initial?.reserve_percentage?.toString() ?? '30')
@@ -54,6 +56,8 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
       setSaved(true)
       onSaved?.(data.plan)
+      // Refresh server component so RecommendationCard shows amounts from new plan
+      router.refresh()
       setTimeout(() => setSaved(false), 3000)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Erro desconhecido')
