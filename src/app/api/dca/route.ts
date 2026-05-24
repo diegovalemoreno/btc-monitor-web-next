@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getServiceClient } from '@/lib/supabase/service'
 import { getDcaPlan, upsertDcaPlan } from '@/repositories/dca-plans'
 import { getLatestRecommendation, insertDcaRecommendation } from '@/repositories/dca-recommendations'
 import { getCurrentMarketData } from '@/services/market-data'
@@ -78,12 +79,12 @@ export async function POST(req: NextRequest) {
   })
 
   // Regenerate recommendation immediately with the new plan values.
-  // This ensures DCA Intelligence shows correct amounts without waiting for next cron run.
+  // Uses service role to bypass RLS — cron-inserted recommendations require elevated access.
   let recommendation = null
   try {
     const { signal, snapshot } = await getCurrentMarketData()
     const rec = await getOrCreateDcaRecommendation(signal, plan, snapshot?.id ?? null)
-    recommendation = await insertDcaRecommendation(supabase, rec)
+    recommendation = await insertDcaRecommendation(getServiceClient(), rec)
   } catch {
     // non-fatal — plan saved; recommendation updates on next cron
   }

@@ -4,6 +4,7 @@ import { getDcaPlan } from '@/repositories/dca-plans'
 import { getLatestRecommendation, getRecentRecommendations, insertDcaRecommendation } from '@/repositories/dca-recommendations'
 import { getCurrentMarketData } from '@/services/market-data'
 import { getOrCreateDcaRecommendation } from '@/services/dca'
+import { getServiceClient } from '@/lib/supabase/service'
 import AppNav from '@/components/shared/AppNav'
 import RecommendationCard from '@/components/dca/RecommendationCard'
 import DcaPlanForm from '@/components/dca/DcaPlanForm'
@@ -38,7 +39,7 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
     try {
       const { signal, snapshot } = await getCurrentMarketData()
       const fresh = await getOrCreateDcaRecommendation(signal, plan, snapshot?.id ?? null)
-      displayRec = await insertDcaRecommendation(supabase, fresh)
+      displayRec = await insertDcaRecommendation(getServiceClient(), fresh)
     } catch {
       // non-fatal — fall back to stale latestRec
     }
