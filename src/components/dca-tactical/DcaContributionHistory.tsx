@@ -411,10 +411,33 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                 Análise de custos · {periodFilter === 'all' ? 'histórico completo' : PERIOD_LABELS[periodFilter]}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0' }}>
-                <FeeMetric label="Taxas pagas"        value={fmt(totalFees)}    color="#F59E0B" hint="Taxa explícita cobrada pela plataforma" />
-                <FeeMetric label="Spread acumulado"   value={fmt(Math.max(0, totalSpread - totalFees))} color="#F97316" hint="Diferença entre cotação e preço efetivo" />
-                <FeeMetric label="Impacto total"      value={fmt(totalImpact)}  color="#EF4444" hint="Custo total acima do preço de mercado" />
-                <FeeMetric label="Aportes analisados" value={`${feesKnown.length}`} hint="Com dados de taxa da vempradig" />
+                <FeeMetric
+                  label="Taxas pagas"
+                  value={fmt(totalFees)}
+                  color="#F59E0B"
+                  hint="Taxa explícita cobrada pela plataforma"
+                  tooltip={'Soma das taxas explícitas pagas à plataforma de compra no período selecionado.\n\nExtraídas automaticamente das notas do aporte no formato "taxa R$X". Registre o valor da taxa no campo Outros Custos ao registrar um aporte para aparecer aqui.'}
+                />
+                <FeeMetric
+                  label="Spread acumulado"
+                  value={fmt(Math.max(0, totalSpread - totalFees))}
+                  color="#F97316"
+                  hint="Diferença entre cotação e preço efetivo"
+                  tooltip="Custo oculto gerado pela diferença entre a cotação de referência do mercado e o preço efetivo que você pagou.\n\nCálculo: (Preço efetivo − Cotação BTC) × BTC comprado − Taxas pagas\n\nO spread é o lucro da plataforma embutido no preço, separado da taxa explícita."
+                />
+                <FeeMetric
+                  label="Impacto total"
+                  value={fmt(totalImpact)}
+                  color="#EF4444"
+                  hint="Custo total acima do preço de mercado"
+                  tooltip="Custo total que você pagou acima do preço de mercado no período.\n\nImpacto total = Taxas pagas + Spread acumulado\n\nRepresenta quanto a mais você pagou por BTC em comparação a comprar exatamente pela cotação de mercado, sem custos."
+                />
+                <FeeMetric
+                  label="Aportes analisados"
+                  value={`${feesKnown.length}`}
+                  hint="Com dados de taxa registrados"
+                  tooltip={`Quantidade de aportes do período que possuem dados de taxa registrados nas notas.\n\nAportes sem o campo Outros Custos preenchido não entram nesta análise. Para análise completa, sempre registre os custos ao fazer um aporte.`}
+                />
               </div>
             </div>
           )}
@@ -777,10 +800,13 @@ function FeeRow({ label, value, valueColor }: { label: string; value: string; va
   )
 }
 
-function FeeMetric({ label, value, color, hint }: { label: string; value: string; color?: string; hint?: string }) {
+function FeeMetric({ label, value, color, hint, tooltip }: { label: string; value: string; color?: string; hint?: string; tooltip?: string }) {
   return (
     <div style={{ padding: '14px 20px', flex: '1 1 140px', borderRight: '1px solid var(--border-dim)' }}>
-      <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '4px' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</span>
+        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+      </div>
       <div style={{ fontSize: '16px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
       {hint && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>{hint}</div>}
     </div>
