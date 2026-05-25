@@ -101,34 +101,70 @@ function AlertsTab() {
 
 function DcaTab() {
   return (
-    <div style={{ padding: '24px' }}>
+    <div style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+      {/* Portfolio summary bar */}
+      <div style={{
+        display: 'flex', gap: '0', flexWrap: 'wrap',
+        background: 'var(--surface2)', border: '1px solid var(--border-dim)',
+        borderRadius: '10px', overflow: 'hidden',
+      }}>
+        {[
+          { label: 'Preço médio acumulado', value: 'R$ 312.480/BTC', color: '#22C55E' },
+          { label: 'Preço atual BTC',       value: 'R$ 389.100/BTC', color: '#F7931A' },
+          { label: 'Variação vs PM',        value: '+24,5%',         color: '#22C55E' },
+          { label: 'Rentabilidade',         value: '+24,5%',         color: '#22C55E' },
+        ].map(({ label, value, color }) => (
+          <div key={label} style={{ padding: '12px 16px', flex: '1 1 120px', borderRight: '1px solid var(--border-dim)' }}>
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '4px' }}>{label}</div>
+            <div style={{ fontSize: '13px', fontWeight: 700, color, fontFamily: 'monospace' }}>{value}</div>
+          </div>
+        ))}
+      </div>
+
       {/* Recomendação atual */}
       <div style={{
         background:   'rgba(105,240,174,0.06)',
         border:       '1px solid rgba(105,240,174,0.3)',
         borderRadius: '10px',
         overflow:     'hidden',
-        marginBottom: '16px',
       }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid rgba(105,240,174,0.15)' }}>
+        <div style={{ padding: '14px 18px', borderBottom: '1px solid rgba(105,240,174,0.15)' }}>
           <div style={{ fontSize: '10px', fontWeight: 600, color: '#69F0AE', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '4px' }}>Recomendação atual</div>
-          <div style={{ fontSize: '20px', fontWeight: 700, color: '#69F0AE' }}>DCA Normal</div>
-          <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Cadência regular</div>
+          <div style={{ fontSize: '18px', fontWeight: 700, color: '#69F0AE' }}>DCA Normal</div>
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr' }}>
-          <div style={{ padding: '16px 20px', borderRight: '1px solid rgba(105,240,174,0.15)' }}>
+          <div style={{ padding: '12px 18px', borderRight: '1px solid rgba(105,240,174,0.15)' }}>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Aportar agora</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)' }}>R$ 700</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text)' }}>R$ 700</div>
           </div>
-          <div style={{ padding: '16px 20px' }}>
+          <div style={{ padding: '12px 18px' }}>
             <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '4px' }}>Manter reserva</div>
-            <div style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text-sec)' }}>R$ 300</div>
+            <div style={{ fontSize: '18px', fontWeight: 700, color: 'var(--text-sec)' }}>R$ 300</div>
           </div>
         </div>
       </div>
-      <div style={{ background: 'var(--surface2)', border: '1px solid var(--border-dim)', borderRadius: '8px', padding: '14px 16px', fontSize: '12px', color: 'var(--text-sec)', lineHeight: 1.6 }}>
-        Mercado em zona neutra. Indicadores sem sinal claro de oportunidade ou risco extremo. Manter cadência regular.
+
+      {/* Análise de custos mockup */}
+      <div style={{ background: 'var(--surface2)', border: '1px solid var(--border-dim)', borderRadius: '10px', overflow: 'hidden' }}>
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border-dim)', fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+          Análise de custos · Este mês
+        </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+          {[
+            { label: 'Taxas pagas',      value: 'R$ 46,00',  color: '#F59E0B' },
+            { label: 'Spread acumulado', value: 'R$ 18,50',  color: '#F97316' },
+            { label: 'Impacto total',    value: 'R$ 64,50',  color: '#EF4444' },
+            { label: 'Aportes analis.',  value: '3',         color: 'var(--text)' },
+          ].map(({ label, value, color }) => (
+            <div key={label} style={{ padding: '10px 16px', flex: '1 1 100px', borderRight: '1px solid var(--border-dim)' }}>
+              <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '3px' }}>{label}</div>
+              <div style={{ fontSize: '14px', fontWeight: 700, color, fontFamily: 'monospace' }}>{value}</div>
+            </div>
+          ))}
+        </div>
       </div>
+
     </div>
   )
 }

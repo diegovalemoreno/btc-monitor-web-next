@@ -8,23 +8,28 @@ const STEPS = [
   },
   {
     n:    '02',
-    title: 'Acompanha o painel',
-    desc:  'Indicadores atualizados diariamente, organizados por dimensão de mercado.',
+    title: 'Configura seu plano DCA',
+    desc:  'Informe valor mensal, perfil de risco e reserva estratégica. O sistema gera recomendações de aporte baseadas no contexto de mercado.',
   },
   {
     n:    '03',
-    title: 'Configura seus alertas',
-    desc:  'Defina critérios para Fear & Greed, Funding Rate, variação de preço e outros.',
+    title: 'Acompanha o painel e os alertas',
+    desc:  'Indicadores on-chain e de derivativos organizados por dimensão. Configure alertas para ser notificado por e-mail ou Telegram quando os critérios forem atingidos.',
   },
   {
     n:    '04',
-    title: 'Recebe notificações',
-    desc:  'Quando um alerta dispara, você é notificado por e-mail ou Telegram.',
+    title: 'Registra cada aporte',
+    desc:  'Informe valor, BTC comprado, cotação do mercado e outros custos (taxas, spread). O sistema calcula o preço efetivo de cada compra automaticamente.',
   },
   {
     n:    '05',
+    title: 'Acompanha sua rentabilidade',
+    desc:  'O histórico mostra preço médio acumulado, cotação atual do BTC, variação e rentabilidade ponderada em tempo real. Análise de custos por período incluída.',
+  },
+  {
+    n:    '06',
     title: 'Decide manualmente',
-    desc:  'O app não compra por você. Ele organiza os dados. A decisão é sempre sua.',
+    desc:  'O app não compra por você. Ele organiza os dados e orienta o timing. A decisão final é sempre sua.',
   },
 ]
 
