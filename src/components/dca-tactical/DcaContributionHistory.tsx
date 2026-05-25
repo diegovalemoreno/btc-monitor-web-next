@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
 
@@ -73,7 +73,6 @@ function getPeriodRange(period: PeriodFilter, customFrom: string, customTo: stri
   return { from: null, to: null }
 }
 
-// Extract fee from notes like "COMPRA P2P - vempradig · taxa R$46.00"
 function extractFee(notes: string | null): number | null {
   if (!notes) return null
   const m = notes.match(/taxa R\$(\d+(?:[.,]\d+)?)/)
@@ -122,6 +121,9 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
 
 type ActiveTab = 'historico' | 'evolucao'
 
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
+type PageSize = typeof PAGE_SIZE_OPTIONS[number]
+
 interface Props { initialContributions: DcaContributionRow[] }
 
 export default function DcaContributionHistory({ initialContributions }: Props) {
@@ -133,6 +135,23 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const [customTo, setCustomTo]           = useState('')
   const [expandedId, setExpandedId]       = useState<string | null>(null)
   const [activeTab, setActiveTab]         = useState<ActiveTab>('historico')
+
+  // Pagination
+  const [currentPage, setCurrentPage]   = useState(1)
+  const [pageSize, setPageSize]         = useState<PageSize>(25)
+  const [goToPageInput, setGoToPageInput] = useState('')
+
+  // BTC price BRL
+  const [btcPriceBrl, setBtcPriceBrl]   = useState<number | null>(null)
+
+  useEffect(() => {
+    fetch('/api/btc-price-brl')
+      .then(r => r.ok ? r.json() : null)
+      .then((d: { btcPriceBrl?: number } | null) => {
+        if (d?.btcPriceBrl) setBtcPriceBrl(d.btcPriceBrl)
+      })
+      .catch(() => {})
+  }, [])
 
   const { from, to } = getPeriodRange(periodFilter, customFrom, customTo)
   const periodFiltered = contributions.filter(c => {
@@ -146,7 +165,20 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
     ? periodFiltered
     : periodFiltered.filter(c => c.contribution_type === filterType)
 
-  const groups = filtered.reduce<Record<string, DcaContributionRow[]>>((acc, c) => {
+  // Reset page when filters change
+  const filteredKey = `${filterType}|${periodFilter}|${customFrom}|${customTo}`
+  useEffect(() => { setCurrentPage(1) }, [filteredKey])
+
+  // Pagination math
+  const totalItems  = filtered.length
+  const totalPages  = Math.max(1, Math.ceil(totalItems / pageSize))
+  const safePage    = Math.min(currentPage, totalPages)
+  const startIdx    = (safePage - 1) * pageSize
+  const endIdx      = Math.min(startIdx + pageSize, totalItems)
+  const pageItems   = filtered.slice(startIdx, endIdx)
+
+  // Group page items by month
+  const groups = pageItems.reduce<Record<string, DcaContributionRow[]>>((acc, c) => {
     const d   = new Date(c.contribution_date + 'T00:00:00')
     const key = d.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' })
     acc[key]  = acc[key] ?? []
@@ -161,6 +193,17 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const withSats    = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
   const avgPriceBrl = withSats.length > 0
     ? (withSats.reduce((s, c) => s + c.amount, 0) / withSats.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)) * 100_000_000
+    : null
+
+  // Derived metrics vs current BTC price
+  const priceDiffAbs = btcPriceBrl !== null && avgPriceBrl !== null ? btcPriceBrl - avgPriceBrl : null
+  const priceDiffPct = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
+
+  // Rentabilidade ponderada: (currentValue - totalInvested) / totalInvested
+  const totalInvested   = withSats.reduce((s, c) => s + c.amount, 0)
+  const currentBtcValue = btcPriceBrl !== null ? (totalSats / 1e8) * btcPriceBrl : null
+  const rentabilidade   = currentBtcValue !== null && totalInvested > 0
+    ? ((currentBtcValue - totalInvested) / totalInvested) * 100
     : null
 
   // Fee analytics — period filtered BTC purchases with fee data
@@ -178,7 +221,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const periodTotalSats     = filteredPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
   const periodTotalFees     = filtered.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
 
-  const priceEvolution = buildPriceEvolution(contributions)
+  const priceEvolution = useMemo(() => buildPriceEvolution(contributions), [contributions])
 
   async function handleDelete(id: string) {
     setDeletingId(id)
@@ -190,6 +233,15 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
       alert('Erro ao remover aporte. Tente novamente.')
     } finally {
       setDeletingId(null)
+    }
+  }
+
+  function handleGoToPage(e: React.FormEvent) {
+    e.preventDefault()
+    const n = parseInt(goToPageInput, 10)
+    if (!isNaN(n) && n >= 1 && n <= totalPages) {
+      setCurrentPage(n)
+      setGoToPageInput('')
     }
   }
 
@@ -211,6 +263,29 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             value={fmtBRL0(avgPriceBrl) + '/BTC'}
             color="#22C55E"
             hint={`Total R$ ÷ total BTC (${withSats.length} aportes)`}
+          />
+        )}
+        {btcPriceBrl !== null && (
+          <SummaryItem
+            label="Preço atual BTC"
+            value={fmtBRL0(btcPriceBrl) + '/BTC'}
+            color="#F7931A"
+          />
+        )}
+        {priceDiffPct !== null && priceDiffAbs !== null && (
+          <SummaryItem
+            label="Variação vs PM"
+            value={(priceDiffPct >= 0 ? '+' : '') + priceDiffPct.toFixed(2).replace('.', ',') + '%'}
+            color={priceDiffPct >= 0 ? '#22C55E' : '#EF4444'}
+            hint={(priceDiffAbs >= 0 ? '+' : '') + fmtBRL0(priceDiffAbs) + '/BTC'}
+          />
+        )}
+        {rentabilidade !== null && (
+          <SummaryItem
+            label="Rentabilidade"
+            value={(rentabilidade >= 0 ? '+' : '') + rentabilidade.toFixed(2).replace('.', ',') + '%'}
+            color={rentabilidade >= 0 ? '#22C55E' : '#EF4444'}
+            hint={currentBtcValue !== null ? 'Valor atual: ' + fmt(currentBtcValue) : undefined}
           />
         )}
       </div>
@@ -324,50 +399,50 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
           )}
 
           {/* Period filter */}
-      <div style={{ marginBottom: '12px' }}>
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-          {(Object.keys(PERIOD_LABELS) as PeriodFilter[]).map(p => (
-            <button key={p} onClick={() => setPeriodFilter(p)} style={{
-              padding: '5px 12px',
-              background: periodFilter === p ? 'rgba(99,102,241,0.15)' : 'var(--surface)',
-              border: `1px solid ${periodFilter === p ? '#6366F1' : 'var(--border)'}`,
-              borderRadius: '20px',
-              color: periodFilter === p ? '#6366F1' : 'var(--text-muted)',
-              fontSize: '12px', fontWeight: periodFilter === p ? 600 : 400, cursor: 'pointer',
-            }}>
-              {PERIOD_LABELS[p]}
-            </button>
-          ))}
-        </div>
-        {periodFilter === 'custom' && (
-          <div style={{ display: 'flex', gap: '12px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-            {(['De', 'Até'] as const).map((lbl, i) => (
-              <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{lbl}</label>
-                <input type="date" value={i === 0 ? customFrom : customTo}
-                  onChange={e => i === 0 ? setCustomFrom(e.target.value) : setCustomTo(e.target.value)}
-                  style={{ padding: '4px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px' }}
-                />
+          <div style={{ marginBottom: '12px' }}>
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {(Object.keys(PERIOD_LABELS) as PeriodFilter[]).map(p => (
+                <button key={p} onClick={() => setPeriodFilter(p)} style={{
+                  padding: '5px 12px',
+                  background: periodFilter === p ? 'rgba(99,102,241,0.15)' : 'var(--surface)',
+                  border: `1px solid ${periodFilter === p ? '#6366F1' : 'var(--border)'}`,
+                  borderRadius: '20px',
+                  color: periodFilter === p ? '#6366F1' : 'var(--text-muted)',
+                  fontSize: '12px', fontWeight: periodFilter === p ? 600 : 400, cursor: 'pointer',
+                }}>
+                  {PERIOD_LABELS[p]}
+                </button>
+              ))}
+            </div>
+            {periodFilter === 'custom' && (
+              <div style={{ display: 'flex', gap: '12px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                {(['De', 'Até'] as const).map((lbl, i) => (
+                  <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{lbl}</label>
+                    <input type="date" value={i === 0 ? customFrom : customTo}
+                      onChange={e => i === 0 ? setCustomFrom(e.target.value) : setCustomTo(e.target.value)}
+                      style={{ padding: '4px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px' }}
+                    />
+                  </div>
+                ))}
               </div>
+            )}
+          </div>
+
+          {/* Type filter */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            {(['ALL', 'TACTICAL', 'STRUCTURAL_DCA', 'MANUAL'] as const).map(t => (
+              <button key={t} onClick={() => setFilterType(t)} style={{
+                padding: '5px 12px',
+                background: filterType === t ? 'var(--orange-dim)' : 'var(--surface)',
+                border: `1px solid ${filterType === t ? 'var(--orange)' : 'var(--border)'}`,
+                borderRadius: '20px', color: filterType === t ? 'var(--orange)' : 'var(--text-muted)',
+                fontSize: '12px', fontWeight: filterType === t ? 600 : 400, cursor: 'pointer',
+              }}>
+                {t === 'ALL' ? 'Todos' : TYPE_META[t as ContributionType].label}
+              </button>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Type filter */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        {(['ALL', 'TACTICAL', 'STRUCTURAL_DCA', 'MANUAL'] as const).map(t => (
-          <button key={t} onClick={() => setFilterType(t)} style={{
-            padding: '5px 12px',
-            background: filterType === t ? 'var(--orange-dim)' : 'var(--surface)',
-            border: `1px solid ${filterType === t ? 'var(--orange)' : 'var(--border)'}`,
-            borderRadius: '20px', color: filterType === t ? 'var(--orange)' : 'var(--text-muted)',
-            fontSize: '12px', fontWeight: filterType === t ? 600 : 400, cursor: 'pointer',
-          }}>
-            {t === 'ALL' ? 'Todos' : TYPE_META[t as ContributionType].label}
-          </button>
-        ))}
-      </div>
 
           {/* Period summary strip */}
           {filtered.length > 0 && (
@@ -402,170 +477,264 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             const monthSats  = purchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
             const monthFees  = items.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
             return (
-          <div key={monthKey} style={{ marginBottom: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', padding: '0 4px', gap: '8px', flexWrap: 'wrap' }}>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'capitalize' }}>
-                {monthKey}
-              </span>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>{fmt(monthTotal)}</span>
-                {monthSats > 0 && (
-                  <span style={{ fontSize: '11px', color: '#F7931A', fontFamily: "'Courier New', monospace" }}>
-                    {monthSats.toLocaleString('pt-BR')} sats
+              <div key={monthKey} style={{ marginBottom: '28px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', padding: '0 4px', gap: '8px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'capitalize' }}>
+                    {monthKey}
                   </span>
-                )}
-                {monthFees > 0 && (
-                  <span style={{ fontSize: '11px', color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>
-                    taxa {fmt(monthFees)}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
-              {items.map((c, idx) => {
-                const typeMeta = TYPE_META[c.contribution_type]
-                const d        = new Date(c.contribution_date + 'T00:00:00')
-                const dateStr  = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-                const isExpanded = expandedId === c.id
-                const isVenda  = c.notes?.includes('Venda') || false
-
-                // Fee analysis data
-                const fee = extractFee(c.notes)
-                const hasPriceData = c.effective_price_brl && c.btc_price_brl
-                const diffPct = hasPriceData
-                  ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100
-                  : null
-                const efficiency = diffPct !== null ? efficiencyLabel(diffPct) : null
-
-                return (
-                  <div key={c.id} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
-                    {/* Main row */}
-                    <div
-                      className="contrib-row"
-                      style={{
-                        cursor: hasPriceData ? 'pointer' : 'default',
-                        background: isExpanded ? 'rgba(99,102,241,0.04)' : 'transparent',
-                      }}
-                      onClick={() => hasPriceData && setExpandedId(isExpanded ? null : c.id)}
-                    >
-                      {/* Date */}
-                      <div className="contrib-date" style={{ minWidth: '110px', flexShrink: 0 }}>
-                        <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{dateStr}</div>
-                      </div>
-
-                      {/* Notes + context */}
-                      <div className="contrib-notes" style={{ flex: 1, minWidth: 0 }}>
-                        {c.notes && (
-                          <div style={{ fontSize: '12px', color: 'var(--text-sec)', marginBottom: '2px', wordBreak: 'break-word' }}>
-                            {c.notes.split(' · taxa')[0]}
-                          </div>
-                        )}
-                        {c.market_state_snapshot && (
-                          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
-                            Score {c.market_score_snapshot ?? '—'} · {STATE_LABEL[c.market_state_snapshot] ?? c.market_state_snapshot}
-                          </div>
-                        )}
-                        {!c.notes && !c.market_state_snapshot && (
-                          <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
-                        )}
-                      </div>
-
-                      {/* BTC + prices */}
-                      <div className="contrib-btc" style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
-                        {c.sats_purchased && !isVenda
-                          ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '3px' }}>
-                              {fmtBTC(c.sats_purchased)}
-                            </div>
-                          : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3, marginBottom: '3px' }}>—</div>
-                        }
-                        {c.effective_price_brl && (
-                          <div style={{ fontSize: '10px', color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
-                            <span style={{ fontFamily: 'sans-serif', color: 'var(--text-muted)' }}>efetivo </span>
-                            {fmtBRL0(c.effective_price_brl)}/BTC
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Type badge */}
-                      <span className="contrib-badge" style={{
-                        padding: '2px 8px', background: `${typeMeta.color}20`, color: typeMeta.color,
-                        borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
-                      }}>
-                        {typeMeta.label}
+                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>{fmt(monthTotal)}</span>
+                    {monthSats > 0 && (
+                      <span style={{ fontSize: '11px', color: '#F7931A', fontFamily: "'Courier New', monospace" }}>
+                        {monthSats.toLocaleString('pt-BR')} sats
                       </span>
-
-                      {/* Amount */}
-                      <span className="contrib-amount" style={{
-                        fontSize: '14px', fontWeight: 700,
-                        color: isVenda ? '#22C55E' : 'var(--text)',
-                        fontFamily: "'Courier New', monospace", textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0,
-                      }}>
-                        {isVenda ? '+' : ''}{fmt(c.amount)}
+                    )}
+                    {monthFees > 0 && (
+                      <span style={{ fontSize: '11px', color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>
+                        taxa {fmt(monthFees)}
                       </span>
-
-                      {/* Expand indicator */}
-                      {hasPriceData && (
-                        <span className="contrib-expand" style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0 }}>
-                          {isExpanded ? '▲' : '▼'}
-                        </span>
-                      )}
-
-                      {/* Delete */}
-                      <button
-                        className="contrib-delete"
-                        onClick={e => { e.stopPropagation(); handleDelete(c.id) }}
-                        disabled={deletingId === c.id}
-                        title="Remover aporte"
-                        style={{
-                          background: 'none', border: 'none',
-                          color: deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.5)',
-                          cursor: deletingId === c.id ? 'not-allowed' : 'pointer',
-                          fontSize: '16px', padding: '0 4px', borderRadius: '4px', lineHeight: 1, flexShrink: 0,
-                        }}
-                      >
-                        {deletingId === c.id ? '…' : '×'}
-                      </button>
-                    </div>
-
-                    {/* Expanded fee breakdown */}
-                    {isExpanded && hasPriceData && (
-                      <div style={{
-                        padding: '12px 20px 16px 20px',
-                        background: 'rgba(99,102,241,0.04)',
-                        borderTop: '1px solid var(--border-dim)',
-                      }}>
-                        <table style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', maxWidth: '400px' }}>
-                          <tbody>
-                            <FeeRow label="Cotação BTC"        value={fmtBRL0(c.btc_price_brl!)} />
-                            <FeeRow label="Seu preço efetivo"  value={fmtBRL0(c.effective_price_brl!)} valueColor="#F59E0B" />
-                            {diffPct !== null && (
-                              <FeeRow
-                                label="Diferença"
-                                value={`+${diffPct.toFixed(2).replace('.', ',')}%`}
-                                valueColor={diffPct > 8 ? '#EF4444' : diffPct > 4 ? '#F59E0B' : '#22C55E'}
-                              />
-                            )}
-                            {fee !== null && <FeeRow label="Taxa paga" value={fmt(fee)} valueColor="#F97316" />}
-                            {efficiency && (
-                              <FeeRow label="Eficiência" value={efficiency.label} valueColor={efficiency.color} />
-                            )}
-                          </tbody>
-                        </table>
-                      </div>
                     )}
                   </div>
-                )
-              })}
+                </div>
+
+                <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+                  {items.map((c, idx) => {
+                    const typeMeta = TYPE_META[c.contribution_type]
+                    const d        = new Date(c.contribution_date + 'T00:00:00')
+                    const dateStr  = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                    const isExpanded = expandedId === c.id
+                    const isVenda  = c.notes?.includes('Venda') || false
+
+                    const fee = extractFee(c.notes)
+                    const hasPriceData = c.effective_price_brl && c.btc_price_brl
+                    const diffPct = hasPriceData
+                      ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100
+                      : null
+                    const efficiency = diffPct !== null ? efficiencyLabel(diffPct) : null
+
+                    return (
+                      <div key={c.id} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
+                        {/* Main row */}
+                        <div
+                          className="contrib-row"
+                          style={{
+                            cursor: hasPriceData ? 'pointer' : 'default',
+                            background: isExpanded ? 'rgba(99,102,241,0.04)' : 'transparent',
+                          }}
+                          onClick={() => hasPriceData && setExpandedId(isExpanded ? null : c.id)}
+                        >
+                          {/* Date */}
+                          <div className="contrib-date" style={{ minWidth: '110px', flexShrink: 0 }}>
+                            <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{dateStr}</div>
+                          </div>
+
+                          {/* Notes + context */}
+                          <div className="contrib-notes" style={{ flex: 1, minWidth: 0 }}>
+                            {c.notes && (
+                              <div style={{ fontSize: '12px', color: 'var(--text-sec)', marginBottom: '2px', wordBreak: 'break-word' }}>
+                                {c.notes.split(' · taxa')[0]}
+                              </div>
+                            )}
+                            {c.market_state_snapshot && (
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                                Score {c.market_score_snapshot ?? '—'} · {STATE_LABEL[c.market_state_snapshot] ?? c.market_state_snapshot}
+                              </div>
+                            )}
+                            {!c.notes && !c.market_state_snapshot && (
+                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
+                            )}
+                          </div>
+
+                          {/* BTC + prices */}
+                          <div className="contrib-btc" style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
+                            {c.sats_purchased && !isVenda
+                              ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '3px' }}>
+                                  {fmtBTC(c.sats_purchased)}
+                                </div>
+                              : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3, marginBottom: '3px' }}>—</div>
+                            }
+                            {c.effective_price_brl && (
+                              <div style={{ fontSize: '10px', color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
+                                <span style={{ fontFamily: 'sans-serif', color: 'var(--text-muted)' }}>efetivo </span>
+                                {fmtBRL0(c.effective_price_brl)}/BTC
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Type badge */}
+                          <span className="contrib-badge" style={{
+                            padding: '2px 8px', background: `${typeMeta.color}20`, color: typeMeta.color,
+                            borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
+                          }}>
+                            {typeMeta.label}
+                          </span>
+
+                          {/* Amount */}
+                          <span className="contrib-amount" style={{
+                            fontSize: '14px', fontWeight: 700,
+                            color: isVenda ? '#22C55E' : 'var(--text)',
+                            fontFamily: "'Courier New', monospace", textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0,
+                          }}>
+                            {isVenda ? '+' : ''}{fmt(c.amount)}
+                          </span>
+
+                          {/* Expand indicator */}
+                          {hasPriceData && (
+                            <span className="contrib-expand" style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0 }}>
+                              {isExpanded ? '▲' : '▼'}
+                            </span>
+                          )}
+
+                          {/* Delete */}
+                          <button
+                            className="contrib-delete"
+                            onClick={e => { e.stopPropagation(); handleDelete(c.id) }}
+                            disabled={deletingId === c.id}
+                            title="Remover aporte"
+                            style={{
+                              background: 'none', border: 'none',
+                              color: deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.5)',
+                              cursor: deletingId === c.id ? 'not-allowed' : 'pointer',
+                              fontSize: '16px', padding: '0 4px', borderRadius: '4px', lineHeight: 1, flexShrink: 0,
+                            }}
+                          >
+                            {deletingId === c.id ? '…' : '×'}
+                          </button>
+                        </div>
+
+                        {/* Expanded fee breakdown */}
+                        {isExpanded && hasPriceData && (
+                          <div style={{
+                            padding: '12px 20px 16px 20px',
+                            background: 'rgba(99,102,241,0.04)',
+                            borderTop: '1px solid var(--border-dim)',
+                          }}>
+                            <table style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', maxWidth: '400px' }}>
+                              <tbody>
+                                <FeeRow label="Cotação BTC"        value={fmtBRL0(c.btc_price_brl!)} />
+                                <FeeRow label="Seu preço efetivo"  value={fmtBRL0(c.effective_price_brl!)} valueColor="#F59E0B" />
+                                {diffPct !== null && (
+                                  <FeeRow
+                                    label="Diferença"
+                                    value={`+${diffPct.toFixed(2).replace('.', ',')}%`}
+                                    valueColor={diffPct > 8 ? '#EF4444' : diffPct > 4 ? '#F59E0B' : '#22C55E'}
+                                  />
+                                )}
+                                {fee !== null && <FeeRow label="Taxa paga" value={fmt(fee)} valueColor="#F97316" />}
+                                {efficiency && (
+                                  <FeeRow label="Eficiência" value={efficiency.label} valueColor={efficiency.color} />
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+                </div>
+              </div>
+            )
+          })}
+
+          {/* Pagination footer */}
+          {totalItems > 0 && (
+            <div style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              flexWrap: 'wrap', gap: '12px',
+              padding: '14px 20px',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              borderRadius: '10px', marginTop: '8px',
+            }}>
+              {/* Left: showing info */}
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+                Mostrando{' '}
+                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{startIdx + 1}–{endIdx}</span>
+                {' '}de{' '}
+                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{totalItems}</span>
+                {' '}registros
+              </span>
+
+              {/* Center: page navigation */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <PageBtn onClick={() => setCurrentPage(1)} disabled={safePage === 1} label="«" title="Primeira página" />
+                <PageBtn onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} label="‹" title="Página anterior" />
+                <span style={{ fontSize: '12px', color: 'var(--text)', padding: '0 8px', whiteSpace: 'nowrap' }}>
+                  Página <strong>{safePage}</strong> / <strong>{totalPages}</strong>
+                </span>
+                <PageBtn onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} label="›" title="Próxima página" />
+                <PageBtn onClick={() => setCurrentPage(totalPages)} disabled={safePage === totalPages} label="»" title="Última página" />
+              </div>
+
+              {/* Right: go to page + page size */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                <form onSubmit={handleGoToPage} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Ir para</label>
+                  <input
+                    type="number" min={1} max={totalPages}
+                    value={goToPageInput}
+                    onChange={e => setGoToPageInput(e.target.value)}
+                    placeholder={String(safePage)}
+                    style={{
+                      width: '52px', padding: '4px 8px',
+                      background: 'var(--bg)', border: '1px solid var(--border)',
+                      borderRadius: '6px', color: 'var(--text)', fontSize: '12px',
+                      textAlign: 'center',
+                    }}
+                  />
+                  <button type="submit" style={{
+                    padding: '4px 10px', background: 'var(--surface3)',
+                    border: '1px solid var(--border)', borderRadius: '6px',
+                    color: 'var(--text-sec)', fontSize: '11px', cursor: 'pointer',
+                  }}>
+                    Ir
+                  </button>
+                </form>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Por página</label>
+                  <select
+                    value={pageSize}
+                    onChange={e => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1) }}
+                    style={{
+                      padding: '4px 8px',
+                      background: 'var(--bg)', border: '1px solid var(--border)',
+                      borderRadius: '6px', color: 'var(--text)', fontSize: '12px', cursor: 'pointer',
+                    }}
+                  >
+                    {PAGE_SIZE_OPTIONS.map(n => (
+                      <option key={n} value={n}>{n}</option>
+                    ))}
+                  </select>
+                </div>
+              </div>
             </div>
-          </div>
-        )
-      })}
+          )}
 
         </div>
       )}
 
     </div>
+  )
+}
+
+function PageBtn({ onClick, disabled, label, title }: { onClick: () => void; disabled: boolean; label: string; title?: string }) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      title={title}
+      style={{
+        padding: '4px 10px', minWidth: '32px',
+        background: disabled ? 'transparent' : 'var(--surface3)',
+        border: '1px solid var(--border)',
+        borderRadius: '6px',
+        color: disabled ? 'var(--text-muted)' : 'var(--text)',
+        fontSize: '14px', cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >
+      {label}
+    </button>
   )
 }
 

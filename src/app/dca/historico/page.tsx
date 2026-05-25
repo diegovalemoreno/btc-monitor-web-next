@@ -11,7 +11,7 @@ export default async function DcaHistoricoPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const contributions = await listDcaContributions(supabase, user.id, 200)
+  const contributions = await listDcaContributions(supabase, user.id, 1000)
 
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
