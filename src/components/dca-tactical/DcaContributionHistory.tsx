@@ -271,7 +271,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             label="Total BTC"
             value={fmtBTC(totalSats)}
             color="#F7931A"
-            tooltip="Total de Bitcoin acumulado em todos os aportes de compra, expresso em BTC.\n\n1 BTC = 100.000.000 satoshis (sats). Vendas são excluídas deste cálculo."
+            tooltip={"Total de Bitcoin acumulado em todos os aportes de compra, expresso em BTC.\n\n1 BTC = 100.000.000 satoshis (sats). Vendas são excluídas deste cálculo."}
           />
         )}
         {avgPriceBrl !== null && (
@@ -288,7 +288,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             label="Preço atual BTC"
             value={fmtBRL0(btcPriceBrl) + '/BTC'}
             color="#F7931A"
-            tooltip="Cotação atual do Bitcoin em reais, atualizada a cada 2 minutos.\n\nFonte: CoinGecko (com fallback para Mercado Bitcoin)."
+            tooltip={"Cotação atual do Bitcoin em reais, atualizada a cada 2 minutos.\n\nFonte: CoinGecko (com fallback para Mercado Bitcoin)."}
           />
         )}
         {priceDiffPct !== null && priceDiffAbs !== null && (
@@ -423,14 +423,14 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                   value={fmt(Math.max(0, totalSpread - totalFees))}
                   color="#F97316"
                   hint="Diferença entre cotação e preço efetivo"
-                  tooltip="Custo oculto gerado pela diferença entre a cotação de referência do mercado e o preço efetivo que você pagou.\n\nCálculo: (Preço efetivo − Cotação BTC) × BTC comprado − Taxas pagas\n\nO spread é o lucro da plataforma embutido no preço, separado da taxa explícita."
+                  tooltip={"Custo oculto gerado pela diferença entre a cotação de referência do mercado e o preço efetivo que você pagou.\n\nCálculo: (Preço efetivo − Cotação BTC) × BTC comprado − Taxas pagas\n\nO spread é o lucro da plataforma embutido no preço, separado da taxa explícita."}
                 />
                 <FeeMetric
                   label="Impacto total"
                   value={fmt(totalImpact)}
                   color="#EF4444"
                   hint="Custo total acima do preço de mercado"
-                  tooltip="Custo total que você pagou acima do preço de mercado no período.\n\nImpacto total = Taxas pagas + Spread acumulado\n\nRepresenta quanto a mais você pagou por BTC em comparação a comprar exatamente pela cotação de mercado, sem custos."
+                  tooltip={"Custo total que você pagou acima do preço de mercado no período.\n\nImpacto total = Taxas pagas + Spread acumulado\n\nRepresenta quanto a mais você pagou por BTC em comparação a comprar exatamente pela cotação de mercado, sem custos."}
                 />
                 <FeeMetric
                   label="Aportes analisados"
