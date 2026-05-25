@@ -29,8 +29,7 @@ const fmtK = (n: number) => {
 function applyBRLMask(raw: string): string {
   const digits = raw.replace(/\D/g, '')
   if (!digits) return ''
-  const num = parseInt(digits, 10) / 100
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num)
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseInt(digits, 10) / 100)
 }
 
 function parseBRLMask(masked: string): number | null {
@@ -70,34 +69,18 @@ const PRESETS: { id: PeriodPreset; label: string }[] = [
   { id: 'custom',       label: 'Período personalizado' },
 ]
 
-function getPeriodRange(
-  preset: PeriodPreset,
-  viewMonth: Date,
-  customFrom: string,
-  customTo: string,
-): { from: Date | null; to: Date | null } {
+function getPeriodRange(preset: PeriodPreset, viewMonth: Date, customFrom: string, customTo: string) {
   const now   = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-
-  if (preset === 'thisMonth') {
-    return {
-      from: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1),
-      to:   new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0),
-    }
-  }
+  if (preset === 'thisMonth')
+    return { from: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1), to: new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0) }
   if (preset === 'last30') {
-    const from = new Date(today); from.setDate(from.getDate() - 29)
-    return { from, to: null }
+    const from = new Date(today); from.setDate(from.getDate() - 29); return { from, to: null }
   }
-  if (preset === 'last12months') {
+  if (preset === 'last12months')
     return { from: new Date(today.getFullYear(), today.getMonth() - 11, 1), to: null }
-  }
-  if (preset === 'custom') {
-    return {
-      from: customFrom ? new Date(customFrom + 'T00:00:00') : null,
-      to:   customTo   ? new Date(customTo   + 'T00:00:00') : null,
-    }
-  }
+  if (preset === 'custom')
+    return { from: customFrom ? new Date(customFrom + 'T00:00:00') : null, to: customTo ? new Date(customTo + 'T00:00:00') : null }
   return { from: null, to: null }
 }
 
@@ -118,6 +101,31 @@ function efficiencyLabel(diffPct: number): { label: string; color: string } {
   return              { label: 'Muito alta',     color: '#EF4444' }
 }
 
+function exportToCsv(rows: DcaContributionRow[], filename: string) {
+  const headers = ['Data','Tipo','Valor (R$)','BTC','Sats','Cotação (R$/BTC)','Preço efetivo (R$/BTC)','Taxa (R$)','Observações']
+  const lines = [headers.join(';')]
+  for (const c of rows) {
+    const fee   = extractFee(c.notes)
+    const notes = c.notes?.split(' · taxa')[0] ?? ''
+    lines.push([
+      c.contribution_date,
+      c.contribution_type,
+      c.amount.toFixed(2).replace('.', ','),
+      c.sats_purchased ? (c.sats_purchased / 1e8).toFixed(8).replace('.', ',') : '',
+      c.sats_purchased ?? '',
+      c.btc_price_brl?.toFixed(2).replace('.', ',') ?? '',
+      c.effective_price_brl?.toFixed(2).replace('.', ',') ?? '',
+      fee?.toFixed(2).replace('.', ',') ?? '',
+      `"${notes.replace(/"/g, '""')}"`,
+    ].join(';'))
+  }
+  const blob = new Blob(['﻿' + lines.join('\n')], { type: 'text/csv;charset=utf-8;' })
+  const url  = URL.createObjectURL(blob)
+  const a    = document.createElement('a')
+  a.href = url; a.download = filename; a.click()
+  URL.revokeObjectURL(url)
+}
+
 interface PriceEvolutionRow {
   label: string; cumAvg: number; cumBtc: number; cumBrl: number; trend: 'up' | 'down' | 'flat' | null
 }
@@ -126,7 +134,7 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
   const withSats = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
   if (withSats.length === 0) return []
   const sorted = [...withSats].sort((a, b) => a.contribution_date.localeCompare(b.contribution_date))
-  const ymSet = new Set<string>()
+  const ymSet  = new Set<string>()
   for (const c of sorted) {
     const d = new Date(c.contribution_date + 'T00:00:00')
     ymSet.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`)
@@ -134,13 +142,13 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
   const rows: PriceEvolutionRow[] = []
   let prevAvg: number | null = null
   for (const ym of ymSet) {
-    const [y, m] = ym.split('-').map(Number)
+    const [y, m]    = ym.split('-').map(Number)
     const endOfMonth = new Date(y, m, 0)
-    const cumC    = withSats.filter(c => new Date(c.contribution_date + 'T00:00:00') <= endOfMonth)
-    const cumBrl  = cumC.reduce((s, c) => s + c.amount, 0)
-    const cumSats = cumC.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-    const cumBtc  = cumSats / 1e8
-    const cumAvg  = cumBtc > 0 ? cumBrl / cumBtc : 0
+    const cumC      = withSats.filter(c => new Date(c.contribution_date + 'T00:00:00') <= endOfMonth)
+    const cumBrl    = cumC.reduce((s, c) => s + c.amount, 0)
+    const cumSats   = cumC.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+    const cumBtc    = cumSats / 1e8
+    const cumAvg    = cumBtc > 0 ? cumBrl / cumBtc : 0
     const trend: PriceEvolutionRow['trend'] = prevAvg === null ? null : cumAvg > prevAvg + 100 ? 'up' : cumAvg < prevAvg - 100 ? 'down' : 'flat'
     rows.push({ label: `${MONTHS_PT[m - 1]}/${String(y).slice(2)}`, cumAvg, cumBtc, cumBrl, trend })
     prevAvg = cumAvg
@@ -150,7 +158,7 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ActiveTab = 'historico' | 'evolucao'
+type ActiveTab = 'visaoGeral' | 'consolidacao' | 'evolucao'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 type PageSize = typeof PAGE_SIZE_OPTIONS[number]
@@ -160,75 +168,59 @@ interface Props { initialContributions: DcaContributionRow[] }
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function DcaContributionHistory({ initialContributions }: Props) {
-  const [contributions, setContributions]       = useState<DcaContributionRow[]>(initialContributions)
-  const [deletingId, setDeletingId]             = useState<string | null>(null)
-  const [filterType, setFilterType]             = useState<ContributionType | 'ALL'>('ALL')
-  const [activeTab, setActiveTab]               = useState<ActiveTab>('historico')
+  const [contributions, setContributions]     = useState<DcaContributionRow[]>(initialContributions)
+  const [deletingId, setDeletingId]           = useState<string | null>(null)
+  const [filterType, setFilterType]           = useState<ContributionType | 'ALL'>('ALL')
+  const [activeTab, setActiveTab]             = useState<ActiveTab>('visaoGeral')
+  const [expandedId, setExpandedId]           = useState<string | null>(null)
+  const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
 
   // Period navigator
-  const [viewMonth, setViewMonth]               = useState(() => new Date())
-  const [selectedPreset, setSelectedPreset]     = useState<PeriodPreset>('thisMonth')
-  const [customFrom, setCustomFrom]             = useState('')
-  const [customTo, setCustomTo]                 = useState('')
-  const [showDropdown, setShowDropdown]         = useState(false)
-  const [pendingFrom, setPendingFrom]           = useState('')
-  const [pendingTo, setPendingTo]               = useState('')
-  const dropdownRef                             = useRef<HTMLDivElement>(null)
+  const [viewMonth, setViewMonth]         = useState(() => new Date())
+  const [selectedPreset, setSelectedPreset] = useState<PeriodPreset>('thisMonth')
+  const [customFrom, setCustomFrom]       = useState('')
+  const [customTo, setCustomTo]           = useState('')
+  const [showDropdown, setShowDropdown]   = useState(false)
+  const [pendingFrom, setPendingFrom]     = useState('')
+  const [pendingTo, setPendingTo]         = useState('')
+  const dropdownRef                       = useRef<HTMLDivElement>(null)
+
+  // Search
+  const [searchText, setSearchText]       = useState('')
 
   // Pagination
-  const [currentPage, setCurrentPage]           = useState(1)
-  const [pageSize, setPageSize]                 = useState<PageSize>(25)
-  const [goToPageInput, setGoToPageInput]       = useState('')
+  const [currentPage, setCurrentPage]     = useState(1)
+  const [pageSize, setPageSize]           = useState<PageSize>(25)
+  const [goToPageInput, setGoToPageInput] = useState('')
 
   // BTC price
-  const [btcPriceBrl, setBtcPriceBrl]           = useState<number | null>(null)
-
-  // Expanded row
-  const [expandedId, setExpandedId]                   = useState<string | null>(null)
-
-  // Edit
-  const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
+  const [btcPriceBrl, setBtcPriceBrl]     = useState<number | null>(null)
 
   useEffect(() => {
     fetch('/api/btc-price-brl')
       .then(r => r.ok ? r.json() : null)
-      .then((d: { btcPriceBrl?: number } | null) => {
-        if (d?.btcPriceBrl) setBtcPriceBrl(d.btcPriceBrl)
-      })
+      .then((d: { btcPriceBrl?: number } | null) => { if (d?.btcPriceBrl) setBtcPriceBrl(d.btcPriceBrl) })
       .catch(() => {})
   }, [])
 
   // Close dropdown on outside click
   useEffect(() => {
     if (!showDropdown) return
-    function close(e: MouseEvent | TouchEvent) {
+    const close = (e: MouseEvent | TouchEvent) => {
       if (!dropdownRef.current?.contains(e.target as Node)) setShowDropdown(false)
     }
     document.addEventListener('mousedown', close)
     document.addEventListener('touchstart', close)
-    return () => {
-      document.removeEventListener('mousedown', close)
-      document.removeEventListener('touchstart', close)
-    }
+    return () => { document.removeEventListener('mousedown', close); document.removeEventListener('touchstart', close) }
   }, [showDropdown])
 
   const now = new Date()
   const isAtCurrentMonth = viewMonth.getFullYear() === now.getFullYear() && viewMonth.getMonth() === now.getMonth()
 
-  function prevMonth() {
-    setViewMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() - 1); return d })
-    setSelectedPreset('thisMonth')
-    setShowDropdown(false)
-  }
-  function nextMonth() {
-    if (isAtCurrentMonth) return
-    setViewMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() + 1); return d })
-    setSelectedPreset('thisMonth')
-    setShowDropdown(false)
-  }
+  function prevMonth() { setViewMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() - 1); return d }); setSelectedPreset('thisMonth'); setShowDropdown(false) }
+  function nextMonth()  { if (isAtCurrentMonth) return; setViewMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() + 1); return d }); setSelectedPreset('thisMonth'); setShowDropdown(false) }
   function selectPreset(p: PeriodPreset) {
-    setSelectedPreset(p)
-    setShowDropdown(false)
+    setSelectedPreset(p); setShowDropdown(false)
     if (p === 'thisMonth') setViewMonth(new Date())
     if (p === 'custom') { setPendingFrom(customFrom); setPendingTo(customTo) }
   }
@@ -245,62 +237,69 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
     if (to   && d > to)   return false
     return true
   })
-  const filtered = filterType === 'ALL'
-    ? periodFiltered
-    : periodFiltered.filter(c => c.contribution_type === filterType)
+  const typeFiltered = filterType === 'ALL' ? periodFiltered : periodFiltered.filter(c => c.contribution_type === filterType)
+  const searchFiltered = searchText.trim()
+    ? typeFiltered.filter(c => (c.notes?.split(' · taxa')[0] ?? '').toLowerCase().includes(searchText.toLowerCase()))
+    : typeFiltered
 
-  // Reset page when filters change
-  const filteredKey = `${filterType}|${selectedPreset}|${customFrom}|${customTo}|${viewMonth.getFullYear()}-${viewMonth.getMonth()}`
+  // Reset page on filter change
+  const filteredKey = `${filterType}|${selectedPreset}|${customFrom}|${customTo}|${viewMonth.getFullYear()}-${viewMonth.getMonth()}|${searchText}`
   useEffect(() => { setCurrentPage(1) }, [filteredKey])
 
   // Pagination
-  const totalItems = filtered.length
+  const totalItems = searchFiltered.length
   const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
   const safePage   = Math.min(currentPage, totalPages)
   const startIdx   = (safePage - 1) * pageSize
   const endIdx     = Math.min(startIdx + pageSize, totalItems)
-  const pageItems  = filtered.slice(startIdx, endIdx)
+  const pageItems  = searchFiltered.slice(startIdx, endIdx)
 
   // Group by month
   const groups = pageItems.reduce<Record<string, DcaContributionRow[]>>((acc, c) => {
     const d   = new Date(c.contribution_date + 'T00:00:00')
     const key = d.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' })
-    acc[key]  = acc[key] ?? []
-    acc[key].push(c)
-    return acc
+    acc[key]  = acc[key] ?? []; acc[key].push(c); return acc
   }, {})
   const monthKeys = Object.keys(groups)
 
-  // Summary stats — all contributions
-  const withSats    = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
-  const totalSats   = contributions.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-  const totalAmount = contributions.reduce((s, c) => s + c.amount, 0)
-  const avgPriceBrl = withSats.length > 0
-    ? (withSats.reduce((s, c) => s + c.amount, 0) / withSats.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)) * 100_000_000
+  // ── Global summary stats (all-time) ──
+  const withSats      = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
+  const totalSats     = contributions.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  const totalAmount   = contributions.reduce((s, c) => s + c.amount, 0)
+  const avgPriceBrl   = withSats.length > 0
+    ? (withSats.reduce((s, c) => s + c.amount, 0) / withSats.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)) * 1e8
     : null
-
-  const priceDiffAbs  = btcPriceBrl !== null && avgPriceBrl !== null ? btcPriceBrl - avgPriceBrl : null
-  const priceDiffPct  = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
-  const totalInvested = withSats.reduce((s, c) => s + c.amount, 0)
+  const totalInvested   = withSats.reduce((s, c) => s + c.amount, 0)
   const currentBtcValue = btcPriceBrl !== null ? (totalSats / 1e8) * btcPriceBrl : null
-  const rentabilidade   = currentBtcValue !== null && totalInvested > 0
-    ? ((currentBtcValue - totalInvested) / totalInvested) * 100
-    : null
+  const rentabilidade   = currentBtcValue !== null && totalInvested > 0 ? ((currentBtcValue - totalInvested) / totalInvested) * 100 : null
+  const priceDiffAbs    = btcPriceBrl !== null && avgPriceBrl !== null ? btcPriceBrl - avgPriceBrl : null
+  const priceDiffPct    = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
 
-  // Fee analytics — period filtered
-  const btcPurchasesFiltered = periodFiltered.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
-  const feesKnown   = btcPurchasesFiltered.filter(c => extractFee(c.notes) !== null)
-  const totalFees   = feesKnown.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
-  const totalSpread = btcPurchasesFiltered
-    .filter(c => c.effective_price_brl && c.btc_price_brl)
+  // ── Cost analytics — last 12 months ──
+  const last12 = useMemo(() => {
+    const from12 = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    const data   = contributions.filter(c => new Date(c.contribution_date + 'T00:00:00') >= from12)
+    const purchases = data.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
+    const fk     = purchases.filter(c => extractFee(c.notes) !== null)
+    const fees   = fk.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+    const spread = purchases.filter(c => c.effective_price_brl && c.btc_price_brl)
+      .reduce((s, c) => s + (c.effective_price_brl! - c.btc_price_brl!) * (c.sats_purchased! / 1e8), 0)
+    return { feesKnown: fk, totalFees: fees, totalSpread: spread, totalImpact: fees + Math.max(0, spread - fees) }
+  }, [contributions]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // ── Cost analytics — current period filter ──
+  const periodBtcPurchases = periodFiltered.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
+  const periodFeesKnown    = periodBtcPurchases.filter(c => extractFee(c.notes) !== null)
+  const periodTotalFees    = periodFeesKnown.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+  const periodTotalSpread  = periodBtcPurchases.filter(c => c.effective_price_brl && c.btc_price_brl)
     .reduce((s, c) => s + (c.effective_price_brl! - c.btc_price_brl!) * (c.sats_purchased! / 1e8), 0)
-  const totalImpact = totalFees + Math.max(0, totalSpread - totalFees)
+  const periodImpact = periodTotalFees + Math.max(0, periodTotalSpread - periodTotalFees)
 
-  // Period strip stats
-  const filteredPurchases = filtered.filter(c => !c.notes?.includes('Venda'))
-  const periodTotalBRL    = filteredPurchases.reduce((s, c) => s + c.amount, 0)
-  const periodTotalSats   = filteredPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-  const periodTotalFees   = filtered.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+  // ── Period strip stats ──
+  const filteredPurchases = searchFiltered.filter(c => !c.notes?.includes('Venda'))
+  const periodStripBRL    = filteredPurchases.reduce((s, c) => s + c.amount, 0)
+  const periodStripSats   = filteredPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  const periodStripFees   = searchFiltered.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
 
   const priceEvolution = useMemo(() => buildPriceEvolution(contributions), [contributions])
 
@@ -310,11 +309,8 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
       const res = await fetch(`/api/dca/contributions/${id}`, { method: 'DELETE' })
       if (!res.ok) throw new Error('Falha')
       setContributions(prev => prev.filter(c => c.id !== id))
-    } catch {
-      alert('Erro ao remover aporte. Tente novamente.')
-    } finally {
-      setDeletingId(null)
-    }
+    } catch { alert('Erro ao remover aporte. Tente novamente.') }
+    finally  { setDeletingId(null) }
   }
 
   function handleSaveEdit(updated: DcaContributionRow) {
@@ -325,11 +321,31 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   function handleGoToPage(e: React.FormEvent) {
     e.preventDefault()
     const n = parseInt(goToPageInput, 10)
-    if (!isNaN(n) && n >= 1 && n <= totalPages) {
-      setCurrentPage(n)
-      setGoToPageInput('')
-    }
+    if (!isNaN(n) && n >= 1 && n <= totalPages) { setCurrentPage(n); setGoToPageInput('') }
   }
+
+  function getCsvFilename() {
+    if (selectedPreset === 'thisMonth') return `aportes-${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, '0')}.csv`
+    if (selectedPreset === 'last30')       return 'aportes-ultimos-30-dias.csv'
+    if (selectedPreset === 'last12months') return 'aportes-ultimos-12-meses.csv'
+    if (selectedPreset === 'custom')       return `aportes-${customFrom || 'inicio'}-ate-${customTo || 'hoje'}.csv`
+    return 'aportes-historico-completo.csv'
+  }
+
+  // ── Shared styles ──
+  const tabBtnStyle = (active: boolean): React.CSSProperties => ({
+    padding: '11px 22px',
+    background: 'none',
+    border: 'none',
+    borderBottom: `2px solid ${active ? 'var(--orange)' : 'transparent'}`,
+    color: active ? 'var(--orange)' : 'var(--text-muted)',
+    fontSize: '13px',
+    fontWeight: active ? 600 : 400,
+    cursor: 'pointer',
+    marginBottom: '-1px',
+    whiteSpace: 'nowrap',
+    transition: 'color 0.15s',
+  })
 
   return (
     <div>
@@ -343,375 +359,253 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         />
       )}
 
-      {/* Global summary bar */}
-      <div style={{
-        display: 'flex', gap: '24px', flexWrap: 'wrap',
-        padding: '16px 24px', background: 'var(--surface)',
-        border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '24px',
-      }}>
-        <SummaryItem
-          label="Total de aportes"
-          value={String(contributions.length)}
-          tooltip="Quantidade total de aportes registrados no histórico, incluindo todos os tipos (Tático, Estrutural e Manual). Aportes deletados são ocultados."
-        />
-        <SummaryItem
-          label="Volume total"
-          value={fmt(totalAmount)}
-          color="var(--orange)"
-          tooltip="Soma de todos os valores aportados em reais ao longo de todo o histórico, independente do período ou filtro selecionado."
-        />
-        {totalSats > 0 && (
-          <SummaryItem
-            label="Total BTC"
-            value={fmtBTC(totalSats)}
-            color="#F7931A"
-            tooltip={"Total de Bitcoin acumulado em todos os aportes de compra, expresso em BTC.\n\n1 BTC = 100.000.000 satoshis (sats). Vendas são excluídas deste cálculo."}
-          />
-        )}
-        {avgPriceBrl !== null && (
-          <SummaryItem
-            label="Preço médio acumulado"
-            value={fmtBRL0(avgPriceBrl) + '/BTC'}
-            color="#22C55E"
-            hint={`Total R$ ÷ total BTC (${withSats.length} aportes)`}
-            tooltip={`Custo médio ponderado de aquisição do Bitcoin.\n\nCálculo: Total investido (R$) ÷ Total BTC acumulado\n\nEste é o preço de equilíbrio — se o BTC estiver acima dele, seu portfólio está no lucro. Baseado em ${withSats.length} aportes com BTC registrado.`}
-          />
-        )}
-        {btcPriceBrl !== null && (
-          <SummaryItem
-            label="Preço atual BTC"
-            value={fmtBRL0(btcPriceBrl) + '/BTC'}
-            color="#F7931A"
-            tooltip={"Cotação atual do Bitcoin em reais, atualizada a cada 2 minutos.\n\nFonte: CoinGecko (com fallback para Mercado Bitcoin)."}
-          />
-        )}
-        {priceDiffPct !== null && priceDiffAbs !== null && (
-          <SummaryItem
-            label="Variação vs PM"
-            value={(priceDiffPct >= 0 ? '+' : '') + priceDiffPct.toFixed(2).replace('.', ',') + '%'}
-            color={priceDiffPct >= 0 ? '#22C55E' : '#EF4444'}
-            hint={(priceDiffAbs >= 0 ? '+' : '') + fmtBRL0(priceDiffAbs) + '/BTC'}
-            tooltip={`Diferença entre o preço atual do BTC e seu preço médio acumulado.\n\nCálculo: (Preço atual − Preço médio) ÷ Preço médio × 100\n\n✅ Positivo (verde): BTC está acima do seu custo médio — portfólio valorizado.\n🔴 Negativo (vermelho): BTC abaixo do custo médio — portfólio desvalorizado.`}
-          />
-        )}
-        {rentabilidade !== null && (
-          <SummaryItem
-            label="Rentabilidade"
-            value={(rentabilidade >= 0 ? '+' : '') + rentabilidade.toFixed(2).replace('.', ',') + '%'}
-            color={rentabilidade >= 0 ? '#22C55E' : '#EF4444'}
-            hint={currentBtcValue !== null ? 'Valor atual: ' + fmt(currentBtcValue) : undefined}
-            tooltip={`Retorno não realizado do portfólio completo ao preço atual.\n\nCálculo: (Valor atual em BTC − Total investido) ÷ Total investido × 100\n\nValor atual = Total de sats × Preço atual do BTC em R$.\n\nEste valor muda conforme o preço do BTC oscila e não considera impostos ou taxas de saque.`}
-          />
-        )}
+      {/* Tab bar */}
+      <div style={{ display: 'flex', gap: '0', marginBottom: '28px', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
+        <button onClick={() => setActiveTab('visaoGeral')}   style={tabBtnStyle(activeTab === 'visaoGeral')}>Visão Geral</button>
+        <button onClick={() => setActiveTab('consolidacao')} style={tabBtnStyle(activeTab === 'consolidacao')}>Consolidação de Aportes</button>
+        <button onClick={() => setActiveTab('evolucao')}     style={tabBtnStyle(activeTab === 'evolucao')}>Evolução do Preço Médio</button>
       </div>
 
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: '0', marginBottom: '24px', borderBottom: '1px solid var(--border)' }}>
-        {([['historico', 'Histórico'], ['evolucao', 'Evolução do Preço Médio']] as const).map(([tab, label]) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab)}
-            style={{
-              padding: '10px 20px',
-              background: 'none',
-              border: 'none',
-              borderBottom: `2px solid ${activeTab === tab ? 'var(--orange)' : 'transparent'}`,
-              color: activeTab === tab ? 'var(--orange)' : 'var(--text-muted)',
-              fontSize: '13px',
-              fontWeight: activeTab === tab ? 600 : 400,
-              cursor: 'pointer',
-              marginBottom: '-1px',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            {label}
-          </button>
-        ))}
-      </div>
-
-      {/* ── Tab: Evolução do Preço Médio ── */}
-      {activeTab === 'evolucao' && (
+      {/* ══════════════════════════════════════════════════════════
+          Tab 1 — Visão Geral
+      ══════════════════════════════════════════════════════════ */}
+      {activeTab === 'visaoGeral' && (
         <div>
-          {priceEvolution.length > 0 ? (
-            <div style={{
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: '12px', overflow: 'hidden',
-            }}>
-              <div style={{ overflowX: 'auto' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                  <thead>
-                    <tr style={{ borderBottom: '1px solid var(--border-dim)' }}>
-                      {(['Mês', 'Preço médio acumulado', 'BTC acumulado', 'Total investido'] as const).map(h => (
-                        <th key={h} style={{
-                          padding: '10px 20px', fontSize: '10px', color: 'var(--text-muted)',
-                          fontWeight: 500, textAlign: h === 'Mês' ? 'left' : 'right',
-                          textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap',
-                        }}>{h}</th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {priceEvolution.map((row, idx) => (
-                      <tr key={row.label} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
-                        <td style={{ padding: '10px 20px', fontSize: '13px', color: 'var(--text)', fontWeight: 500, textTransform: 'capitalize', whiteSpace: 'nowrap' }}>
-                          {row.label}
-                        </td>
-                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '13px', fontWeight: 700, color: '#22C55E', whiteSpace: 'nowrap' }}>
-                          {fmtK(row.cumAvg)}/BTC
-                          {row.trend && (
-                            <span style={{ marginLeft: '6px', fontSize: '11px', color: row.trend === 'up' ? '#EF4444' : row.trend === 'down' ? '#22C55E' : 'var(--text-muted)' }}>
-                              {row.trend === 'up' ? '↑' : row.trend === 'down' ? '↓' : '—'}
-                            </span>
-                          )}
-                        </td>
-                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: '#F7931A', whiteSpace: 'nowrap' }}>
-                          {fmtBTC(Math.round(row.cumBtc * 1e8))}
-                        </td>
-                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: 'var(--text-sec)', whiteSpace: 'nowrap' }}>
-                          {fmt(row.cumBrl)}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+
+          {/* KPI cards */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '36px' }}>
+
+            <KPICard
+              accent="var(--orange)"
+              label="Total investido"
+              value={fmt(totalAmount)}
+              valueColor="var(--orange)"
+              sub1={`${contributions.length} aportes registrados`}
+              sub2={withSats.length > 0 ? `${withSats.length} com BTC registrado` : undefined}
+              tooltip="Soma de todos os valores aportados em reais ao longo de todo o histórico. Inclui todos os tipos de aporte."
+            />
+
+            <KPICard
+              accent="#F7931A"
+              label="Bitcoin acumulado"
+              value={totalSats > 0 ? fmtBTC(totalSats) : '—'}
+              valueColor="#F7931A"
+              sub1={avgPriceBrl !== null ? `PM: ${fmtBRL0(avgPriceBrl)}/BTC` : undefined}
+              sub1Color="#22C55E"
+              tooltip={"Total de Bitcoin acumulado em compras, expresso em BTC.\n\nPM = Preço médio ponderado de aquisição.\n\n1 BTC = 100.000.000 satoshis. Vendas são excluídas."}
+            />
+
+            <KPICard
+              accent={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : '#22C55E'}
+              label="Valor atual do portfólio"
+              value={currentBtcValue !== null ? fmt(currentBtcValue) : '—'}
+              valueColor={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'}
+              sub1={rentabilidade !== null ? `Rentabilidade: ${rentabilidade >= 0 ? '+' : ''}${rentabilidade.toFixed(2).replace('.', ',')}%` : 'Carregando cotação…'}
+              sub1Color={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : 'var(--text-muted)'}
+              tooltip={"Valor atual do seu portfólio de Bitcoin ao preço de mercado.\n\nCálculo: Total de BTC × Preço atual do BTC em R$\n\nA rentabilidade mostra o retorno não realizado sobre o total investido."}
+            />
+
+            <KPICard
+              accent={priceDiffPct !== null ? (priceDiffPct >= 0 ? '#22C55E' : '#EF4444') : '#6366F1'}
+              label="Variação vs. Preço Médio"
+              value={priceDiffPct !== null ? `${priceDiffPct >= 0 ? '+' : ''}${priceDiffPct.toFixed(2).replace('.', ',')}%` : '—'}
+              valueColor={priceDiffPct !== null ? (priceDiffPct >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'}
+              sub1={btcPriceBrl !== null ? `BTC atual: ${fmtBRL0(btcPriceBrl)}/BTC` : 'Carregando…'}
+              sub2={priceDiffAbs !== null ? `Diferença: ${priceDiffAbs >= 0 ? '+' : ''}${fmtBRL0(priceDiffAbs)}/BTC` : undefined}
+              tooltip={"Diferença percentual entre o preço atual do BTC e seu preço médio de aquisição.\n\n✅ Positivo: BTC acima do custo médio — portfólio no lucro.\n🔴 Negativo: BTC abaixo do custo médio — portfólio no prejuízo.\n\nFonte do preço: CoinGecko (atualizado a cada 2 min)."}
+            />
+
+          </div>
+
+          {/* Cost analysis — last 12 months */}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '16px' }}>
+              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Análise de custos</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Últimos 12 meses</span>
+            </div>
+
+            {last12.feesKnown.length > 0 ? (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
+
+                <CostCard
+                  accent="#F59E0B"
+                  label="Taxas pagas"
+                  value={fmt(last12.totalFees)}
+                  valueColor="#F59E0B"
+                  hint={`${last12.feesKnown.length} aportes com taxa`}
+                  tooltip={'Soma das taxas explícitas pagas à plataforma de compra nos últimos 12 meses.\n\nExtraídas das notas no formato "taxa R$X". Registre o valor da taxa no campo Outros Custos ao registrar um aporte.'}
+                />
+
+                <CostCard
+                  accent="#F97316"
+                  label="Spread acumulado"
+                  value={fmt(Math.max(0, last12.totalSpread - last12.totalFees))}
+                  valueColor="#F97316"
+                  hint="Custo oculto embutido no preço"
+                  tooltip={"Custo oculto gerado pela diferença entre a cotação de referência e o preço efetivo pago.\n\nCálculo: (Preço efetivo − Cotação BTC) × BTC − Taxas pagas\n\nO spread é o lucro da plataforma embutido no preço, separado da taxa explícita."}
+                />
+
+                <CostCard
+                  accent="#EF4444"
+                  label="Impacto total"
+                  value={fmt(last12.totalImpact)}
+                  valueColor="#EF4444"
+                  hint="Taxas + spread"
+                  tooltip={"Custo total pago acima do preço de mercado.\n\nImpacto total = Taxas pagas + Spread acumulado\n\nRepresenta quanto a mais você pagou por BTC em comparação a comprar diretamente pelo preço de mercado."}
+                />
+
+                <CostCard
+                  accent="var(--text-muted)"
+                  label="Aportes analisados"
+                  value={String(last12.feesKnown.length)}
+                  hint="Com dados de custo"
+                  tooltip={`Aportes dos últimos 12 meses com dados de taxa registrados.\n\nPara uma análise completa, sempre registre o valor das taxas no campo Outros Custos ao registrar um aporte.`}
+                />
+
               </div>
-            </div>
-          ) : (
-            <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>
-              Nenhum dado de preço disponível.
-            </div>
-          )}
+            ) : (
+              <div style={{ padding: '24px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center' }}>
+                Nenhum aporte com dados de taxa nos últimos 12 meses. Registre os custos nos aportes para análise.
+              </div>
+            )}
+          </div>
+
         </div>
       )}
 
-      {/* ── Tab: Histórico ── */}
-      {activeTab === 'historico' && (
+      {/* ══════════════════════════════════════════════════════════
+          Tab 2 — Consolidação de Aportes
+      ══════════════════════════════════════════════════════════ */}
+      {activeTab === 'consolidacao' && (
         <div>
 
           {/* Chart */}
           <DcaPatrimonyChart contributions={periodFiltered} />
 
-          {/* Fee analytics panel */}
-          {feesKnown.length > 0 && (
-            <div style={{
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: '12px', marginBottom: '24px', overflow: 'hidden',
-            }}>
-              <div style={{
-                padding: '12px 20px', borderBottom: '1px solid var(--border-dim)',
-                fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)',
-                textTransform: 'uppercase', letterSpacing: '0.08em',
-              }}>
-                Análise de custos · {selectedPreset === 'all' ? 'histórico completo' : PRESETS.find(p => p.id === selectedPreset)?.label}
+          {/* Controls bar */}
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '12px' }}>
+
+            {/* Month navigator */}
+            <div ref={dropdownRef} style={{ position: 'relative' }}>
+              <div style={{ display: 'flex', alignItems: 'stretch', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', background: 'var(--surface)' }}>
+                <button onClick={prevMonth} title="Mês anterior" style={{ padding: '7px 12px', background: 'transparent', border: 'none', borderRight: '1px solid var(--border-dim)', color: 'var(--text-sec)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>‹</button>
+                <button onClick={() => setShowDropdown(v => !v)} style={{ padding: '7px 14px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  {navLabel}
+                  <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>▾</span>
+                </button>
+                <button onClick={nextMonth} disabled={isAtCurrentMonth} title="Próximo mês" style={{ padding: '7px 12px', background: 'transparent', border: 'none', borderLeft: '1px solid var(--border-dim)', color: isAtCurrentMonth ? 'var(--text-muted)' : 'var(--text-sec)', fontSize: '16px', cursor: isAtCurrentMonth ? 'not-allowed' : 'pointer', opacity: isAtCurrentMonth ? 0.3 : 1, display: 'flex', alignItems: 'center' }}>›</button>
               </div>
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0' }}>
-                <FeeMetric
-                  label="Taxas pagas"
-                  value={fmt(totalFees)}
-                  color="#F59E0B"
-                  hint="Taxa explícita cobrada pela plataforma"
-                  tooltip={'Soma das taxas explícitas pagas à plataforma de compra no período selecionado.\n\nExtraídas automaticamente das notas do aporte no formato "taxa R$X". Registre o valor da taxa no campo Outros Custos ao registrar um aporte para aparecer aqui.'}
-                />
-                <FeeMetric
-                  label="Spread acumulado"
-                  value={fmt(Math.max(0, totalSpread - totalFees))}
-                  color="#F97316"
-                  hint="Diferença entre cotação e preço efetivo"
-                  tooltip={"Custo oculto gerado pela diferença entre a cotação de referência do mercado e o preço efetivo que você pagou.\n\nCálculo: (Preço efetivo − Cotação BTC) × BTC comprado − Taxas pagas\n\nO spread é o lucro da plataforma embutido no preço, separado da taxa explícita."}
-                />
-                <FeeMetric
-                  label="Impacto total"
-                  value={fmt(totalImpact)}
-                  color="#EF4444"
-                  hint="Custo total acima do preço de mercado"
-                  tooltip={"Custo total que você pagou acima do preço de mercado no período.\n\nImpacto total = Taxas pagas + Spread acumulado\n\nRepresenta quanto a mais você pagou por BTC em comparação a comprar exatamente pela cotação de mercado, sem custos."}
-                />
-                <FeeMetric
-                  label="Aportes analisados"
-                  value={`${feesKnown.length}`}
-                  hint="Com dados de taxa registrados"
-                  tooltip={`Quantidade de aportes do período que possuem dados de taxa registrados nas notas.\n\nAportes sem o campo Outros Custos preenchido não entram nesta análise. Para análise completa, sempre registre os custos ao fazer um aporte.`}
-                />
+              {showDropdown && (
+                <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 200, minWidth: '210px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+                  {PRESETS.map(p => (
+                    <button key={p.id} onClick={() => selectPreset(p.id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', background: selectedPreset === p.id ? 'rgba(99,102,241,0.1)' : 'transparent', border: 'none', borderBottom: '1px solid var(--border-dim)', color: selectedPreset === p.id ? '#818cf8' : 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Type filter pills */}
+            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+              {(['ALL', 'TACTICAL', 'STRUCTURAL_DCA', 'MANUAL'] as const).map(t => (
+                <button key={t} onClick={() => setFilterType(t)} style={{ padding: '6px 14px', background: filterType === t ? 'rgba(99,102,241,0.15)' : 'var(--surface)', border: `1px solid ${filterType === t ? '#6366F1' : 'var(--border)'}`, borderRadius: '20px', color: filterType === t ? '#818cf8' : 'var(--text-muted)', fontSize: '12px', fontWeight: filterType === t ? 600 : 400, cursor: 'pointer' }}>
+                  {t === 'ALL' ? 'Todos' : TYPE_META[t as ContributionType].label}
+                </button>
+              ))}
+            </div>
+
+            {/* Spacer */}
+            <div style={{ flex: 1, minWidth: '12px' }} />
+
+            {/* Search */}
+            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+              <span style={{ position: 'absolute', left: '10px', fontSize: '13px', color: 'var(--text-muted)', pointerEvents: 'none' }}>⌕</span>
+              <input
+                type="text"
+                value={searchText}
+                onChange={e => setSearchText(e.target.value)}
+                placeholder="Buscar por descrição…"
+                style={{
+                  padding: '7px 10px 7px 30px',
+                  background: 'var(--surface)', border: '1px solid var(--border)',
+                  borderRadius: '8px', color: 'var(--text)', fontSize: '13px',
+                  width: '200px', outline: 'none',
+                }}
+              />
+              {searchText && (
+                <button onClick={() => setSearchText('')} style={{ position: 'absolute', right: '8px', background: 'none', border: 'none', color: 'var(--text-muted)', cursor: 'pointer', fontSize: '13px', padding: '0', lineHeight: 1 }}>×</button>
+              )}
+            </div>
+
+            {/* CSV export */}
+            <button
+              onClick={() => exportToCsv(searchFiltered, getCsvFilename())}
+              disabled={searchFiltered.length === 0}
+              title="Exportar para CSV"
+              style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
+                padding: '7px 14px',
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: '8px', color: 'var(--text-sec)',
+                fontSize: '12px', fontWeight: 500, cursor: searchFiltered.length === 0 ? 'not-allowed' : 'pointer',
+                opacity: searchFiltered.length === 0 ? 0.5 : 1,
+                whiteSpace: 'nowrap',
+              }}
+            >
+              ↓ CSV
+            </button>
+          </div>
+
+          {/* Custom date panel */}
+          {selectedPreset === 'custom' && (
+            <div style={{ marginBottom: '14px', padding: '14px 18px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', display: 'flex', gap: '14px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>Data inicial</label>
+                <input type="date" value={pendingFrom} onChange={e => setPendingFrom(e.target.value)} style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }} />
+              </div>
+              <span style={{ fontSize: '13px', color: 'var(--text-muted)', paddingBottom: '8px' }}>até</span>
+              <div>
+                <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>Data final</label>
+                <input type="date" value={pendingTo} onChange={e => setPendingTo(e.target.value)} style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }} />
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button onClick={() => setSelectedPreset('thisMonth')} style={{ padding: '7px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
+                <button onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }} style={{ padding: '7px 16px', background: '#6366F1', border: '1px solid #6366F1', borderRadius: '6px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Aplicar filtro</button>
               </div>
             </div>
           )}
 
-          {/* ── Period navigator (ContaAzul-style) ── */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-
-              {/* Month navigator + dropdown */}
-              <div ref={dropdownRef} style={{ position: 'relative' }}>
-                <div style={{
-                  display: 'flex', alignItems: 'stretch',
-                  border: '1px solid var(--border)', borderRadius: '8px',
-                  overflow: 'hidden', background: 'var(--surface)',
-                }}>
-                  {/* Left arrow */}
-                  <button
-                    onClick={prevMonth}
-                    title="Mês anterior"
-                    style={{
-                      padding: '8px 12px', background: 'transparent', border: 'none',
-                      borderRight: '1px solid var(--border-dim)',
-                      color: 'var(--text-sec)', fontSize: '16px', cursor: 'pointer',
-                      display: 'flex', alignItems: 'center',
-                    }}
-                  >
-                    ‹
-                  </button>
-
-                  {/* Label / dropdown trigger */}
-                  <button
-                    onClick={() => setShowDropdown(v => !v)}
-                    style={{
-                      padding: '8px 16px', background: 'transparent', border: 'none',
-                      color: 'var(--text)', fontSize: '13px', fontWeight: 600,
-                      cursor: 'pointer', whiteSpace: 'nowrap',
-                      display: 'flex', alignItems: 'center', gap: '6px',
-                    }}
-                  >
-                    {navLabel}
-                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>▾</span>
-                  </button>
-
-                  {/* Right arrow */}
-                  <button
-                    onClick={nextMonth}
-                    disabled={isAtCurrentMonth}
-                    title="Próximo mês"
-                    style={{
-                      padding: '8px 12px', background: 'transparent', border: 'none',
-                      borderLeft: '1px solid var(--border-dim)',
-                      color: isAtCurrentMonth ? 'var(--text-muted)' : 'var(--text-sec)',
-                      fontSize: '16px',
-                      cursor: isAtCurrentMonth ? 'not-allowed' : 'pointer',
-                      opacity: isAtCurrentMonth ? 0.3 : 1,
-                      display: 'flex', alignItems: 'center',
-                    }}
-                  >
-                    ›
-                  </button>
-                </div>
-
-                {/* Dropdown */}
-                {showDropdown && (
-                  <div style={{
-                    position: 'absolute', top: 'calc(100% + 4px)', left: 0,
-                    background: 'var(--surface)', border: '1px solid var(--border)',
-                    borderRadius: '8px', zIndex: 200, minWidth: '220px',
-                    boxShadow: '0 8px 24px rgba(0,0,0,0.25)', overflow: 'hidden',
-                  }}>
-                    {PRESETS.map(p => (
-                      <button
-                        key={p.id}
-                        onClick={() => selectPreset(p.id)}
-                        style={{
-                          display: 'block', width: '100%', textAlign: 'left',
-                          padding: '11px 16px', background: selectedPreset === p.id ? 'rgba(99,102,241,0.1)' : 'transparent',
-                          border: 'none',
-                          borderBottom: '1px solid var(--border-dim)',
-                          color: selectedPreset === p.id ? '#6366F1' : 'var(--text-sec)',
-                          fontSize: '13px', cursor: 'pointer',
-                        }}
-                      >
-                        {p.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Type filter pills */}
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                {(['ALL', 'TACTICAL', 'STRUCTURAL_DCA', 'MANUAL'] as const).map(t => (
-                  <button key={t} onClick={() => setFilterType(t)} style={{
-                    padding: '6px 14px',
-                    background: filterType === t ? 'rgba(99,102,241,0.15)' : 'var(--surface)',
-                    border: `1px solid ${filterType === t ? '#6366F1' : 'var(--border)'}`,
-                    borderRadius: '20px', color: filterType === t ? '#6366F1' : 'var(--text-muted)',
-                    fontSize: '12px', fontWeight: filterType === t ? 600 : 400, cursor: 'pointer',
-                  }}>
-                    {t === 'ALL' ? 'Todos' : TYPE_META[t as ContributionType].label}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Custom date panel */}
-            {selectedPreset === 'custom' && (
-              <div style={{
-                marginTop: '10px', padding: '16px 20px',
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                borderRadius: '10px', display: 'flex', gap: '16px',
-                alignItems: 'flex-end', flexWrap: 'wrap',
-              }}>
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>Data inicial</label>
-                  <input
-                    type="date" value={pendingFrom}
-                    onChange={e => setPendingFrom(e.target.value)}
-                    style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
-                  />
-                </div>
-                <span style={{ fontSize: '13px', color: 'var(--text-muted)', paddingBottom: '8px' }}>até</span>
-                <div>
-                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>Data final</label>
-                  <input
-                    type="date" value={pendingTo}
-                    onChange={e => setPendingTo(e.target.value)}
-                    style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '8px' }}>
-                  <button
-                    onClick={() => setSelectedPreset('thisMonth')}
-                    style={{
-                      padding: '7px 16px', background: 'transparent',
-                      border: '1px solid var(--border)', borderRadius: '6px',
-                      color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer',
-                    }}
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }}
-                    style={{
-                      padding: '7px 16px',
-                      background: '#6366F1', border: '1px solid #6366F1',
-                      borderRadius: '6px', color: '#fff',
-                      fontSize: '13px', fontWeight: 600, cursor: 'pointer',
-                    }}
-                  >
-                    Aplicar filtro
-                  </button>
-                </div>
-              </div>
-            )}
-          </div>
-
           {/* Period summary strip */}
-          {filtered.length > 0 && (
-            <div style={{
-              display: 'flex', gap: '0', flexWrap: 'wrap',
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: '10px', marginBottom: '20px', overflow: 'hidden',
-            }}>
-              <PeriodStat label="Total no período" value={fmt(periodTotalBRL)} color="var(--orange)" />
-              {periodTotalSats > 0 && (
-                <PeriodStat label="Sats comprados" value={periodTotalSats.toLocaleString('pt-BR') + ' sats'} color="#F7931A" />
-              )}
-              {periodTotalFees > 0 && (
-                <PeriodStat label="Taxas pagas" value={fmt(periodTotalFees)} color="#F59E0B" />
-              )}
-              <PeriodStat label="Aportes" value={String(filtered.length)} />
+          {searchFiltered.length > 0 && (
+            <div style={{ display: 'flex', flexWrap: 'wrap', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', marginBottom: '20px', overflow: 'hidden' }}>
+              <PeriodStat label="Total no período"  value={fmt(periodStripBRL)}  color="var(--orange)" />
+              {periodStripSats > 0 && <PeriodStat label="Sats comprados" value={periodStripSats.toLocaleString('pt-BR') + ' sats'} color="#F7931A" />}
+              {periodStripFees > 0 && <PeriodStat label="Taxas pagas"    value={fmt(periodStripFees)}  color="#F59E0B" />}
+              <PeriodStat label="Aportes" value={String(searchFiltered.length)} />
+              {searchText && <PeriodStat label="Filtro ativo" value={`"${searchText}"`} color="#818cf8" />}
+            </div>
+          )}
+
+          {/* Fee analysis for current period */}
+          {periodFeesKnown.length > 0 && (
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '24px', overflow: 'hidden' }}>
+              <div style={{ padding: '11px 18px', borderBottom: '1px solid var(--border-dim)', fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                Análise de custos · {PRESETS.find(p => p.id === selectedPreset)?.label ?? navLabel}
+              </div>
+              <div style={{ display: 'flex', flexWrap: 'wrap' }}>
+                <FeeMetric label="Taxas pagas"      value={fmt(periodTotalFees)}  color="#F59E0B" hint="Taxa explícita"          tooltip={'Soma das taxas explícitas pagas no período selecionado.\n\nExtraídas das notas no formato "taxa R$X".'} />
+                <FeeMetric label="Spread acumulado" value={fmt(Math.max(0, periodTotalSpread - periodTotalFees))} color="#F97316" hint="Custo oculto" tooltip={"Diferença entre cotação de referência e preço efetivo pago, excluindo taxas explícitas."} />
+                <FeeMetric label="Impacto total"    value={fmt(periodImpact)}     color="#EF4444" hint="Taxas + spread"          tooltip={"Custo total pago acima do preço de mercado no período."} />
+                <FeeMetric label="Aportes"          value={`${periodFeesKnown.length}`}           hint="Com dados de custo"   tooltip={"Aportes com dados de taxa registrados no período."} />
+              </div>
             </div>
           )}
 
           {/* No results */}
           {monthKeys.length === 0 && (
-            <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-              Nenhum aporte encontrado{selectedPreset !== 'all' ? ' no período selecionado' : ''}.
+            <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
+              {searchText ? `Nenhum aporte encontrado para "${searchText}"` : 'Nenhum aporte encontrado no período selecionado.'}
             </div>
           )}
 
@@ -722,119 +616,93 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             const monthTotal = purchases.reduce((s, c) => s + c.amount, 0)
             const monthSats  = purchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
             const monthFees  = items.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+
             return (
               <div key={monthKey} style={{ marginBottom: '28px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '10px', padding: '0 4px', gap: '8px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'capitalize' }}>
-                    {monthKey}
-                  </span>
-                  <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'flex-end' }}>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>{fmt(monthTotal)}</span>
-                    {monthSats > 0 && (
-                      <span style={{ fontSize: '11px', color: '#F7931A', fontFamily: "'Courier New', monospace" }}>
-                        {monthSats.toLocaleString('pt-BR')} sats
-                      </span>
-                    )}
-                    {monthFees > 0 && (
-                      <span style={{ fontSize: '11px', color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>
-                        taxa {fmt(monthFees)}
-                      </span>
-                    )}
-                  </div>
+                {/* Month label */}
+                <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', textTransform: 'capitalize', marginBottom: '8px', padding: '0 2px' }}>
+                  {monthKey}
                 </div>
 
                 <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+                  {/* Contribution rows */}
                   {items.map((c, idx) => {
-                    const typeMeta   = TYPE_META[c.contribution_type]
-                    const d          = new Date(c.contribution_date + 'T00:00:00')
-                    const dateStr    = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
-                    const isExpanded = expandedId === c.id
-                    const isVenda    = c.notes?.includes('Venda') || false
-                    const fee        = extractFee(c.notes)
+                    const typeMeta     = TYPE_META[c.contribution_type]
+                    const d            = new Date(c.contribution_date + 'T00:00:00')
+                    const dateStr      = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                    const isExpanded   = expandedId === c.id
+                    const isVenda      = c.notes?.includes('Venda') || false
+                    const fee          = extractFee(c.notes)
                     const hasPriceData = c.effective_price_brl && c.btc_price_brl
-                    const diffPct    = hasPriceData
-                      ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100
-                      : null
-                    const efficiency = diffPct !== null ? efficiencyLabel(diffPct) : null
+                    const diffPct      = hasPriceData ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100 : null
+                    const efficiency   = diffPct !== null ? efficiencyLabel(diffPct) : null
 
                     return (
                       <div key={c.id} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
-                        {/* Main row */}
                         <div
                           className="contrib-row"
-                          style={{
-                            cursor: hasPriceData ? 'pointer' : 'default',
-                            background: isExpanded ? 'rgba(99,102,241,0.04)' : 'transparent',
-                          }}
+                          style={{ cursor: hasPriceData ? 'pointer' : 'default', background: isExpanded ? 'rgba(99,102,241,0.04)' : 'transparent' }}
                           onClick={() => hasPriceData && setExpandedId(isExpanded ? null : c.id)}
                         >
-                          <div className="contrib-date" style={{ minWidth: '110px', flexShrink: 0 }}>
+                          <div className="contrib-date" style={{ minWidth: '100px', flexShrink: 0 }}>
                             <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{dateStr}</div>
                           </div>
 
                           <div className="contrib-notes" style={{ flex: 1, minWidth: 0 }}>
-                            {c.notes && (
-                              <div style={{ fontSize: '12px', color: 'var(--text-sec)', marginBottom: '2px', wordBreak: 'break-word' }}>
-                                {c.notes.split(' · taxa')[0]}
-                              </div>
-                            )}
+                            {c.notes
+                              ? <div style={{ fontSize: '12px', color: 'var(--text-sec)', wordBreak: 'break-word' }}>{c.notes.split(' · taxa')[0]}</div>
+                              : c.market_state_snapshot
+                                ? null
+                                : <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
+                            }
                             {c.market_state_snapshot && (
-                              <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+                              <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '1px' }}>
                                 Score {c.market_score_snapshot ?? '—'} · {STATE_LABEL[c.market_state_snapshot] ?? c.market_state_snapshot}
                               </div>
-                            )}
-                            {!c.notes && !c.market_state_snapshot && (
-                              <div style={{ fontSize: '12px', color: 'var(--text-muted)', fontStyle: 'italic' }}>—</div>
                             )}
                           </div>
 
                           <div className="contrib-btc" style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
                             {c.sats_purchased && !isVenda
-                              ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '3px' }}>
-                                  {fmtBTC(c.sats_purchased)}
-                                </div>
-                              : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3, marginBottom: '3px' }}>—</div>
+                              ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '2px' }}>{fmtBTC(c.sats_purchased)}</div>
+                              : <div style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.3, marginBottom: '2px' }}>—</div>
                             }
                             {c.effective_price_brl && (
                               <div style={{ fontSize: '10px', color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
-                                <span style={{ fontFamily: 'sans-serif', color: 'var(--text-muted)' }}>efetivo </span>
-                                {fmtBRL0(c.effective_price_brl)}/BTC
+                                <span style={{ fontFamily: 'sans-serif', color: 'var(--text-muted)' }}>efetivo </span>{fmtBRL0(c.effective_price_brl)}/BTC
                               </div>
                             )}
                           </div>
 
-                          <span className="contrib-badge" style={{
-                            padding: '2px 8px', background: `${typeMeta.color}20`, color: typeMeta.color,
-                            borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
-                          }}>
+                          <span className="contrib-badge" style={{ padding: '2px 8px', background: `${typeMeta.color}20`, color: typeMeta.color, borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
                             {typeMeta.label}
                           </span>
 
-                          <span className="contrib-amount" style={{
-                            fontSize: '14px', fontWeight: 700,
-                            color: isVenda ? '#22C55E' : 'var(--text)',
-                            fontFamily: "'Courier New', monospace", textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0,
-                          }}>
+                          <span className="contrib-amount" style={{ fontSize: '14px', fontWeight: 700, color: isVenda ? '#22C55E' : 'var(--text)', fontFamily: "'Courier New', monospace", textAlign: 'right', whiteSpace: 'nowrap', flexShrink: 0 }}>
                             {isVenda ? '+' : ''}{fmt(c.amount)}
                           </span>
 
                           {hasPriceData && (
-                            <span className="contrib-expand" style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0 }}>
-                              {isExpanded ? '▲' : '▼'}
-                            </span>
+                            <span className="contrib-expand" style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0 }}>{isExpanded ? '▲' : '▼'}</span>
                           )}
 
-                          {/* Edit button */}
+                          {/* Edit button — visible & prominent */}
                           <button
                             className="contrib-edit"
                             onClick={e => { e.stopPropagation(); setEditingContribution(c) }}
                             title="Editar aporte"
                             style={{
-                              background: 'none', border: 'none',
-                              color: 'rgba(99,102,241,0.5)',
+                              background: 'rgba(99,102,241,0.15)',
+                              border: '1px solid rgba(99,102,241,0.35)',
+                              borderRadius: '5px',
+                              color: '#818cf8',
                               cursor: 'pointer',
-                              fontSize: '14px', padding: '0 4px', borderRadius: '4px', lineHeight: 1, flexShrink: 0,
-                              transition: 'color 0.15s',
+                              fontSize: '12px',
+                              fontWeight: 600,
+                              padding: '3px 8px',
+                              flexShrink: 0,
+                              lineHeight: 1.3,
+                              whiteSpace: 'nowrap',
                             }}
                           >
                             ✎
@@ -847,10 +715,15 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                             disabled={deletingId === c.id}
                             title="Remover aporte"
                             style={{
-                              background: 'none', border: 'none',
-                              color: deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.5)',
+                              background: 'rgba(239,68,68,0.1)',
+                              border: '1px solid rgba(239,68,68,0.25)',
+                              borderRadius: '5px',
+                              color: deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.8)',
                               cursor: deletingId === c.id ? 'not-allowed' : 'pointer',
-                              fontSize: '16px', padding: '0 4px', borderRadius: '4px', lineHeight: 1, flexShrink: 0,
+                              fontSize: '14px',
+                              padding: '2px 7px',
+                              lineHeight: 1.3,
+                              flexShrink: 0,
                             }}
                           >
                             {deletingId === c.id ? '…' : '×'}
@@ -859,26 +732,14 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
 
                         {/* Expanded fee breakdown */}
                         {isExpanded && hasPriceData && (
-                          <div style={{
-                            padding: '12px 20px 16px 20px',
-                            background: 'rgba(99,102,241,0.04)',
-                            borderTop: '1px solid var(--border-dim)',
-                          }}>
+                          <div style={{ padding: '12px 20px 16px', background: 'rgba(99,102,241,0.04)', borderTop: '1px solid var(--border-dim)' }}>
                             <table style={{ fontSize: '11px', borderCollapse: 'collapse', width: '100%', maxWidth: '400px' }}>
                               <tbody>
-                                <FeeRow label="Cotação BTC"        value={fmtBRL0(c.btc_price_brl!)} />
-                                <FeeRow label="Seu preço efetivo"  value={fmtBRL0(c.effective_price_brl!)} valueColor="#F59E0B" />
-                                {diffPct !== null && (
-                                  <FeeRow
-                                    label="Diferença"
-                                    value={`+${diffPct.toFixed(2).replace('.', ',')}%`}
-                                    valueColor={diffPct > 8 ? '#EF4444' : diffPct > 4 ? '#F59E0B' : '#22C55E'}
-                                  />
-                                )}
+                                <FeeRow label="Cotação BTC"       value={fmtBRL0(c.btc_price_brl!)} />
+                                <FeeRow label="Seu preço efetivo" value={fmtBRL0(c.effective_price_brl!)} valueColor="#F59E0B" />
+                                {diffPct !== null && <FeeRow label="Diferença" value={`+${diffPct.toFixed(2).replace('.', ',')}%`} valueColor={diffPct > 8 ? '#EF4444' : diffPct > 4 ? '#F59E0B' : '#22C55E'} />}
                                 {fee !== null && <FeeRow label="Taxa paga" value={fmt(fee)} valueColor="#F97316" />}
-                                {efficiency && (
-                                  <FeeRow label="Eficiência" value={efficiency.label} valueColor={efficiency.color} />
-                                )}
+                                {efficiency && <FeeRow label="Eficiência" value={efficiency.label} valueColor={efficiency.color} />}
                               </tbody>
                             </table>
                           </div>
@@ -886,75 +747,45 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                       </div>
                     )
                   })}
+
+                  {/* Month footer totals */}
+                  <div style={{ borderTop: '1px solid var(--border-dim)', padding: '10px 20px', background: 'rgba(0,0,0,0.12)', display: 'flex', gap: '20px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--orange)', fontFamily: "'Courier New', monospace" }}>{fmt(monthTotal)}</span>
+                    {monthSats > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#F7931A', fontFamily: "'Courier New', monospace" }}>{monthSats.toLocaleString('pt-BR')} sats</span>
+                    )}
+                    {monthFees > 0 && (
+                      <span style={{ fontSize: '13px', fontWeight: 700, color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>taxa {fmt(monthFees)}</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )
           })}
 
-          {/* Pagination footer */}
+          {/* Pagination */}
           {totalItems > 0 && (
-            <div style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-              flexWrap: 'wrap', gap: '12px',
-              padding: '14px 20px',
-              background: 'var(--surface)', border: '1px solid var(--border)',
-              borderRadius: '10px', marginTop: '8px',
-            }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', padding: '14px 20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', marginTop: '8px' }}>
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
-                Mostrando{' '}
-                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{startIdx + 1}–{endIdx}</span>
-                {' '}de{' '}
-                <span style={{ color: 'var(--text)', fontWeight: 600 }}>{totalItems}</span>
-                {' '}registros
+                Mostrando <strong style={{ color: 'var(--text)' }}>{startIdx + 1}–{endIdx}</strong> de <strong style={{ color: 'var(--text)' }}>{totalItems}</strong> registros
               </span>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <PageBtn onClick={() => setCurrentPage(1)} disabled={safePage === 1} label="«" title="Primeira página" />
-                <PageBtn onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} label="‹" title="Página anterior" />
-                <span style={{ fontSize: '12px', color: 'var(--text)', padding: '0 8px', whiteSpace: 'nowrap' }}>
-                  Página <strong>{safePage}</strong> / <strong>{totalPages}</strong>
-                </span>
-                <PageBtn onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))} disabled={safePage === totalPages} label="›" title="Próxima página" />
-                <PageBtn onClick={() => setCurrentPage(totalPages)} disabled={safePage === totalPages} label="»" title="Última página" />
+                <PageBtn onClick={() => setCurrentPage(1)}             disabled={safePage === 1}          label="«" title="Primeira" />
+                <PageBtn onClick={() => setCurrentPage(p => p - 1)}    disabled={safePage === 1}          label="‹" title="Anterior" />
+                <span style={{ fontSize: '12px', color: 'var(--text)', padding: '0 8px', whiteSpace: 'nowrap' }}>Página <strong>{safePage}</strong> / <strong>{totalPages}</strong></span>
+                <PageBtn onClick={() => setCurrentPage(p => p + 1)}    disabled={safePage === totalPages} label="›" title="Próxima" />
+                <PageBtn onClick={() => setCurrentPage(totalPages)}     disabled={safePage === totalPages} label="»" title="Última" />
               </div>
-
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <form onSubmit={handleGoToPage} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Ir para</label>
-                  <input
-                    type="number" min={1} max={totalPages}
-                    value={goToPageInput}
-                    onChange={e => setGoToPageInput(e.target.value)}
-                    placeholder={String(safePage)}
-                    style={{
-                      width: '52px', padding: '4px 8px',
-                      background: 'var(--bg)', border: '1px solid var(--border)',
-                      borderRadius: '6px', color: 'var(--text)', fontSize: '12px', textAlign: 'center',
-                    }}
-                  />
-                  <button type="submit" style={{
-                    padding: '4px 10px', background: 'var(--surface3)',
-                    border: '1px solid var(--border)', borderRadius: '6px',
-                    color: 'var(--text-sec)', fontSize: '11px', cursor: 'pointer',
-                  }}>
-                    Ir
-                  </button>
+                  <input type="number" min={1} max={totalPages} value={goToPageInput} onChange={e => setGoToPageInput(e.target.value)} placeholder={String(safePage)} style={{ width: '52px', padding: '4px 8px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px', textAlign: 'center' }} />
+                  <button type="submit" style={{ padding: '4px 10px', background: 'var(--surface3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-sec)', fontSize: '11px', cursor: 'pointer' }}>Ir</button>
                 </form>
-
                 <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Por página</label>
-                  <select
-                    value={pageSize}
-                    onChange={e => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1) }}
-                    style={{
-                      padding: '4px 8px',
-                      background: 'var(--bg)', border: '1px solid var(--border)',
-                      borderRadius: '6px', color: 'var(--text)', fontSize: '12px', cursor: 'pointer',
-                    }}
-                  >
-                    {PAGE_SIZE_OPTIONS.map(n => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
+                  <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1) }} style={{ padding: '4px 8px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px', cursor: 'pointer' }}>
+                    {PAGE_SIZE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
                 </div>
               </div>
@@ -964,278 +795,158 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         </div>
       )}
 
+      {/* ══════════════════════════════════════════════════════════
+          Tab 3 — Evolução do Preço Médio
+      ══════════════════════════════════════════════════════════ */}
+      {activeTab === 'evolucao' && (
+        <div>
+          {priceEvolution.length > 0 ? (
+            <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+              <div style={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr style={{ borderBottom: '1px solid var(--border-dim)' }}>
+                      {(['Mês','Preço médio acumulado','BTC acumulado','Total investido'] as const).map(h => (
+                        <th key={h} style={{ padding: '10px 20px', fontSize: '10px', color: 'var(--text-muted)', fontWeight: 500, textAlign: h === 'Mês' ? 'left' : 'right', textTransform: 'uppercase', letterSpacing: '0.06em', whiteSpace: 'nowrap' }}>{h}</th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {priceEvolution.map((row, idx) => (
+                      <tr key={row.label} style={{ borderTop: idx > 0 ? '1px solid var(--border-dim)' : 'none' }}>
+                        <td style={{ padding: '10px 20px', fontSize: '13px', color: 'var(--text)', fontWeight: 500, whiteSpace: 'nowrap' }}>{row.label}</td>
+                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '13px', fontWeight: 700, color: '#22C55E', whiteSpace: 'nowrap' }}>
+                          {fmtK(row.cumAvg)}/BTC
+                          {row.trend && <span style={{ marginLeft: '6px', fontSize: '11px', color: row.trend === 'up' ? '#EF4444' : row.trend === 'down' ? '#22C55E' : 'var(--text-muted)' }}>{row.trend === 'up' ? '↑' : row.trend === 'down' ? '↓' : '—'}</span>}
+                        </td>
+                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: '#F7931A', whiteSpace: 'nowrap' }}>{fmtBTC(Math.round(row.cumBtc * 1e8))}</td>
+                        <td style={{ padding: '10px 20px', textAlign: 'right', fontFamily: "'Courier New', monospace", fontSize: '12px', color: 'var(--text-sec)', whiteSpace: 'nowrap' }}>{fmt(row.cumBrl)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : (
+            <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px' }}>Nenhum dado de preço disponível.</div>
+          )}
+        </div>
+      )}
+
     </div>
   )
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function EditContributionModal({
-  contribution,
-  onClose,
-  onSave,
-}: {
-  contribution: DcaContributionRow
-  onClose: () => void
-  onSave: (updated: DcaContributionRow) => void
+function KPICard({ accent, label, value, valueColor, sub1, sub1Color, sub2, tooltip }: {
+  accent: string; label: string; value: string; valueColor?: string
+  sub1?: string; sub1Color?: string; sub2?: string; tooltip?: string
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '20px 22px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>{label}</span>
+        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+      </div>
+      <div style={{ fontSize: '22px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace", marginBottom: sub1 ? '6px' : '0', lineHeight: 1.2 }}>{value}</div>
+      {sub1 && <div style={{ fontSize: '12px', color: sub1Color ?? 'var(--text-muted)', marginTop: '4px' }}>{sub1}</div>}
+      {sub2 && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{sub2}</div>}
+    </div>
+  )
+}
+
+function CostCard({ accent, label, value, valueColor, hint, tooltip }: {
+  accent: string; label: string; value: string; valueColor?: string; hint?: string; tooltip?: string
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '18px 20px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+      </div>
+      <div style={{ fontSize: '20px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace", marginBottom: hint ? '4px' : '0' }}>{value}</div>
+      {hint && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{hint}</div>}
+    </div>
+  )
+}
+
+function EditContributionModal({ contribution, onClose, onSave }: {
+  contribution: DcaContributionRow; onClose: () => void; onSave: (u: DcaContributionRow) => void
 }) {
   const fee       = extractFee(contribution.notes)
   const baseNotes = contribution.notes?.split(' · taxa')[0] ?? ''
 
-  const [amountMask, setAmountMask]         = useState(
-    contribution.amount ? applyBRLMask(String(Math.round(contribution.amount * 100))) : ''
-  )
-  const [date, setDate]                     = useState(contribution.contribution_date)
-  const [type, setType]                     = useState<ContributionType>(contribution.contribution_type)
-  const [btcInput, setBtcInput]             = useState(
-    contribution.sats_purchased ? (contribution.sats_purchased / 1e8).toFixed(8).replace(/\.?0+$/, '') : ''
-  )
-  const [btcPriceMask, setBtcPriceMask]     = useState(
-    contribution.btc_price_brl ? applyBRLMask(String(Math.round(contribution.btc_price_brl * 100))) : ''
-  )
-  const [outrosCustosMask, setOutrosCustosMask] = useState(
-    fee ? applyBRLMask(String(Math.round(fee * 100))) : ''
-  )
-  const [notes, setNotes]                   = useState(baseNotes)
-  const [saving, setSaving]                 = useState(false)
-  const [error, setError]                   = useState<string | null>(null)
+  const [amountMask, setAmountMask]             = useState(contribution.amount ? applyBRLMask(String(Math.round(contribution.amount * 100))) : '')
+  const [date, setDate]                         = useState(contribution.contribution_date)
+  const [type, setType]                         = useState<ContributionType>(contribution.contribution_type)
+  const [btcInput, setBtcInput]                 = useState(contribution.sats_purchased ? (contribution.sats_purchased / 1e8).toFixed(8).replace(/\.?0+$/, '') : '')
+  const [btcPriceMask, setBtcPriceMask]         = useState(contribution.btc_price_brl ? applyBRLMask(String(Math.round(contribution.btc_price_brl * 100))) : '')
+  const [outrosCustosMask, setOutrosCustosMask] = useState(fee ? applyBRLMask(String(Math.round(fee * 100))) : '')
+  const [notes, setNotes]                       = useState(baseNotes)
+  const [saving, setSaving]                     = useState(false)
+  const [error, setError]                       = useState<string | null>(null)
 
   const parsedAmount       = parseBRLMask(amountMask) ?? 0
   const parsedSats         = btcInput ? Math.round(parseFloat(btcInput.replace(',', '.')) * 1e8) : null
   const parsedBtcPrice     = parseBRLMask(btcPriceMask) ?? 0
   const parsedOutrosCustos = parseBRLMask(outrosCustosMask) ?? 0
-  const calcEffective      = parsedSats && parsedSats > 0 && parsedAmount > 0
-    ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
-    : null
+  const calcEffective      = parsedSats && parsedSats > 0 && parsedAmount > 0 ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8) : null
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!parsedAmount || parsedAmount <= 0) { setError('Informe o valor do aporte'); return }
-
-    setSaving(true)
-    setError(null)
-
+    setSaving(true); setError(null)
     const notesWithFee = parsedOutrosCustos > 0
-      ? (notes.trim() ? notes.trim() + ` · taxa R$${parsedOutrosCustos.toFixed(2)}` : `taxa R$${parsedOutrosCustos.toFixed(2)}`)
+      ? (notes.trim() ? `${notes.trim()} · taxa R$${parsedOutrosCustos.toFixed(2)}` : `taxa R$${parsedOutrosCustos.toFixed(2)}`)
       : (notes.trim() || null)
-
-    const patch: Record<string, unknown> = {
-      amount: parsedAmount,
-      contribution_date: date,
-      contribution_type: type,
-      notes: notesWithFee,
-    }
-
+    const patch: Record<string, unknown> = { amount: parsedAmount, contribution_date: date, contribution_type: type, notes: notesWithFee }
     if (parsedSats && parsedSats > 0) {
       patch.sats_purchased = parsedSats
-      if (parsedBtcPrice > 0) {
-        patch.btc_price_brl     = parsedBtcPrice
-        patch.effective_price_brl = calcEffective
-      }
+      if (parsedBtcPrice > 0) { patch.btc_price_brl = parsedBtcPrice; patch.effective_price_brl = calcEffective }
     } else {
-      patch.sats_purchased      = null
-      patch.btc_price_brl       = null
-      patch.effective_price_brl = null
+      patch.sats_purchased = null; patch.btc_price_brl = null; patch.effective_price_brl = null
     }
-
     try {
-      const res = await fetch(`/api/dca/contributions/${contribution.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(patch),
-      })
-      if (!res.ok) {
-        const data = await res.json() as { error?: string }
-        throw new Error(data.error ?? 'Erro ao salvar')
-      }
+      const res = await fetch(`/api/dca/contributions/${contribution.id}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(patch) })
+      if (!res.ok) { const d = await res.json() as { error?: string }; throw new Error(d.error ?? 'Erro ao salvar') }
       const { contribution: updated } = await res.json() as { contribution: DcaContributionRow }
       onSave(updated)
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Erro ao salvar')
-    } finally {
-      setSaving(false)
-    }
+    } catch (err) { setError(err instanceof Error ? err.message : 'Erro ao salvar') }
+    finally { setSaving(false) }
   }
 
-  const inputStyle: React.CSSProperties = {
-    width: '100%', padding: '9px 12px',
-    background: 'var(--bg)', border: '1px solid var(--border)',
-    borderRadius: '8px', color: 'var(--text)', fontSize: '14px',
-    boxSizing: 'border-box',
-  }
-  const labelStyle: React.CSSProperties = {
-    display: 'block', fontSize: '11px', fontWeight: 600,
-    color: 'var(--text-muted)', textTransform: 'uppercase',
-    letterSpacing: '0.07em', marginBottom: '6px',
-  }
+  const inp: React.CSSProperties = { width: '100%', padding: '9px 12px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '14px', boxSizing: 'border-box' }
+  const lbl: React.CSSProperties = { display: 'block', fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px' }
 
   return createPortal(
-    <div
-      style={{
-        position: 'fixed', inset: 0, zIndex: 1000,
-        background: 'rgba(0,0,0,0.65)',
-        display: 'flex', alignItems: 'center', justifyContent: 'center',
-        padding: '16px',
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          background: 'var(--surface)', border: '1px solid var(--border)',
-          borderRadius: '14px', padding: '24px',
-          width: '100%', maxWidth: '500px',
-          maxHeight: '90vh', overflowY: 'auto',
-        }}
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Header */}
+    <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={onClose}>
+      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>Editar aporte</h3>
-          <button
-            onClick={onClose}
-            style={{
-              background: 'none', border: 'none', color: 'var(--text-muted)',
-              fontSize: '18px', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px',
-            }}
-          >
-            ✕
-          </button>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '2px 6px' }}>✕</button>
         </div>
-
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            {/* Amount */}
-            <div>
-              <label style={labelStyle}>Valor *</label>
-              <input
-                type="text" inputMode="numeric"
-                value={amountMask}
-                onChange={e => setAmountMask(applyBRLMask(e.target.value))}
-                placeholder="R$ 0,00"
-                style={inputStyle}
-              />
-            </div>
-
-            {/* Date */}
-            <div>
-              <label style={labelStyle}>Data *</label>
-              <input
-                type="date" value={date}
-                onChange={e => setDate(e.target.value)}
-                style={inputStyle}
-              />
-            </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div><label style={lbl}>Valor *</label><input type="text" inputMode="numeric" value={amountMask} onChange={e => setAmountMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
+            <div><label style={lbl}>Data *</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} /></div>
           </div>
-
-          {/* Type */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Tipo</label>
-            <select
-              value={type}
-              onChange={e => setType(e.target.value as ContributionType)}
-              style={{ ...inputStyle, cursor: 'pointer' }}
-            >
-              {(Object.entries(TYPE_META) as [ContributionType, { label: string }][]).map(([k, v]) => (
-                <option key={k} value={k}>{v.label}</option>
-              ))}
-            </select>
+          <div style={{ marginBottom: '14px' }}><label style={lbl}>Tipo</label><select value={type} onChange={e => setType(e.target.value as ContributionType)} style={{ ...inp, cursor: 'pointer' }}>{(Object.entries(TYPE_META) as [ContributionType, { label: string }][]).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div><label style={lbl}>BTC comprado</label><input type="text" inputMode="decimal" value={btcInput} onChange={e => setBtcInput(e.target.value)} placeholder="0.00000000" style={inp} /></div>
+            <div><label style={lbl}>Cotação do mercado</label><input type="text" inputMode="numeric" value={btcPriceMask} onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
-            {/* BTC comprado */}
-            <div>
-              <label style={labelStyle}>BTC comprado</label>
-              <input
-                type="text" inputMode="decimal"
-                value={btcInput}
-                onChange={e => setBtcInput(e.target.value)}
-                placeholder="0.00000000"
-                style={inputStyle}
-              />
-            </div>
-
-            {/* Cotação */}
-            <div>
-              <label style={labelStyle}>Cotação do mercado</label>
-              <input
-                type="text" inputMode="numeric"
-                value={btcPriceMask}
-                onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))}
-                placeholder="R$ 0,00"
-                style={inputStyle}
-              />
-            </div>
-          </div>
-
-          {/* Outros custos */}
-          <div style={{ marginBottom: '16px' }}>
-            <label style={labelStyle}>Outros custos (opcional)</label>
-            <input
-              type="text" inputMode="numeric"
-              value={outrosCustosMask}
-              onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))}
-              placeholder="R$ 0,00"
-              style={inputStyle}
-            />
-          </div>
-
-          {/* Effective price preview */}
+          <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos (opcional)</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           {calcEffective !== null && (
-            <div style={{
-              padding: '12px 16px', marginBottom: '16px',
-              background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)',
-              borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)',
-            }}>
-              Preço efetivo calculado:{' '}
-              <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>
-                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(calcEffective)}/BTC
-              </strong>
+            <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)' }}>
+              Preço efetivo: <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>{fmtBRL0(calcEffective)}/BTC</strong>
             </div>
           )}
-
-          {/* Notes */}
-          <div style={{ marginBottom: '20px' }}>
-            <label style={labelStyle}>Observações</label>
-            <textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="Notas opcionais…"
-              rows={2}
-              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
-            />
-          </div>
-
-          {error && (
-            <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '16px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
-              {error}
-            </div>
-          )}
-
+          <div style={{ marginBottom: '20px' }}><label style={lbl}>Observações</label><textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas opcionais…" rows={2} style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} /></div>
+          {error && <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '14px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>{error}</div>}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button
-              type="button"
-              onClick={onClose}
-              style={{
-                padding: '9px 20px', background: 'transparent',
-                border: '1px solid var(--border)', borderRadius: '8px',
-                color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer',
-              }}
-            >
-              Cancelar
-            </button>
-            <button
-              type="submit"
-              disabled={saving}
-              style={{
-                padding: '9px 20px', background: '#6366F1', border: '1px solid #6366F1',
-                borderRadius: '8px', color: '#fff',
-                fontSize: '13px', fontWeight: 600,
-                cursor: saving ? 'not-allowed' : 'pointer',
-                opacity: saving ? 0.7 : 1,
-              }}
-            >
-              {saving ? 'Salvando…' : 'Salvar alterações'}
-            </button>
+            <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
+            <button type="submit" disabled={saving} style={{ padding: '9px 20px', background: '#6366F1', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Salvando…' : 'Salvar alterações'}</button>
           </div>
         </form>
       </div>
@@ -1246,22 +957,7 @@ function EditContributionModal({
 
 function PageBtn({ onClick, disabled, label, title }: { onClick: () => void; disabled: boolean; label: string; title?: string }) {
   return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      title={title}
-      style={{
-        padding: '4px 10px', minWidth: '32px',
-        background: disabled ? 'transparent' : 'var(--surface3)',
-        border: '1px solid var(--border)',
-        borderRadius: '6px',
-        color: disabled ? 'var(--text-muted)' : 'var(--text)',
-        fontSize: '14px', cursor: disabled ? 'not-allowed' : 'pointer',
-        opacity: disabled ? 0.4 : 1,
-      }}
-    >
-      {label}
-    </button>
+    <button onClick={onClick} disabled={disabled} title={title} style={{ padding: '4px 10px', minWidth: '32px', background: disabled ? 'transparent' : 'var(--surface3)', border: '1px solid var(--border)', borderRadius: '6px', color: disabled ? 'var(--text-muted)' : 'var(--text)', fontSize: '14px', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}>{label}</button>
   )
 }
 
@@ -1285,25 +981,12 @@ function FeeRow({ label, value, valueColor }: { label: string; value: string; va
 
 function FeeMetric({ label, value, color, hint, tooltip }: { label: string; value: string; color?: string; hint?: string; tooltip?: string }) {
   return (
-    <div style={{ padding: '14px 20px', flex: '1 1 140px', borderRight: '1px solid var(--border-dim)' }}>
+    <div style={{ padding: '12px 18px', flex: '1 1 130px', borderRight: '1px solid var(--border-dim)' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
         <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>{label}</span>
         {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
       </div>
-      <div style={{ fontSize: '16px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
-      {hint && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>{hint}</div>}
-    </div>
-  )
-}
-
-function SummaryItem({ label, value, color, hint, tooltip }: { label: string; value: string; color?: string; hint?: string; tooltip?: string }) {
-  return (
-    <div>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px' }}>
-        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
-        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
-      </div>
-      <div style={{ fontSize: '18px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
+      <div style={{ fontSize: '15px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
       {hint && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{hint}</div>}
     </div>
   )
