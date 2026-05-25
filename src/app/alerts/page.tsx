@@ -22,7 +22,7 @@ export default async function AlertsPage() {
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
       <AppNav userEmail={user.email ?? ''} />
 
-      <main style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 20px' }}>
+      <main style={{ padding: '32px 24px' }}>
 
         {/* Page header */}
         <div style={{ marginBottom: '40px' }}>

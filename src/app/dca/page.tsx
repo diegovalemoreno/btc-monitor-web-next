@@ -62,7 +62,7 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
       <AppNav userEmail={user.email ?? ''} />
 
-      <main style={{ maxWidth: '960px', margin: '0 auto', padding: '40px 24px' }}>
+      <main style={{ padding: '32px 24px' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '32px' }}>

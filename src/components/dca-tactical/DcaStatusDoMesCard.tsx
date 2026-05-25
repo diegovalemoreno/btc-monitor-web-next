@@ -77,7 +77,7 @@ export default function DcaStatusDoMesCard({
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const today = new Date().toISOString().slice(0, 10)
-  const [amount,        setAmount]       = useState('')
+  const [amountMask,    setAmountMask]   = useState('')
   const [date,          setDate]         = useState(today)
   const [type,          setType]         = useState<ContributionType>('TACTICAL')
   const [notes,         setNotes]        = useState('')
@@ -92,7 +92,7 @@ export default function DcaStatusDoMesCard({
 
   const btcFloat   = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
   const parsedSats = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
-  const parsedAmount      = parseFloat(amount) || 0
+  const parsedAmount      = parseBRLMask(amountMask) ?? 0
   const parsedOutrosCustos = parseBRLMask(outrosCustos) ?? 0
   const calculatedEffectivePrice = parsedSats && parsedSats > 0 && parsedAmount > 0
     ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
@@ -100,7 +100,7 @@ export default function DcaStatusDoMesCard({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const parsed = parseFloat(amount)
+    const parsed = parseBRLMask(amountMask)
     if (!parsed || parsed <= 0) { setFormError('Valor inválido'); return }
     if (!parsedSats || parsedSats <= 0) { setFormError('Informe a quantidade de BTC comprado'); return }
     if (!parseBRLMask(btcPriceMask)) { setFormError('Informe a cotação do mercado'); return }
@@ -123,7 +123,7 @@ export default function DcaStatusDoMesCard({
         btc_price_brl:       parsedMarketPrice,
         effective_price_brl: calculatedEffectivePrice,
       })
-      setAmount('')
+      setAmountMask('')
       setDate(today)
       setType('TACTICAL')
       setNotes('')
@@ -272,13 +272,11 @@ export default function DcaStatusDoMesCard({
             <div>
               <div style={labelStyle}>Valor (R$)</div>
               <input
-                type="number"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                placeholder="500"
-                min="0.01"
-                step="0.01"
-                required
+                type="text"
+                inputMode="numeric"
+                value={amountMask}
+                onChange={e => setAmountMask(applyBRLMask(e.target.value))}
+                placeholder="R$ 0,00"
                 style={inputStyle}
               />
             </div>
@@ -380,7 +378,7 @@ export default function DcaStatusDoMesCard({
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Custo total: </span>
                   <span style={{ fontWeight: 700, color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(amount) + parsedOutrosCustos)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parsedAmount + parsedOutrosCustos)}
                   </span>
                 </div>
               )}
