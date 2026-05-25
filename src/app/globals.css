@@ -155,19 +155,20 @@ html, body {
 
 @media (max-width: 640px) {
   .contrib-row {
-    flex-wrap:   wrap;
-    gap:         4px 8px;
-    padding:     12px 14px;
+    display:               grid;
+    grid-template-areas:   "date badge amount expand delete"
+                           "notes notes notes notes notes";
+    grid-template-columns: auto 1fr auto auto auto;
+    grid-template-rows:    auto auto;
+    gap:       4px 8px;
+    padding:   12px 14px;
     align-items: center;
   }
-  /* Line 1: date — pushes badge/amount/actions to the right */
-  .contrib-date   { flex: 0 0 auto; order: 1; min-width: auto !important; }
-  .contrib-badge  { flex: 0 0 auto; order: 2; margin-left: auto; font-size: 9px !important; }
-  .contrib-amount { flex: 0 0 auto; order: 3; }
-  .contrib-expand { flex: 0 0 auto; order: 4; }
-  .contrib-delete { flex: 0 0 auto; order: 5; }
-  /* Line 2: notes spans full width */
-  .contrib-notes  { order: 10; flex: 0 0 100%; margin-top: 2px; }
-  /* BTC column hidden on mobile */
+  .contrib-date   { grid-area: date;   min-width: auto !important; }
+  .contrib-badge  { grid-area: badge;  justify-self: end; font-size: 9px !important; }
+  .contrib-amount { grid-area: amount; }
+  .contrib-expand { grid-area: expand; }
+  .contrib-delete { grid-area: delete; }
+  .contrib-notes  { grid-area: notes;  overflow: hidden; }
   .contrib-btc    { display: none !important; }
 }
