@@ -81,34 +81,47 @@ export default function DcaStatusDoMesCard({
   const [date,          setDate]         = useState(today)
   const [type,          setType]         = useState<ContributionType>('TACTICAL')
   const [notes,         setNotes]        = useState('')
-  const [btcAmount,         setBtcAmount]        = useState('')
-  const [btcPriceMask,      setBtcPriceMask]      = useState('')   // cotação do mercado
-  const [effectivePriceMask, setEffectivePriceMask] = useState('')  // preço efetivo (com spread/taxa)
+  const [btcAmount,     setBtcAmount]    = useState('')
+  const [btcPriceMask,  setBtcPriceMask] = useState('')   // cotação do mercado
+  const [outrosCustos,  setOutrosCustos] = useState('')   // outros custos / taxas
 
   const status = getMonthStatus(usedThisMonth, tacticalPool)
   const meta   = STATUS_META[status]
   const remaining = Math.max(0, tacticalPool - usedThisMonth)
   const pctUsed   = tacticalPool > 0 ? Math.min(100, (usedThisMonth / tacticalPool) * 100) : 0
 
+  const btcFloat   = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
+  const parsedSats = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
+  const parsedAmount      = parseFloat(amount) || 0
+  const parsedOutrosCustos = parseBRLMask(outrosCustos) ?? 0
+  const calculatedEffectivePrice = parsedSats && parsedSats > 0 && parsedAmount > 0
+    ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
+    : null
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     const parsed = parseFloat(amount)
     if (!parsed || parsed <= 0) { setFormError('Valor inválido'); return }
+    if (!parsedSats || parsedSats <= 0) { setFormError('Informe a quantidade de BTC comprado'); return }
+    if (!parseBRLMask(btcPriceMask)) { setFormError('Informe a cotação do mercado'); return }
     setSubmitting(true)
     setFormError(null)
     try {
-      const btcFloat    = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
-      const parsedSats  = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
-      const parsedMarketPrice    = parseBRLMask(btcPriceMask)
-      const parsedEffectivePrice = parseBRLMask(effectivePriceMask)
+      const parsedMarketPrice = parseBRLMask(btcPriceMask)
+      // Embed outros custos in notes using existing "taxa" convention
+      let finalNotes = notes.trim() || null
+      if (parsedOutrosCustos > 0) {
+        const taxaStr = `taxa R$${parsedOutrosCustos.toFixed(2)}`
+        finalNotes = finalNotes ? `${finalNotes} · ${taxaStr}` : taxaStr
+      }
       await onRegister({
         amount:              parsed,
         contribution_date:   date,
         contribution_type:   type,
-        notes:               notes.trim() || null,
+        notes:               finalNotes,
         sats_purchased:      parsedSats,
         btc_price_brl:       parsedMarketPrice,
-        effective_price_brl: parsedEffectivePrice,
+        effective_price_brl: calculatedEffectivePrice,
       })
       setAmount('')
       setDate(today)
@@ -116,7 +129,7 @@ export default function DcaStatusDoMesCard({
       setNotes('')
       setBtcAmount('')
       setBtcPriceMask('')
-      setEffectivePriceMask('')
+      setOutrosCustos('')
       setShowForm(false)
     } catch (err) {
       setFormError(err instanceof Error ? err.message : 'Erro ao registrar')
@@ -300,7 +313,7 @@ export default function DcaStatusDoMesCard({
           {/* BTC + prices */}
           <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
             <div>
-              <div style={labelStyle}>BTC comprado (opcional)</div>
+              <div style={labelStyle}>BTC comprado *</div>
               <input
                 type="text"
                 inputMode="decimal"
@@ -309,14 +322,14 @@ export default function DcaStatusDoMesCard({
                 placeholder="0.00244283"
                 style={inputStyle}
               />
-              {btcAmount && parseFloat(btcAmount.replace(',', '.')) > 0 && (
+              {btcFloat && btcFloat > 0 && (
                 <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
-                  = {Math.round(parseFloat(btcAmount.replace(',', '.')) * 1e8).toLocaleString('pt-BR')} sats
+                  = {Math.round(btcFloat * 1e8).toLocaleString('pt-BR')} sats
                 </div>
               )}
             </div>
             <div>
-              <div style={labelStyle}>Cotação do mercado (opcional)</div>
+              <div style={labelStyle}>Cotação do mercado *</div>
               <input
                 type="text"
                 inputMode="numeric"
@@ -328,18 +341,51 @@ export default function DcaStatusDoMesCard({
               <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Preço de referência da corretora</div>
             </div>
             <div>
-              <div style={labelStyle}>Preço efetivo (opcional)</div>
+              <div style={labelStyle}>Outros custos (opcional)</div>
               <input
                 type="text"
                 inputMode="numeric"
-                value={effectivePriceMask}
-                onChange={e => setEffectivePriceMask(applyBRLMask(e.target.value))}
-                placeholder="R$ 387.900,00"
+                value={outrosCustos}
+                onChange={e => setOutrosCustos(applyBRLMask(e.target.value))}
+                placeholder="R$ 0,00"
                 style={inputStyle}
               />
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Com spread e taxas incluídos</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Taxas, spread e outros gastos</div>
             </div>
           </div>
+
+          {/* Calculated effective price preview */}
+          {calculatedEffectivePrice !== null && (
+            <div style={{
+              display: 'flex', gap: '20px', flexWrap: 'wrap',
+              padding: '10px 14px', marginBottom: '14px',
+              background: 'var(--surface)', border: '1px solid var(--border-dim)',
+              borderRadius: '8px', fontSize: '11px',
+            }}>
+              <div>
+                <span style={{ color: 'var(--text-muted)' }}>Preço efetivo calculado: </span>
+                <span style={{ fontWeight: 700, color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>
+                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(calculatedEffectivePrice)}/BTC
+                </span>
+              </div>
+              {parseBRLMask(btcPriceMask) && (
+                <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Diferença vs cotação: </span>
+                  <span style={{ fontWeight: 700, color: '#F97316', fontFamily: "'Courier New', monospace" }}>
+                    +{(((calculatedEffectivePrice - parseBRLMask(btcPriceMask)!) / parseBRLMask(btcPriceMask)!) * 100).toFixed(2).replace('.', ',')}%
+                  </span>
+                </div>
+              )}
+              {parsedOutrosCustos > 0 && (
+                <div>
+                  <span style={{ color: 'var(--text-muted)' }}>Custo total: </span>
+                  <span style={{ fontWeight: 700, color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(amount) + parsedOutrosCustos)}
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Notes */}
           <div style={{ marginBottom: '16px' }}>
