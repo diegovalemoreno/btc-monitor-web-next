@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
+import Tooltip from '@/components/shared/Tooltip'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -254,15 +255,32 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
         padding: '16px 24px', background: 'var(--surface)',
         border: '1px solid var(--border)', borderRadius: '12px', marginBottom: '24px',
       }}>
-        <SummaryItem label="Total de aportes" value={String(contributions.length)} />
-        <SummaryItem label="Volume total" value={fmt(totalAmount)} color="var(--orange)" />
-        {totalSats > 0 && <SummaryItem label="Total BTC" value={fmtBTC(totalSats)} color="#F7931A" />}
+        <SummaryItem
+          label="Total de aportes"
+          value={String(contributions.length)}
+          tooltip="Quantidade total de aportes registrados no histórico, incluindo todos os tipos (Tático, Estrutural e Manual). Aportes deletados são ocultados."
+        />
+        <SummaryItem
+          label="Volume total"
+          value={fmt(totalAmount)}
+          color="var(--orange)"
+          tooltip="Soma de todos os valores aportados em reais ao longo de todo o histórico, independente do período ou filtro selecionado."
+        />
+        {totalSats > 0 && (
+          <SummaryItem
+            label="Total BTC"
+            value={fmtBTC(totalSats)}
+            color="#F7931A"
+            tooltip="Total de Bitcoin acumulado em todos os aportes de compra, expresso em BTC.\n\n1 BTC = 100.000.000 satoshis (sats). Vendas são excluídas deste cálculo."
+          />
+        )}
         {avgPriceBrl !== null && (
           <SummaryItem
             label="Preço médio acumulado"
             value={fmtBRL0(avgPriceBrl) + '/BTC'}
             color="#22C55E"
             hint={`Total R$ ÷ total BTC (${withSats.length} aportes)`}
+            tooltip={`Custo médio ponderado de aquisição do Bitcoin.\n\nCálculo: Total investido (R$) ÷ Total BTC acumulado\n\nEste é o preço de equilíbrio — se o BTC estiver acima dele, seu portfólio está no lucro. Baseado em ${withSats.length} aportes com BTC registrado.`}
           />
         )}
         {btcPriceBrl !== null && (
@@ -270,6 +288,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             label="Preço atual BTC"
             value={fmtBRL0(btcPriceBrl) + '/BTC'}
             color="#F7931A"
+            tooltip="Cotação atual do Bitcoin em reais, atualizada a cada 2 minutos.\n\nFonte: CoinGecko (com fallback para Mercado Bitcoin)."
           />
         )}
         {priceDiffPct !== null && priceDiffAbs !== null && (
@@ -278,6 +297,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             value={(priceDiffPct >= 0 ? '+' : '') + priceDiffPct.toFixed(2).replace('.', ',') + '%'}
             color={priceDiffPct >= 0 ? '#22C55E' : '#EF4444'}
             hint={(priceDiffAbs >= 0 ? '+' : '') + fmtBRL0(priceDiffAbs) + '/BTC'}
+            tooltip={`Diferença entre o preço atual do BTC e seu preço médio acumulado.\n\nCálculo: (Preço atual − Preço médio) ÷ Preço médio × 100\n\n✅ Positivo (verde): BTC está acima do seu custo médio — portfólio valorizado.\n🔴 Negativo (vermelho): BTC abaixo do custo médio — portfólio desvalorizado.`}
           />
         )}
         {rentabilidade !== null && (
@@ -286,6 +306,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             value={(rentabilidade >= 0 ? '+' : '') + rentabilidade.toFixed(2).replace('.', ',') + '%'}
             color={rentabilidade >= 0 ? '#22C55E' : '#EF4444'}
             hint={currentBtcValue !== null ? 'Valor atual: ' + fmt(currentBtcValue) : undefined}
+            tooltip={`Retorno não realizado do portfólio completo ao preço atual.\n\nCálculo: (Valor atual em BTC − Total investido) ÷ Total investido × 100\n\nValor atual = Total de sats × Preço atual do BTC em R$.\n\nEste valor muda conforme o preço do BTC oscila e não considera impostos ou taxas de saque.`}
           />
         )}
       </div>
@@ -766,10 +787,13 @@ function FeeMetric({ label, value, color, hint }: { label: string; value: string
   )
 }
 
-function SummaryItem({ label, value, color, hint }: { label: string; value: string; color?: string; hint?: string }) {
+function SummaryItem({ label, value, color, hint, tooltip }: { label: string; value: string; color?: string; hint?: string; tooltip?: string }) {
   return (
     <div>
-      <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '3px' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '3px' }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
+        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+      </div>
       <div style={{ fontSize: '18px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
       {hint && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{hint}</div>}
     </div>
