@@ -156,9 +156,9 @@ html, body {
 @media (max-width: 640px) {
   .contrib-row {
     display:               grid;
-    grid-template-areas:   "date badge amount expand delete"
-                           "notes notes notes notes notes";
-    grid-template-columns: auto 1fr auto auto auto;
+    grid-template-areas:   "date badge amount expand edit delete"
+                           "notes notes notes notes notes notes";
+    grid-template-columns: auto 1fr auto auto auto auto;
     grid-template-rows:    auto auto;
     gap:       4px 8px;
     padding:   12px 14px;
@@ -168,6 +168,7 @@ html, body {
   .contrib-badge  { grid-area: badge;  justify-self: end; font-size: 9px !important; }
   .contrib-amount { grid-area: amount; }
   .contrib-expand { grid-area: expand; }
+  .contrib-edit   { grid-area: edit; }
   .contrib-delete { grid-area: delete; }
   .contrib-notes  { grid-area: notes;  overflow: hidden; }
   .contrib-btc    { display: none !important; }

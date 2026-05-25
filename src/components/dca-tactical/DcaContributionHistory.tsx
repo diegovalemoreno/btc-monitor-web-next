@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useEffect, useMemo, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
 import Tooltip from '@/components/shared/Tooltip'
+
+// ─── Formatters ───────────────────────────────────────────────────────────────
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -23,6 +26,22 @@ const fmtK = (n: number) => {
   return fmtBRL0(n)
 }
 
+function applyBRLMask(raw: string): string {
+  const digits = raw.replace(/\D/g, '')
+  if (!digits) return ''
+  const num = parseInt(digits, 10) / 100
+  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num)
+}
+
+function parseBRLMask(masked: string): number | null {
+  const digits = masked.replace(/\D/g, '')
+  if (!digits) return null
+  const num = parseInt(digits, 10) / 100
+  return num > 0 ? num : null
+}
+
+// ─── Constants ────────────────────────────────────────────────────────────────
+
 const TYPE_META: Record<ContributionType, { label: string; color: string }> = {
   TACTICAL:       { label: 'Tático',        color: '#00BCD4' },
   STRUCTURAL_DCA: { label: 'DCA Estrutural', color: 'var(--orange)' },
@@ -36,36 +55,44 @@ const STATE_LABEL: Record<string, string> = {
   AGGRESSIVE: 'Agressivo',
 }
 
-type PeriodFilter = 'all' | 'last30' | 'thisWeek' | 'thisMonth' | 'lastMonth' | 'custom'
+const MONTHS_PT      = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
+const MONTHS_PT_FULL = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro']
 
-const PERIOD_LABELS: Record<PeriodFilter, string> = {
-  all:       'Todos',
-  last30:    'Últimos 30 dias',
-  thisWeek:  'Esta semana',
-  thisMonth: 'Este mês',
-  lastMonth: 'Mês anterior',
-  custom:    'Personalizado',
-}
+// ─── Period filter ────────────────────────────────────────────────────────────
 
-function getPeriodRange(period: PeriodFilter, customFrom: string, customTo: string): { from: Date | null; to: Date | null } {
+type PeriodPreset = 'thisMonth' | 'last30' | 'last12months' | 'all' | 'custom'
+
+const PRESETS: { id: PeriodPreset; label: string }[] = [
+  { id: 'thisMonth',    label: 'Este mês' },
+  { id: 'last30',       label: 'Últimos 30 dias' },
+  { id: 'last12months', label: 'Últimos 12 meses' },
+  { id: 'all',          label: 'Todo o período' },
+  { id: 'custom',       label: 'Período personalizado' },
+]
+
+function getPeriodRange(
+  preset: PeriodPreset,
+  viewMonth: Date,
+  customFrom: string,
+  customTo: string,
+): { from: Date | null; to: Date | null } {
   const now   = new Date()
   const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  if (period === 'last30') {
+
+  if (preset === 'thisMonth') {
+    return {
+      from: new Date(viewMonth.getFullYear(), viewMonth.getMonth(), 1),
+      to:   new Date(viewMonth.getFullYear(), viewMonth.getMonth() + 1, 0),
+    }
+  }
+  if (preset === 'last30') {
     const from = new Date(today); from.setDate(from.getDate() - 29)
     return { from, to: null }
   }
-  if (period === 'thisWeek') {
-    const from = new Date(today); from.setDate(from.getDate() - from.getDay())
-    return { from, to: null }
+  if (preset === 'last12months') {
+    return { from: new Date(today.getFullYear(), today.getMonth() - 11, 1), to: null }
   }
-  if (period === 'thisMonth') return { from: new Date(today.getFullYear(), today.getMonth(), 1), to: null }
-  if (period === 'lastMonth') {
-    return {
-      from: new Date(today.getFullYear(), today.getMonth() - 1, 1),
-      to:   new Date(today.getFullYear(), today.getMonth(), 0),
-    }
-  }
-  if (period === 'custom') {
+  if (preset === 'custom') {
     return {
       from: customFrom ? new Date(customFrom + 'T00:00:00') : null,
       to:   customTo   ? new Date(customTo   + 'T00:00:00') : null,
@@ -73,6 +100,8 @@ function getPeriodRange(period: PeriodFilter, customFrom: string, customTo: stri
   }
   return { from: null, to: null }
 }
+
+// ─── Utils ────────────────────────────────────────────────────────────────────
 
 function extractFee(notes: string | null): number | null {
   if (!notes) return null
@@ -90,7 +119,7 @@ function efficiencyLabel(diffPct: number): { label: string; color: string } {
 }
 
 interface PriceEvolutionRow {
-  label:  string; cumAvg: number; cumBtc: number; cumBrl: number; trend: 'up' | 'down' | 'flat' | null
+  label: string; cumAvg: number; cumBtc: number; cumBrl: number; trend: 'up' | 'down' | 'flat' | null
 }
 
 function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutionRow[] {
@@ -107,18 +136,19 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
   for (const ym of ymSet) {
     const [y, m] = ym.split('-').map(Number)
     const endOfMonth = new Date(y, m, 0)
-    const cumC   = withSats.filter(c => new Date(c.contribution_date + 'T00:00:00') <= endOfMonth)
-    const cumBrl = cumC.reduce((s, c) => s + c.amount, 0)
+    const cumC    = withSats.filter(c => new Date(c.contribution_date + 'T00:00:00') <= endOfMonth)
+    const cumBrl  = cumC.reduce((s, c) => s + c.amount, 0)
     const cumSats = cumC.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
     const cumBtc  = cumSats / 1e8
     const cumAvg  = cumBtc > 0 ? cumBrl / cumBtc : 0
     const trend: PriceEvolutionRow['trend'] = prevAvg === null ? null : cumAvg > prevAvg + 100 ? 'up' : cumAvg < prevAvg - 100 ? 'down' : 'flat'
-    const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
     rows.push({ label: `${MONTHS_PT[m - 1]}/${String(y).slice(2)}`, cumAvg, cumBtc, cumBrl, trend })
     prevAvg = cumAvg
   }
   return rows.reverse()
 }
+
+// ─── Types ────────────────────────────────────────────────────────────────────
 
 type ActiveTab = 'historico' | 'evolucao'
 
@@ -127,23 +157,37 @@ type PageSize = typeof PAGE_SIZE_OPTIONS[number]
 
 interface Props { initialContributions: DcaContributionRow[] }
 
+// ─── Main component ───────────────────────────────────────────────────────────
+
 export default function DcaContributionHistory({ initialContributions }: Props) {
-  const [contributions, setContributions] = useState<DcaContributionRow[]>(initialContributions)
-  const [deletingId, setDeletingId]       = useState<string | null>(null)
-  const [filterType, setFilterType]       = useState<ContributionType | 'ALL'>('ALL')
-  const [periodFilter, setPeriodFilter]   = useState<PeriodFilter>('thisMonth')
-  const [customFrom, setCustomFrom]       = useState('')
-  const [customTo, setCustomTo]           = useState('')
-  const [expandedId, setExpandedId]       = useState<string | null>(null)
-  const [activeTab, setActiveTab]         = useState<ActiveTab>('historico')
+  const [contributions, setContributions]       = useState<DcaContributionRow[]>(initialContributions)
+  const [deletingId, setDeletingId]             = useState<string | null>(null)
+  const [filterType, setFilterType]             = useState<ContributionType | 'ALL'>('ALL')
+  const [activeTab, setActiveTab]               = useState<ActiveTab>('historico')
+
+  // Period navigator
+  const [viewMonth, setViewMonth]               = useState(() => new Date())
+  const [selectedPreset, setSelectedPreset]     = useState<PeriodPreset>('thisMonth')
+  const [customFrom, setCustomFrom]             = useState('')
+  const [customTo, setCustomTo]                 = useState('')
+  const [showDropdown, setShowDropdown]         = useState(false)
+  const [pendingFrom, setPendingFrom]           = useState('')
+  const [pendingTo, setPendingTo]               = useState('')
+  const dropdownRef                             = useRef<HTMLDivElement>(null)
 
   // Pagination
-  const [currentPage, setCurrentPage]   = useState(1)
-  const [pageSize, setPageSize]         = useState<PageSize>(25)
-  const [goToPageInput, setGoToPageInput] = useState('')
+  const [currentPage, setCurrentPage]           = useState(1)
+  const [pageSize, setPageSize]                 = useState<PageSize>(25)
+  const [goToPageInput, setGoToPageInput]       = useState('')
 
-  // BTC price BRL
-  const [btcPriceBrl, setBtcPriceBrl]   = useState<number | null>(null)
+  // BTC price
+  const [btcPriceBrl, setBtcPriceBrl]           = useState<number | null>(null)
+
+  // Expanded row
+  const [expandedId, setExpandedId]                   = useState<string | null>(null)
+
+  // Edit
+  const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
 
   useEffect(() => {
     fetch('/api/btc-price-brl')
@@ -154,31 +198,70 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
       .catch(() => {})
   }, [])
 
-  const { from, to } = getPeriodRange(periodFilter, customFrom, customTo)
+  // Close dropdown on outside click
+  useEffect(() => {
+    if (!showDropdown) return
+    function close(e: MouseEvent | TouchEvent) {
+      if (!dropdownRef.current?.contains(e.target as Node)) setShowDropdown(false)
+    }
+    document.addEventListener('mousedown', close)
+    document.addEventListener('touchstart', close)
+    return () => {
+      document.removeEventListener('mousedown', close)
+      document.removeEventListener('touchstart', close)
+    }
+  }, [showDropdown])
+
+  const now = new Date()
+  const isAtCurrentMonth = viewMonth.getFullYear() === now.getFullYear() && viewMonth.getMonth() === now.getMonth()
+
+  function prevMonth() {
+    setViewMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() - 1); return d })
+    setSelectedPreset('thisMonth')
+    setShowDropdown(false)
+  }
+  function nextMonth() {
+    if (isAtCurrentMonth) return
+    setViewMonth(m => { const d = new Date(m); d.setMonth(d.getMonth() + 1); return d })
+    setSelectedPreset('thisMonth')
+    setShowDropdown(false)
+  }
+  function selectPreset(p: PeriodPreset) {
+    setSelectedPreset(p)
+    setShowDropdown(false)
+    if (p === 'thisMonth') setViewMonth(new Date())
+    if (p === 'custom') { setPendingFrom(customFrom); setPendingTo(customTo) }
+  }
+
+  const navLabel = selectedPreset === 'thisMonth'
+    ? `${MONTHS_PT_FULL[viewMonth.getMonth()]} de ${viewMonth.getFullYear()}`
+    : PRESETS.find(p => p.id === selectedPreset)?.label ?? ''
+
+  // Filtering
+  const { from, to } = getPeriodRange(selectedPreset, viewMonth, customFrom, customTo)
   const periodFiltered = contributions.filter(c => {
     const d = new Date(c.contribution_date + 'T00:00:00')
     if (from && d < from) return false
     if (to   && d > to)   return false
     return true
   })
-
   const filtered = filterType === 'ALL'
     ? periodFiltered
     : periodFiltered.filter(c => c.contribution_type === filterType)
 
   // Reset page when filters change
-  const filteredKey = `${filterType}|${periodFilter}|${customFrom}|${customTo}`
+  const filteredKey = `${filterType}|${selectedPreset}|${customFrom}|${customTo}|${viewMonth.getFullYear()}-${viewMonth.getMonth()}`
   useEffect(() => { setCurrentPage(1) }, [filteredKey])
 
-  // Pagination math
-  const totalItems  = filtered.length
-  const totalPages  = Math.max(1, Math.ceil(totalItems / pageSize))
-  const safePage    = Math.min(currentPage, totalPages)
-  const startIdx    = (safePage - 1) * pageSize
-  const endIdx      = Math.min(startIdx + pageSize, totalItems)
-  const pageItems   = filtered.slice(startIdx, endIdx)
+  // Pagination
+  const totalItems = filtered.length
+  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const safePage   = Math.min(currentPage, totalPages)
+  const startIdx   = (safePage - 1) * pageSize
+  const endIdx     = Math.min(startIdx + pageSize, totalItems)
+  const pageItems  = filtered.slice(startIdx, endIdx)
 
-  // Group page items by month
+  // Group by month
   const groups = pageItems.reduce<Record<string, DcaContributionRow[]>>((acc, c) => {
     const d   = new Date(c.contribution_date + 'T00:00:00')
     const key = d.toLocaleDateString('pt-BR', { year: 'numeric', month: 'long' })
@@ -188,39 +271,36 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   }, {})
   const monthKeys = Object.keys(groups)
 
-  // Summary stats — all contributions (not filtered)
-  const totalAmount = contributions.reduce((s, c) => s + c.amount, 0)
-  const totalSats   = contributions.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  // Summary stats — all contributions
   const withSats    = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
+  const totalSats   = contributions.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  const totalAmount = contributions.reduce((s, c) => s + c.amount, 0)
   const avgPriceBrl = withSats.length > 0
     ? (withSats.reduce((s, c) => s + c.amount, 0) / withSats.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)) * 100_000_000
     : null
 
-  // Derived metrics vs current BTC price
-  const priceDiffAbs = btcPriceBrl !== null && avgPriceBrl !== null ? btcPriceBrl - avgPriceBrl : null
-  const priceDiffPct = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
-
-  // Rentabilidade ponderada: (currentValue - totalInvested) / totalInvested
-  const totalInvested   = withSats.reduce((s, c) => s + c.amount, 0)
+  const priceDiffAbs  = btcPriceBrl !== null && avgPriceBrl !== null ? btcPriceBrl - avgPriceBrl : null
+  const priceDiffPct  = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
+  const totalInvested = withSats.reduce((s, c) => s + c.amount, 0)
   const currentBtcValue = btcPriceBrl !== null ? (totalSats / 1e8) * btcPriceBrl : null
   const rentabilidade   = currentBtcValue !== null && totalInvested > 0
     ? ((currentBtcValue - totalInvested) / totalInvested) * 100
     : null
 
-  // Fee analytics — period filtered BTC purchases with fee data
+  // Fee analytics — period filtered
   const btcPurchasesFiltered = periodFiltered.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
-  const feesKnown     = btcPurchasesFiltered.filter(c => extractFee(c.notes) !== null)
-  const totalFees     = feesKnown.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
-  const totalSpread   = btcPurchasesFiltered
+  const feesKnown   = btcPurchasesFiltered.filter(c => extractFee(c.notes) !== null)
+  const totalFees   = feesKnown.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+  const totalSpread = btcPurchasesFiltered
     .filter(c => c.effective_price_brl && c.btc_price_brl)
     .reduce((s, c) => s + (c.effective_price_brl! - c.btc_price_brl!) * (c.sats_purchased! / 1e8), 0)
-  const totalImpact   = totalFees + Math.max(0, totalSpread - totalFees)
+  const totalImpact = totalFees + Math.max(0, totalSpread - totalFees)
 
-  // Period-filtered totals (drives the summary strip under filters)
-  const filteredPurchases   = filtered.filter(c => !c.notes?.includes('Venda'))
-  const periodTotalBRL      = filteredPurchases.reduce((s, c) => s + c.amount, 0)
-  const periodTotalSats     = filteredPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-  const periodTotalFees     = filtered.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+  // Period strip stats
+  const filteredPurchases = filtered.filter(c => !c.notes?.includes('Venda'))
+  const periodTotalBRL    = filteredPurchases.reduce((s, c) => s + c.amount, 0)
+  const periodTotalSats   = filteredPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  const periodTotalFees   = filtered.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
 
   const priceEvolution = useMemo(() => buildPriceEvolution(contributions), [contributions])
 
@@ -237,6 +317,11 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
     }
   }
 
+  function handleSaveEdit(updated: DcaContributionRow) {
+    setContributions(prev => prev.map(c => c.id === updated.id ? updated : c))
+    setEditingContribution(null)
+  }
+
   function handleGoToPage(e: React.FormEvent) {
     e.preventDefault()
     const n = parseInt(goToPageInput, 10)
@@ -248,6 +333,15 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
 
   return (
     <div>
+
+      {/* Edit modal */}
+      {editingContribution && typeof document !== 'undefined' && (
+        <EditContributionModal
+          contribution={editingContribution}
+          onClose={() => setEditingContribution(null)}
+          onSave={handleSaveEdit}
+        />
+      )}
 
       {/* Global summary bar */}
       <div style={{
@@ -408,7 +502,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                 fontSize: '11px', fontWeight: 600, color: 'var(--text-sec)',
                 textTransform: 'uppercase', letterSpacing: '0.08em',
               }}>
-                Análise de custos · {periodFilter === 'all' ? 'histórico completo' : PERIOD_LABELS[periodFilter]}
+                Análise de custos · {selectedPreset === 'all' ? 'histórico completo' : PRESETS.find(p => p.id === selectedPreset)?.label}
               </div>
               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0' }}>
                 <FeeMetric
@@ -442,50 +536,158 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
             </div>
           )}
 
-          {/* Period filter */}
-          <div style={{ marginBottom: '12px' }}>
-            <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-              {(Object.keys(PERIOD_LABELS) as PeriodFilter[]).map(p => (
-                <button key={p} onClick={() => setPeriodFilter(p)} style={{
-                  padding: '5px 12px',
-                  background: periodFilter === p ? 'rgba(99,102,241,0.15)' : 'var(--surface)',
-                  border: `1px solid ${periodFilter === p ? '#6366F1' : 'var(--border)'}`,
-                  borderRadius: '20px',
-                  color: periodFilter === p ? '#6366F1' : 'var(--text-muted)',
-                  fontSize: '12px', fontWeight: periodFilter === p ? 600 : 400, cursor: 'pointer',
+          {/* ── Period navigator (ContaAzul-style) ── */}
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+
+              {/* Month navigator + dropdown */}
+              <div ref={dropdownRef} style={{ position: 'relative' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'stretch',
+                  border: '1px solid var(--border)', borderRadius: '8px',
+                  overflow: 'hidden', background: 'var(--surface)',
                 }}>
-                  {PERIOD_LABELS[p]}
-                </button>
-              ))}
-            </div>
-            {periodFilter === 'custom' && (
-              <div style={{ display: 'flex', gap: '12px', marginTop: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                {(['De', 'Até'] as const).map((lbl, i) => (
-                  <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <label style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{lbl}</label>
-                    <input type="date" value={i === 0 ? customFrom : customTo}
-                      onChange={e => i === 0 ? setCustomFrom(e.target.value) : setCustomTo(e.target.value)}
-                      style={{ padding: '4px 8px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px' }}
-                    />
+                  {/* Left arrow */}
+                  <button
+                    onClick={prevMonth}
+                    title="Mês anterior"
+                    style={{
+                      padding: '8px 12px', background: 'transparent', border: 'none',
+                      borderRight: '1px solid var(--border-dim)',
+                      color: 'var(--text-sec)', fontSize: '16px', cursor: 'pointer',
+                      display: 'flex', alignItems: 'center',
+                    }}
+                  >
+                    ‹
+                  </button>
+
+                  {/* Label / dropdown trigger */}
+                  <button
+                    onClick={() => setShowDropdown(v => !v)}
+                    style={{
+                      padding: '8px 16px', background: 'transparent', border: 'none',
+                      color: 'var(--text)', fontSize: '13px', fontWeight: 600,
+                      cursor: 'pointer', whiteSpace: 'nowrap',
+                      display: 'flex', alignItems: 'center', gap: '6px',
+                    }}
+                  >
+                    {navLabel}
+                    <span style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '1px' }}>▾</span>
+                  </button>
+
+                  {/* Right arrow */}
+                  <button
+                    onClick={nextMonth}
+                    disabled={isAtCurrentMonth}
+                    title="Próximo mês"
+                    style={{
+                      padding: '8px 12px', background: 'transparent', border: 'none',
+                      borderLeft: '1px solid var(--border-dim)',
+                      color: isAtCurrentMonth ? 'var(--text-muted)' : 'var(--text-sec)',
+                      fontSize: '16px',
+                      cursor: isAtCurrentMonth ? 'not-allowed' : 'pointer',
+                      opacity: isAtCurrentMonth ? 0.3 : 1,
+                      display: 'flex', alignItems: 'center',
+                    }}
+                  >
+                    ›
+                  </button>
+                </div>
+
+                {/* Dropdown */}
+                {showDropdown && (
+                  <div style={{
+                    position: 'absolute', top: 'calc(100% + 4px)', left: 0,
+                    background: 'var(--surface)', border: '1px solid var(--border)',
+                    borderRadius: '8px', zIndex: 200, minWidth: '220px',
+                    boxShadow: '0 8px 24px rgba(0,0,0,0.25)', overflow: 'hidden',
+                  }}>
+                    {PRESETS.map(p => (
+                      <button
+                        key={p.id}
+                        onClick={() => selectPreset(p.id)}
+                        style={{
+                          display: 'block', width: '100%', textAlign: 'left',
+                          padding: '11px 16px', background: selectedPreset === p.id ? 'rgba(99,102,241,0.1)' : 'transparent',
+                          border: 'none',
+                          borderBottom: '1px solid var(--border-dim)',
+                          color: selectedPreset === p.id ? '#6366F1' : 'var(--text-sec)',
+                          fontSize: '13px', cursor: 'pointer',
+                        }}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
                   </div>
+                )}
+              </div>
+
+              {/* Type filter pills */}
+              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                {(['ALL', 'TACTICAL', 'STRUCTURAL_DCA', 'MANUAL'] as const).map(t => (
+                  <button key={t} onClick={() => setFilterType(t)} style={{
+                    padding: '6px 14px',
+                    background: filterType === t ? 'rgba(99,102,241,0.15)' : 'var(--surface)',
+                    border: `1px solid ${filterType === t ? '#6366F1' : 'var(--border)'}`,
+                    borderRadius: '20px', color: filterType === t ? '#6366F1' : 'var(--text-muted)',
+                    fontSize: '12px', fontWeight: filterType === t ? 600 : 400, cursor: 'pointer',
+                  }}>
+                    {t === 'ALL' ? 'Todos' : TYPE_META[t as ContributionType].label}
+                  </button>
                 ))}
               </div>
-            )}
-          </div>
+            </div>
 
-          {/* Type filter */}
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-            {(['ALL', 'TACTICAL', 'STRUCTURAL_DCA', 'MANUAL'] as const).map(t => (
-              <button key={t} onClick={() => setFilterType(t)} style={{
-                padding: '5px 12px',
-                background: filterType === t ? 'var(--orange-dim)' : 'var(--surface)',
-                border: `1px solid ${filterType === t ? 'var(--orange)' : 'var(--border)'}`,
-                borderRadius: '20px', color: filterType === t ? 'var(--orange)' : 'var(--text-muted)',
-                fontSize: '12px', fontWeight: filterType === t ? 600 : 400, cursor: 'pointer',
+            {/* Custom date panel */}
+            {selectedPreset === 'custom' && (
+              <div style={{
+                marginTop: '10px', padding: '16px 20px',
+                background: 'var(--surface)', border: '1px solid var(--border)',
+                borderRadius: '10px', display: 'flex', gap: '16px',
+                alignItems: 'flex-end', flexWrap: 'wrap',
               }}>
-                {t === 'ALL' ? 'Todos' : TYPE_META[t as ContributionType].label}
-              </button>
-            ))}
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>Data inicial</label>
+                  <input
+                    type="date" value={pendingFrom}
+                    onChange={e => setPendingFrom(e.target.value)}
+                    style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
+                  />
+                </div>
+                <span style={{ fontSize: '13px', color: 'var(--text-muted)', paddingBottom: '8px' }}>até</span>
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '6px' }}>Data final</label>
+                  <input
+                    type="date" value={pendingTo}
+                    onChange={e => setPendingTo(e.target.value)}
+                    style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button
+                    onClick={() => setSelectedPreset('thisMonth')}
+                    style={{
+                      padding: '7px 16px', background: 'transparent',
+                      border: '1px solid var(--border)', borderRadius: '6px',
+                      color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer',
+                    }}
+                  >
+                    Cancelar
+                  </button>
+                  <button
+                    onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }}
+                    style={{
+                      padding: '7px 16px',
+                      background: '#6366F1', border: '1px solid #6366F1',
+                      borderRadius: '6px', color: '#fff',
+                      fontSize: '13px', fontWeight: 600, cursor: 'pointer',
+                    }}
+                  >
+                    Aplicar filtro
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Period summary strip */}
@@ -509,7 +711,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
           {/* No results */}
           {monthKeys.length === 0 && (
             <div style={{ padding: '40px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
-              Nenhum aporte encontrado{periodFilter !== 'all' ? ' no período selecionado' : ''}.
+              Nenhum aporte encontrado{selectedPreset !== 'all' ? ' no período selecionado' : ''}.
             </div>
           )}
 
@@ -543,15 +745,14 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
 
                 <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
                   {items.map((c, idx) => {
-                    const typeMeta = TYPE_META[c.contribution_type]
-                    const d        = new Date(c.contribution_date + 'T00:00:00')
-                    const dateStr  = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
+                    const typeMeta   = TYPE_META[c.contribution_type]
+                    const d          = new Date(c.contribution_date + 'T00:00:00')
+                    const dateStr    = d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
                     const isExpanded = expandedId === c.id
-                    const isVenda  = c.notes?.includes('Venda') || false
-
-                    const fee = extractFee(c.notes)
+                    const isVenda    = c.notes?.includes('Venda') || false
+                    const fee        = extractFee(c.notes)
                     const hasPriceData = c.effective_price_brl && c.btc_price_brl
-                    const diffPct = hasPriceData
+                    const diffPct    = hasPriceData
                       ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100
                       : null
                     const efficiency = diffPct !== null ? efficiencyLabel(diffPct) : null
@@ -567,12 +768,10 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                           }}
                           onClick={() => hasPriceData && setExpandedId(isExpanded ? null : c.id)}
                         >
-                          {/* Date */}
                           <div className="contrib-date" style={{ minWidth: '110px', flexShrink: 0 }}>
                             <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{dateStr}</div>
                           </div>
 
-                          {/* Notes + context */}
                           <div className="contrib-notes" style={{ flex: 1, minWidth: 0 }}>
                             {c.notes && (
                               <div style={{ fontSize: '12px', color: 'var(--text-sec)', marginBottom: '2px', wordBreak: 'break-word' }}>
@@ -589,7 +788,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                             )}
                           </div>
 
-                          {/* BTC + prices */}
                           <div className="contrib-btc" style={{ minWidth: '130px', flexShrink: 0, textAlign: 'right' }}>
                             {c.sats_purchased && !isVenda
                               ? <div style={{ fontSize: '12px', color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace", marginBottom: '3px' }}>
@@ -605,7 +803,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                             )}
                           </div>
 
-                          {/* Type badge */}
                           <span className="contrib-badge" style={{
                             padding: '2px 8px', background: `${typeMeta.color}20`, color: typeMeta.color,
                             borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0,
@@ -613,7 +810,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                             {typeMeta.label}
                           </span>
 
-                          {/* Amount */}
                           <span className="contrib-amount" style={{
                             fontSize: '14px', fontWeight: 700,
                             color: isVenda ? '#22C55E' : 'var(--text)',
@@ -622,14 +818,29 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                             {isVenda ? '+' : ''}{fmt(c.amount)}
                           </span>
 
-                          {/* Expand indicator */}
                           {hasPriceData && (
                             <span className="contrib-expand" style={{ fontSize: '10px', color: 'var(--text-muted)', flexShrink: 0 }}>
                               {isExpanded ? '▲' : '▼'}
                             </span>
                           )}
 
-                          {/* Delete */}
+                          {/* Edit button */}
+                          <button
+                            className="contrib-edit"
+                            onClick={e => { e.stopPropagation(); setEditingContribution(c) }}
+                            title="Editar aporte"
+                            style={{
+                              background: 'none', border: 'none',
+                              color: 'rgba(99,102,241,0.5)',
+                              cursor: 'pointer',
+                              fontSize: '14px', padding: '0 4px', borderRadius: '4px', lineHeight: 1, flexShrink: 0,
+                              transition: 'color 0.15s',
+                            }}
+                          >
+                            ✎
+                          </button>
+
+                          {/* Delete button */}
                           <button
                             className="contrib-delete"
                             onClick={e => { e.stopPropagation(); handleDelete(c.id) }}
@@ -689,7 +900,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
               background: 'var(--surface)', border: '1px solid var(--border)',
               borderRadius: '10px', marginTop: '8px',
             }}>
-              {/* Left: showing info */}
               <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                 Mostrando{' '}
                 <span style={{ color: 'var(--text)', fontWeight: 600 }}>{startIdx + 1}–{endIdx}</span>
@@ -698,7 +908,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                 {' '}registros
               </span>
 
-              {/* Center: page navigation */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <PageBtn onClick={() => setCurrentPage(1)} disabled={safePage === 1} label="«" title="Primeira página" />
                 <PageBtn onClick={() => setCurrentPage(p => Math.max(1, p - 1))} disabled={safePage === 1} label="‹" title="Página anterior" />
@@ -709,7 +918,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                 <PageBtn onClick={() => setCurrentPage(totalPages)} disabled={safePage === totalPages} label="»" title="Última página" />
               </div>
 
-              {/* Right: go to page + page size */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                 <form onSubmit={handleGoToPage} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Ir para</label>
@@ -721,8 +929,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
                     style={{
                       width: '52px', padding: '4px 8px',
                       background: 'var(--bg)', border: '1px solid var(--border)',
-                      borderRadius: '6px', color: 'var(--text)', fontSize: '12px',
-                      textAlign: 'center',
+                      borderRadius: '6px', color: 'var(--text)', fontSize: '12px', textAlign: 'center',
                     }}
                   />
                   <button type="submit" style={{
@@ -758,6 +965,282 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
       )}
 
     </div>
+  )
+}
+
+// ─── Sub-components ───────────────────────────────────────────────────────────
+
+function EditContributionModal({
+  contribution,
+  onClose,
+  onSave,
+}: {
+  contribution: DcaContributionRow
+  onClose: () => void
+  onSave: (updated: DcaContributionRow) => void
+}) {
+  const fee       = extractFee(contribution.notes)
+  const baseNotes = contribution.notes?.split(' · taxa')[0] ?? ''
+
+  const [amountMask, setAmountMask]         = useState(
+    contribution.amount ? applyBRLMask(String(Math.round(contribution.amount * 100))) : ''
+  )
+  const [date, setDate]                     = useState(contribution.contribution_date)
+  const [type, setType]                     = useState<ContributionType>(contribution.contribution_type)
+  const [btcInput, setBtcInput]             = useState(
+    contribution.sats_purchased ? (contribution.sats_purchased / 1e8).toFixed(8).replace(/\.?0+$/, '') : ''
+  )
+  const [btcPriceMask, setBtcPriceMask]     = useState(
+    contribution.btc_price_brl ? applyBRLMask(String(Math.round(contribution.btc_price_brl * 100))) : ''
+  )
+  const [outrosCustosMask, setOutrosCustosMask] = useState(
+    fee ? applyBRLMask(String(Math.round(fee * 100))) : ''
+  )
+  const [notes, setNotes]                   = useState(baseNotes)
+  const [saving, setSaving]                 = useState(false)
+  const [error, setError]                   = useState<string | null>(null)
+
+  const parsedAmount       = parseBRLMask(amountMask) ?? 0
+  const parsedSats         = btcInput ? Math.round(parseFloat(btcInput.replace(',', '.')) * 1e8) : null
+  const parsedBtcPrice     = parseBRLMask(btcPriceMask) ?? 0
+  const parsedOutrosCustos = parseBRLMask(outrosCustosMask) ?? 0
+  const calcEffective      = parsedSats && parsedSats > 0 && parsedAmount > 0
+    ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
+    : null
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!parsedAmount || parsedAmount <= 0) { setError('Informe o valor do aporte'); return }
+
+    setSaving(true)
+    setError(null)
+
+    const notesWithFee = parsedOutrosCustos > 0
+      ? (notes.trim() ? notes.trim() + ` · taxa R$${parsedOutrosCustos.toFixed(2)}` : `taxa R$${parsedOutrosCustos.toFixed(2)}`)
+      : (notes.trim() || null)
+
+    const patch: Record<string, unknown> = {
+      amount: parsedAmount,
+      contribution_date: date,
+      contribution_type: type,
+      notes: notesWithFee,
+    }
+
+    if (parsedSats && parsedSats > 0) {
+      patch.sats_purchased = parsedSats
+      if (parsedBtcPrice > 0) {
+        patch.btc_price_brl     = parsedBtcPrice
+        patch.effective_price_brl = calcEffective
+      }
+    } else {
+      patch.sats_purchased      = null
+      patch.btc_price_brl       = null
+      patch.effective_price_brl = null
+    }
+
+    try {
+      const res = await fetch(`/api/dca/contributions/${contribution.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+      })
+      if (!res.ok) {
+        const data = await res.json() as { error?: string }
+        throw new Error(data.error ?? 'Erro ao salvar')
+      }
+      const { contribution: updated } = await res.json() as { contribution: DcaContributionRow }
+      onSave(updated)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao salvar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%', padding: '9px 12px',
+    background: 'var(--bg)', border: '1px solid var(--border)',
+    borderRadius: '8px', color: 'var(--text)', fontSize: '14px',
+    boxSizing: 'border-box',
+  }
+  const labelStyle: React.CSSProperties = {
+    display: 'block', fontSize: '11px', fontWeight: 600,
+    color: 'var(--text-muted)', textTransform: 'uppercase',
+    letterSpacing: '0.07em', marginBottom: '6px',
+  }
+
+  return createPortal(
+    <div
+      style={{
+        position: 'fixed', inset: 0, zIndex: 1000,
+        background: 'rgba(0,0,0,0.65)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        padding: '16px',
+      }}
+      onClick={onClose}
+    >
+      <div
+        style={{
+          background: 'var(--surface)', border: '1px solid var(--border)',
+          borderRadius: '14px', padding: '24px',
+          width: '100%', maxWidth: '500px',
+          maxHeight: '90vh', overflowY: 'auto',
+        }}
+        onClick={e => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>Editar aporte</h3>
+          <button
+            onClick={onClose}
+            style={{
+              background: 'none', border: 'none', color: 'var(--text-muted)',
+              fontSize: '18px', cursor: 'pointer', padding: '2px 6px', borderRadius: '4px',
+            }}
+          >
+            ✕
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            {/* Amount */}
+            <div>
+              <label style={labelStyle}>Valor *</label>
+              <input
+                type="text" inputMode="numeric"
+                value={amountMask}
+                onChange={e => setAmountMask(applyBRLMask(e.target.value))}
+                placeholder="R$ 0,00"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Date */}
+            <div>
+              <label style={labelStyle}>Data *</label>
+              <input
+                type="date" value={date}
+                onChange={e => setDate(e.target.value)}
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* Type */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Tipo</label>
+            <select
+              value={type}
+              onChange={e => setType(e.target.value as ContributionType)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              {(Object.entries(TYPE_META) as [ContributionType, { label: string }][]).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '16px' }}>
+            {/* BTC comprado */}
+            <div>
+              <label style={labelStyle}>BTC comprado</label>
+              <input
+                type="text" inputMode="decimal"
+                value={btcInput}
+                onChange={e => setBtcInput(e.target.value)}
+                placeholder="0.00000000"
+                style={inputStyle}
+              />
+            </div>
+
+            {/* Cotação */}
+            <div>
+              <label style={labelStyle}>Cotação do mercado</label>
+              <input
+                type="text" inputMode="numeric"
+                value={btcPriceMask}
+                onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))}
+                placeholder="R$ 0,00"
+                style={inputStyle}
+              />
+            </div>
+          </div>
+
+          {/* Outros custos */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={labelStyle}>Outros custos (opcional)</label>
+            <input
+              type="text" inputMode="numeric"
+              value={outrosCustosMask}
+              onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))}
+              placeholder="R$ 0,00"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Effective price preview */}
+          {calcEffective !== null && (
+            <div style={{
+              padding: '12px 16px', marginBottom: '16px',
+              background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)',
+              borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)',
+            }}>
+              Preço efetivo calculado:{' '}
+              <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>
+                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(calcEffective)}/BTC
+              </strong>
+            </div>
+          )}
+
+          {/* Notes */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={labelStyle}>Observações</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              placeholder="Notas opcionais…"
+              rows={2}
+              style={{ ...inputStyle, resize: 'vertical', lineHeight: 1.5 }}
+            />
+          </div>
+
+          {error && (
+            <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '16px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button
+              type="button"
+              onClick={onClose}
+              style={{
+                padding: '9px 20px', background: 'transparent',
+                border: '1px solid var(--border)', borderRadius: '8px',
+                color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer',
+              }}
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              style={{
+                padding: '9px 20px', background: '#6366F1', border: '1px solid #6366F1',
+                borderRadius: '8px', color: '#fff',
+                fontSize: '13px', fontWeight: 600,
+                cursor: saving ? 'not-allowed' : 'pointer',
+                opacity: saving ? 0.7 : 1,
+              }}
+            >
+              {saving ? 'Salvando…' : 'Salvar alterações'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
   )
 }
 
