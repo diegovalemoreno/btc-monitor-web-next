@@ -24,11 +24,14 @@ export default async function DashboardPage() {
     hour: '2-digit', minute: '2-digit',
   }).format(new Date(signal.generatedAt))
 
+  const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
+
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
-      <AppNav userEmail={user.email ?? ''} />
+      <AppNav userEmail={user.email ?? ''} userAvatarUrl={avatarUrl} />
 
       <main style={{ padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
         {/* Header */}
         <div style={{ marginBottom: '32px', display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
@@ -68,6 +71,7 @@ export default async function DashboardPage() {
           </div>
         )}
 
+      </div>
       </main>
     </div>
   )

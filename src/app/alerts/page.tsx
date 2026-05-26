@@ -18,11 +18,14 @@ export default async function AlertsPage() {
     getSubscription(supabase, user.id),
   ])
 
+  const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
+
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
-      <AppNav userEmail={user.email ?? ''} />
+      <AppNav userEmail={user.email ?? ''} userAvatarUrl={avatarUrl} />
 
       <main style={{ padding: '32px 24px' }}>
+      <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
         {/* Page header */}
         <div style={{ marginBottom: '40px' }}>
@@ -45,6 +48,7 @@ export default async function AlertsPage() {
           <SubscriptionSettings initial={subscription} />
         </div>
 
+      </div>
       </main>
     </div>
   )

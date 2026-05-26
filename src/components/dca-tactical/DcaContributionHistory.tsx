@@ -158,20 +158,20 @@ function buildPriceEvolution(contributions: DcaContributionRow[]): PriceEvolutio
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-type ActiveTab = 'visaoGeral' | 'consolidacao' | 'evolucao'
+type ActiveTab = 'consolidacao' | 'evolucao'
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
 type PageSize = typeof PAGE_SIZE_OPTIONS[number]
 
-interface Props { initialContributions: DcaContributionRow[] }
+interface Props { initialContributions: DcaContributionRow[]; initialTab?: ActiveTab; chartCompact?: boolean }
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function DcaContributionHistory({ initialContributions }: Props) {
+export default function DcaContributionHistory({ initialContributions, initialTab, chartCompact }: Props) {
   const [contributions, setContributions]     = useState<DcaContributionRow[]>(initialContributions)
   const [deletingId, setDeletingId]           = useState<string | null>(null)
   const [filterType, setFilterType]           = useState<ContributionType | 'ALL'>('ALL')
-  const [activeTab, setActiveTab]             = useState<ActiveTab>('visaoGeral')
+  const [activeTab, setActiveTab]             = useState<ActiveTab>(initialTab ?? 'consolidacao')
   const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
 
@@ -193,15 +193,7 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
   const [pageSize, setPageSize]           = useState<PageSize>(25)
   const [goToPageInput, setGoToPageInput] = useState('')
 
-  // BTC price
-  const [btcPriceBrl, setBtcPriceBrl]     = useState<number | null>(null)
 
-  useEffect(() => {
-    fetch('/api/btc-price-brl')
-      .then(r => r.ok ? r.json() : null)
-      .then((d: { btcPriceBrl?: number } | null) => { if (d?.btcPriceBrl) setBtcPriceBrl(d.btcPriceBrl) })
-      .catch(() => {})
-  }, [])
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -261,31 +253,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
     acc[key]  = acc[key] ?? []; acc[key].push(c); return acc
   }, {})
   const monthKeys = Object.keys(groups)
-
-  // ── Global summary stats (all-time) ──
-  const withSats      = contributions.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
-  const totalSats     = contributions.filter(c => !c.notes?.includes('Venda')).reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-  const totalAmount   = contributions.reduce((s, c) => s + c.amount, 0)
-  const avgPriceBrl   = withSats.length > 0
-    ? (withSats.reduce((s, c) => s + c.amount, 0) / withSats.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)) * 1e8
-    : null
-  const totalInvested   = withSats.reduce((s, c) => s + c.amount, 0)
-  const currentBtcValue = btcPriceBrl !== null ? (totalSats / 1e8) * btcPriceBrl : null
-  const rentabilidade   = currentBtcValue !== null && totalInvested > 0 ? ((currentBtcValue - totalInvested) / totalInvested) * 100 : null
-  const priceDiffAbs    = btcPriceBrl !== null && avgPriceBrl !== null ? btcPriceBrl - avgPriceBrl : null
-  const priceDiffPct    = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
-
-  // ── Cost analytics — last 12 months ──
-  const last12 = useMemo(() => {
-    const from12 = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-    const data   = contributions.filter(c => new Date(c.contribution_date + 'T00:00:00') >= from12)
-    const purchases = data.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
-    const fk     = purchases.filter(c => extractFee(c.notes) !== null)
-    const fees   = fk.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
-    const spread = purchases.filter(c => c.effective_price_brl && c.btc_price_brl)
-      .reduce((s, c) => s + (c.effective_price_brl! - c.btc_price_brl!) * (c.sats_purchased! / 1e8), 0)
-    return { feesKnown: fk, totalFees: fees, totalSpread: spread, totalImpact: fees + Math.max(0, spread - fees) }
-  }, [contributions]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Cost analytics — current period filter ──
   const periodBtcPurchases = periodFiltered.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
@@ -361,126 +328,18 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
 
       {/* Tab bar */}
       <div style={{ display: 'flex', gap: '0', marginBottom: '28px', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
-        <button onClick={() => setActiveTab('visaoGeral')}   style={tabBtnStyle(activeTab === 'visaoGeral')}>Visão Geral</button>
         <button onClick={() => setActiveTab('consolidacao')} style={tabBtnStyle(activeTab === 'consolidacao')}>Consolidação de Aportes</button>
         <button onClick={() => setActiveTab('evolucao')}     style={tabBtnStyle(activeTab === 'evolucao')}>Evolução do Preço Médio</button>
       </div>
 
       {/* ══════════════════════════════════════════════════════════
-          Tab 1 — Visão Geral
-      ══════════════════════════════════════════════════════════ */}
-      {activeTab === 'visaoGeral' && (
-        <div>
-
-          {/* KPI cards */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '36px' }}>
-
-            <KPICard
-              accent="var(--orange)"
-              label="Total investido"
-              value={fmt(totalAmount)}
-              valueColor="var(--orange)"
-              sub1={`${contributions.length} aportes registrados`}
-              sub2={withSats.length > 0 ? `${withSats.length} com BTC registrado` : undefined}
-              tooltip="Soma de todos os valores aportados em reais ao longo de todo o histórico. Inclui todos os tipos de aporte."
-            />
-
-            <KPICard
-              accent="#F7931A"
-              label="Bitcoin acumulado"
-              value={totalSats > 0 ? fmtBTC(totalSats) : '—'}
-              valueColor="#F7931A"
-              sub1={avgPriceBrl !== null ? `PM: ${fmtBRL0(avgPriceBrl)}/BTC` : undefined}
-              sub1Color="#22C55E"
-              tooltip={"Total de Bitcoin acumulado em compras, expresso em BTC.\n\nPM = Preço médio ponderado de aquisição.\n\n1 BTC = 100.000.000 satoshis. Vendas são excluídas."}
-            />
-
-            <KPICard
-              accent={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : '#22C55E'}
-              label="Valor atual do portfólio"
-              value={currentBtcValue !== null ? fmt(currentBtcValue) : '—'}
-              valueColor={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'}
-              sub1={rentabilidade !== null ? `Rentabilidade: ${rentabilidade >= 0 ? '+' : ''}${rentabilidade.toFixed(2).replace('.', ',')}%` : 'Carregando cotação…'}
-              sub1Color={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : 'var(--text-muted)'}
-              tooltip={"Valor atual do seu portfólio de Bitcoin ao preço de mercado.\n\nCálculo: Total de BTC × Preço atual do BTC em R$\n\nA rentabilidade mostra o retorno não realizado sobre o total investido."}
-            />
-
-            <KPICard
-              accent={priceDiffPct !== null ? (priceDiffPct >= 0 ? '#22C55E' : '#EF4444') : '#6366F1'}
-              label="Variação vs. Preço Médio"
-              value={priceDiffPct !== null ? `${priceDiffPct >= 0 ? '+' : ''}${priceDiffPct.toFixed(2).replace('.', ',')}%` : '—'}
-              valueColor={priceDiffPct !== null ? (priceDiffPct >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'}
-              sub1={btcPriceBrl !== null ? `BTC atual: ${fmtBRL0(btcPriceBrl)}/BTC` : 'Carregando…'}
-              sub2={priceDiffAbs !== null ? `Diferença: ${priceDiffAbs >= 0 ? '+' : ''}${fmtBRL0(priceDiffAbs)}/BTC` : undefined}
-              tooltip={"Diferença percentual entre o preço atual do BTC e seu preço médio de aquisição.\n\n✅ Positivo: BTC acima do custo médio — portfólio no lucro.\n🔴 Negativo: BTC abaixo do custo médio — portfólio no prejuízo.\n\nFonte do preço: CoinGecko (atualizado a cada 2 min)."}
-            />
-
-          </div>
-
-          {/* Cost analysis — last 12 months */}
-          <div>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '16px' }}>
-              <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Análise de custos</span>
-              <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Últimos 12 meses</span>
-            </div>
-
-            {last12.feesKnown.length > 0 ? (
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-
-                <CostCard
-                  accent="#F59E0B"
-                  label="Taxas pagas"
-                  value={fmt(last12.totalFees)}
-                  valueColor="#F59E0B"
-                  hint={`${last12.feesKnown.length} aportes com taxa`}
-                  tooltip={'Soma das taxas explícitas pagas à plataforma de compra nos últimos 12 meses.\n\nExtraídas das notas no formato "taxa R$X". Registre o valor da taxa no campo Outros Custos ao registrar um aporte.'}
-                />
-
-                <CostCard
-                  accent="#F97316"
-                  label="Spread acumulado"
-                  value={fmt(Math.max(0, last12.totalSpread - last12.totalFees))}
-                  valueColor="#F97316"
-                  hint="Custo oculto embutido no preço"
-                  tooltip={"Custo oculto gerado pela diferença entre a cotação de referência e o preço efetivo pago.\n\nCálculo: (Preço efetivo − Cotação BTC) × BTC − Taxas pagas\n\nO spread é o lucro da plataforma embutido no preço, separado da taxa explícita."}
-                />
-
-                <CostCard
-                  accent="#EF4444"
-                  label="Impacto total"
-                  value={fmt(last12.totalImpact)}
-                  valueColor="#EF4444"
-                  hint="Taxas + spread"
-                  tooltip={"Custo total pago acima do preço de mercado.\n\nImpacto total = Taxas pagas + Spread acumulado\n\nRepresenta quanto a mais você pagou por BTC em comparação a comprar diretamente pelo preço de mercado."}
-                />
-
-                <CostCard
-                  accent="var(--text-muted)"
-                  label="Aportes analisados"
-                  value={String(last12.feesKnown.length)}
-                  hint="Com dados de custo"
-                  tooltip={`Aportes dos últimos 12 meses com dados de taxa registrados.\n\nPara uma análise completa, sempre registre o valor das taxas no campo Outros Custos ao registrar um aporte.`}
-                />
-
-              </div>
-            ) : (
-              <div style={{ padding: '24px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center' }}>
-                Nenhum aporte com dados de taxa nos últimos 12 meses. Registre os custos nos aportes para análise.
-              </div>
-            )}
-          </div>
-
-        </div>
-      )}
-
-      {/* ══════════════════════════════════════════════════════════
-          Tab 2 — Consolidação de Aportes
+          Tab 1 — Consolidação de Aportes
       ══════════════════════════════════════════════════════════ */}
       {activeTab === 'consolidacao' && (
         <div>
 
           {/* Chart */}
-          <DcaPatrimonyChart contributions={periodFiltered} />
+          <DcaPatrimonyChart contributions={periodFiltered} compact={chartCompact} />
 
           {/* Controls bar */}
           <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '12px' }}>
@@ -838,38 +697,6 @@ export default function DcaContributionHistory({ initialContributions }: Props) 
 }
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
-
-function KPICard({ accent, label, value, valueColor, sub1, sub1Color, sub2, tooltip }: {
-  accent: string; label: string; value: string; valueColor?: string
-  sub1?: string; sub1Color?: string; sub2?: string; tooltip?: string
-}) {
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '20px 22px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>{label}</span>
-        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
-      </div>
-      <div style={{ fontSize: '22px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace", marginBottom: sub1 ? '6px' : '0', lineHeight: 1.2 }}>{value}</div>
-      {sub1 && <div style={{ fontSize: '12px', color: sub1Color ?? 'var(--text-muted)', marginTop: '4px' }}>{sub1}</div>}
-      {sub2 && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{sub2}</div>}
-    </div>
-  )
-}
-
-function CostCard({ accent, label, value, valueColor, hint, tooltip }: {
-  accent: string; label: string; value: string; valueColor?: string; hint?: string; tooltip?: string
-}) {
-  return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '18px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
-        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
-      </div>
-      <div style={{ fontSize: '20px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace", marginBottom: hint ? '4px' : '0' }}>{value}</div>
-      {hint && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{hint}</div>}
-    </div>
-  )
-}
 
 function EditContributionModal({ contribution, onClose, onSave }: {
   contribution: DcaContributionRow; onClose: () => void; onSave: (u: DcaContributionRow) => void

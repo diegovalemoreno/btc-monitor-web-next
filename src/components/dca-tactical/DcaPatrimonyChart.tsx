@@ -78,9 +78,9 @@ interface TooltipState {
   y:       number
 }
 
-interface Props { contributions: DcaContributionRow[] }
+interface Props { contributions: DcaContributionRow[]; compact?: boolean }
 
-export default function DcaPatrimonyChart({ contributions }: Props) {
+export default function DcaPatrimonyChart({ contributions, compact }: Props) {
   const [tooltip,    setTooltip]    = useState<TooltipState | null>(null)
   const [hoveredYm,  setHoveredYm]  = useState<string | null>(null)
   const [mousePos,   setMousePos]   = useState({ x: 0, y: 0 })
@@ -91,7 +91,7 @@ export default function DcaPatrimonyChart({ contributions }: Props) {
   const n          = data.length
   const BAR_SLOT   = Math.max(24, Math.min(52, 700 / n))
   const W          = Math.max(640, n * BAR_SLOT + 84)
-  const H          = 260
+  const H          = compact ? 180 : 260
   const pad        = { top: 28, right: 20, bottom: 42, left: 62 }
   const plotW      = W - pad.left - pad.right
   const plotH      = H - pad.top - pad.bottom
