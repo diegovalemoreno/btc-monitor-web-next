@@ -5,8 +5,8 @@ import { createClient } from '@/lib/supabase/client'
 import { useTheme } from '@/contexts/ThemeContext'
 
 const NAV_ITEMS = [
-  { label: 'Análise Tática', href: '/dashboard'    },
   { label: 'Resumo',         href: '/resumo'        },
+  { label: 'Análise Tática', href: '/dashboard'    },
   { label: 'Rentabilidade',  href: '/rentabilidade' },
   { label: 'Alertas',        href: '/alerts'        },
   { label: 'DCA',            href: '/dca'           },
