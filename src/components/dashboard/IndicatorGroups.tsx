@@ -81,8 +81,8 @@ function GroupRow({ group }: { group: IndicatorGroup }) {
                 marginLeft:   '8px',
                 marginBottom: '2px',
               }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '104px', flexShrink: 0 }}>
-                  <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{ind.name}</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', width: '108px', flexShrink: 0, overflow: 'hidden' }}>
+                  <span style={{ fontSize: '11px', color: 'var(--text-muted)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', minWidth: 0 }}>{ind.name}</span>
                   {indTip && <Tooltip text={indTip} position="right" wide />}
                 </div>
                 <span style={{ fontSize: '11px', color: 'var(--text-sec)', flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ind.summary}</span>

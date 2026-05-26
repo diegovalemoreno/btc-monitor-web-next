@@ -5,6 +5,24 @@ import type { DcaContributionRow } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
 import Tooltip from '@/components/shared/Tooltip'
 
+type ChartPeriod = 'all' | '12m' | '2y' | '5y' | '10y'
+
+const CHART_PERIODS: { id: ChartPeriod; label: string }[] = [
+  { id: 'all',  label: 'Desde o início' },
+  { id: '12m',  label: '12 meses'       },
+  { id: '2y',   label: '2 anos'         },
+  { id: '5y',   label: '5 anos'         },
+  { id: '10y',  label: '10 anos'        },
+]
+
+function filterByPeriod(contributions: DcaContributionRow[], period: ChartPeriod): DcaContributionRow[] {
+  if (period === 'all') return contributions
+  const now  = new Date()
+  const months: Record<ChartPeriod, number> = { all: 0, '12m': 12, '2y': 24, '5y': 60, '10y': 120 }
+  const from = new Date(now.getFullYear(), now.getMonth() - months[period] + 1, 1)
+  return contributions.filter(c => new Date(c.contribution_date + 'T00:00:00') >= from)
+}
+
 const fmt     = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 const fmtBRL0 = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
 const fmtBTC  = (sats: number) => {
@@ -23,7 +41,8 @@ function extractFee(notes: string | null): number | null {
 interface Props { initialContributions: DcaContributionRow[] }
 
 export default function DcaResumoView({ initialContributions }: Props) {
-  const [btcPriceBrl, setBtcPriceBrl] = useState<number | null>(null)
+  const [btcPriceBrl,  setBtcPriceBrl]  = useState<number | null>(null)
+  const [chartPeriod,  setChartPeriod]  = useState<ChartPeriod>('all')
 
   useEffect(() => {
     fetch('/api/btc-price-brl')
@@ -129,8 +148,33 @@ export default function DcaResumoView({ initialContributions }: Props) {
 
       {/* Patrimony evolution chart */}
       <div style={{ marginBottom: '8px' }}>
-        <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', marginBottom: '16px' }}>Evolução de Patrimônio</div>
-        <DcaPatrimonyChart contributions={contributions} />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
+          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Evolução de Patrimônio</div>
+          {/* Period filter pills */}
+          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+            {CHART_PERIODS.map(p => (
+              <button
+                key={p.id}
+                onClick={() => setChartPeriod(p.id)}
+                style={{
+                  padding:      '5px 12px',
+                  background:   chartPeriod === p.id ? 'var(--orange-dim)' : 'var(--surface)',
+                  border:       `1px solid ${chartPeriod === p.id ? 'var(--orange)' : 'var(--border)'}`,
+                  borderRadius: '20px',
+                  color:        chartPeriod === p.id ? 'var(--orange)' : 'var(--text-muted)',
+                  fontSize:     '12px',
+                  fontWeight:   chartPeriod === p.id ? 600 : 400,
+                  cursor:       'pointer',
+                  whiteSpace:   'nowrap',
+                  transition:   'all 0.12s',
+                }}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+        <DcaPatrimonyChart contributions={filterByPeriod(contributions, chartPeriod)} />
       </div>
 
     </div>

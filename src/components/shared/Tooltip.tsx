@@ -32,18 +32,29 @@ export default function Tooltip({ text, position = 'top', wide = false }: Toolti
     let top: number
     let left: number
 
-    // Vertical
-    if (position === 'bottom') {
-      top = btn.bottom + GAP
+    if (position === 'right') {
+      left = btn.right + GAP
+      if (left + w > vw - TOOLTIP_MAX_MOBILE) left = btn.left - w - GAP
+      left = Math.max(TOOLTIP_MAX_MOBILE, left)
+      top  = btn.top + btn.height / 2 - tipH / 2
+      top  = Math.max(TOOLTIP_MAX_MOBILE, Math.min(top, vh - tipH - TOOLTIP_MAX_MOBILE))
+    } else if (position === 'left') {
+      left = btn.left - w - GAP
+      if (left < TOOLTIP_MAX_MOBILE) left = btn.right + GAP
+      left = Math.max(TOOLTIP_MAX_MOBILE, left)
+      top  = btn.top + btn.height / 2 - tipH / 2
+      top  = Math.max(TOOLTIP_MAX_MOBILE, Math.min(top, vh - tipH - TOOLTIP_MAX_MOBILE))
+    } else if (position === 'bottom') {
+      top  = btn.bottom + GAP
       if (top + tipH > vh - TOOLTIP_MAX_MOBILE) top = btn.top - tipH - GAP
+      left = btn.left + btn.width / 2 - w / 2
+      left = Math.max(TOOLTIP_MAX_MOBILE, Math.min(left, vw - w - TOOLTIP_MAX_MOBILE))
     } else {
-      top = btn.top - tipH - GAP
+      top  = btn.top - tipH - GAP
       if (top < TOOLTIP_MAX_MOBILE) top = btn.bottom + GAP
+      left = btn.left + btn.width / 2 - w / 2
+      left = Math.max(TOOLTIP_MAX_MOBILE, Math.min(left, vw - w - TOOLTIP_MAX_MOBILE))
     }
-
-    // Horizontal: center on button, clamp to viewport
-    left = btn.left + btn.width / 2 - w / 2
-    left = Math.max(TOOLTIP_MAX_MOBILE, Math.min(left, vw - w - TOOLTIP_MAX_MOBILE))
 
     setCoords({ top, left })
   }, [position, wide])

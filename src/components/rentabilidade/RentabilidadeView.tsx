@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import type { DcaContributionRow } from '@/lib/db/types'
+import Tooltip from '@/components/shared/Tooltip'
 
 const MONTHS = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
@@ -144,10 +145,32 @@ export default function RentabilidadeView({ initialContributions }: Props) {
 
       {/* Summary KPIs */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
-        <KPICard label="Total investido"   value={fmt0(totalInv)}              accent="var(--orange)"  />
-        <KPICard label="Valor atual (BTC)"  value={totalVal !== null ? fmt0(totalVal) : '—'} accent="#22C55E" valueColor={totalRet !== null ? (totalRet >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'} />
-        <KPICard label="Retorno total"      value={totalRet !== null ? pct(totalRet, 2) : '—'} accent={totalRet !== null ? (totalRet >= 0 ? '#22C55E' : '#EF4444') : '#6366F1'} valueColor={totalRet !== null ? (totalRet >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'} />
-        <KPICard label="Preço BTC atual"   value={fmt0(btcPrice)}             accent="#F7931A"        />
+        <KPICard
+          label="Total investido"
+          value={fmt0(totalInv)}
+          accent="var(--orange)"
+          tooltip="Soma de todos os valores aportados em reais ao longo do histórico, incluindo todos os tipos de aporte com BTC registrado."
+        />
+        <KPICard
+          label="Valor atual (BTC)"
+          value={totalVal !== null ? fmt0(totalVal) : '—'}
+          accent="#22C55E"
+          valueColor={totalRet !== null ? (totalRet >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'}
+          tooltip={"Valor atual do portfólio de Bitcoin ao preço de mercado.\n\nCálculo: Total de BTC acumulado × Preço atual do BTC em R$"}
+        />
+        <KPICard
+          label="Retorno total"
+          value={totalRet !== null ? pct(totalRet, 2) : '—'}
+          accent={totalRet !== null ? (totalRet >= 0 ? '#22C55E' : '#EF4444') : '#6366F1'}
+          valueColor={totalRet !== null ? (totalRet >= 0 ? '#22C55E' : '#EF4444') : 'var(--text)'}
+          tooltip={"Retorno não realizado sobre o total investido.\n\nCálculo: (Valor atual − Total investido) ÷ Total investido × 100\n\n✅ Positivo: portfólio acima do custo de aquisição.\n🔴 Negativo: portfólio abaixo do custo médio."}
+        />
+        <KPICard
+          label="Preço BTC atual"
+          value={fmt0(btcPrice)}
+          accent="#F7931A"
+          tooltip={"Cotação atual do Bitcoin em reais.\n\nFonte: CoinGecko (atualizado a cada 2 minutos).\n\nUsada como base para calcular todos os retornos desta página."}
+        />
       </div>
 
       {/* Annual bar chart */}
@@ -229,12 +252,15 @@ const tdStyle: React.CSSProperties = {
   whiteSpace: 'nowrap',
 }
 
-function KPICard({ label, value, accent, valueColor }: {
-  label: string; value: string; accent: string; valueColor?: string
+function KPICard({ label, value, accent, valueColor, tooltip }: {
+  label: string; value: string; accent: string; valueColor?: string; tooltip?: string
 }) {
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '18px 22px' }}>
-      <div style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em', marginBottom: '8px' }}>{label}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>{label}</span>
+        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+      </div>
       <div style={{ fontSize: '22px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
     </div>
   )
@@ -245,36 +271,28 @@ function AnnualBarChart({ rows }: { rows: YearRow[] }) {
   if (data.length === 0) return null
 
   const maxAbs = Math.max(...data.map(r => Math.abs(r.annual ?? 0)), 1)
-  const H      = 160
-  const barH   = (v: number) => Math.max(2, (Math.abs(v) / maxAbs) * (H * 0.85))
+  const MAX_H  = 140
 
   return (
     <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '20px', marginBottom: '24px' }}>
       <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', marginBottom: '16px' }}>Retorno Anual por Ano</div>
-      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', height: `${H + 40}px`, overflowX: 'auto', paddingBottom: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'flex-end', gap: '10px', overflowX: 'auto', paddingBottom: '4px' }}>
         {data.map(row => {
-          const r    = row.annual ?? 0
-          const pos  = r >= 0
-          const h    = barH(r)
+          const r     = row.annual ?? 0
+          const pos   = r >= 0
           const color = pos ? '#22C55E' : '#EF4444'
+          const h     = Math.max(4, (Math.abs(r) / maxAbs) * MAX_H)
+          const label = row.annual !== null ? pct(r, 0) : ''
           return (
-            <div key={row.year} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flexShrink: 0, minWidth: '52px' }}>
-              {/* value label */}
-              <div style={{ fontSize: '11px', fontWeight: 700, color, fontFamily: "'Courier New', monospace", height: '16px', display: 'flex', alignItems: 'flex-end' }}>
-                {row.annual !== null ? pct(r, 0) : ''}
+            <div key={row.year} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '3px', flexShrink: 0, minWidth: '52px' }}>
+              {/* value above bar */}
+              <div style={{ fontSize: '10px', fontWeight: 700, color, fontFamily: "'Courier New', monospace", lineHeight: '14px', minHeight: '14px' }}>
+                {label}
               </div>
-              {/* bar area */}
-              <div style={{ display: 'flex', alignItems: 'flex-end', height: `${H}px` }}>
-                <div style={{
-                  width:        '40px',
-                  height:       `${h}px`,
-                  background:   color,
-                  borderRadius: pos ? '4px 4px 0 0' : '0 0 4px 4px',
-                  opacity:      0.8,
-                }} />
-              </div>
-              {/* year label */}
-              <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 600 }}>{row.year}</div>
+              {/* bar */}
+              <div style={{ width: '38px', height: `${h}px`, background: color, borderRadius: pos ? '4px 4px 0 0' : '0 0 4px 4px', opacity: 0.82 }} />
+              {/* year */}
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', fontWeight: 600, marginTop: '2px' }}>{row.year}</div>
             </div>
           )
         })}
