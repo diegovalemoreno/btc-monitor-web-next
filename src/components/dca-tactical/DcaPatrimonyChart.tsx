@@ -148,8 +148,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
       >
         <svg
           viewBox={`0 0 ${W} ${H}`}
-          style={{ display: 'block', width: '100%', minWidth: '480px', height: 'auto' }}
-          preserveAspectRatio="none"
+          style={{ display: 'block', width: `${W}px`, height: `${H}px` }}
         >
           <defs>
             <linearGradient id="dca-grad-green" x1="0" y1="0" x2="0" y2="1">
