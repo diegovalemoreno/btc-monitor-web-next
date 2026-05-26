@@ -75,6 +75,28 @@
   --skeleton-base:  #1c1808;
 }
 
+/* ── Theme: celeste (sky blue) ───────────────────────────────── */
+
+[data-theme="celeste"] {
+  --bg:             #04080f;
+  --surface:        #0a1220;
+  --surface2:       #0f1a2e;
+  --surface3:       #162238;
+  --border:         rgba(56, 189, 248, 0.14);
+  --border-dim:     rgba(56, 189, 248, 0.07);
+  --border-strong:  rgba(56, 189, 248, 0.28);
+  --text:           #dff0fb;
+  --text-sec:       #7eb8d8;
+  --text-muted:     #3a6080;
+  --text-dim:       #183048;
+  --orange:         #38bdf8;
+  --orange-dim:     rgba(56, 189, 248, 0.18);
+  --orange-subtle:  rgba(56, 189, 248, 0.08);
+  --nav-bg:         #04080f;
+  --brand-glow:     0 0 14px rgba(56, 189, 248, 0.3);
+  --skeleton-base:  #0f1a2e;
+}
+
 /* ── Base ────────────────────────────────────────────────────── */
 
 * { box-sizing: border-box; }
@@ -133,6 +155,20 @@ html, body {
 
 /* ── Responsive ──────────────────────────────────────────────── */
 
+.grid-3 {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   16px;
+}
+
+@media (max-width: 960px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .grid-3 { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 640px) {
   .page-main      { padding: 24px 16px; }
   .grid-2         { grid-template-columns: 1fr; }
@@ -156,9 +192,9 @@ html, body {
 @media (max-width: 640px) {
   .contrib-row {
     display:               grid;
-    grid-template-areas:   "date badge amount expand delete"
-                           "notes notes notes notes notes";
-    grid-template-columns: auto 1fr auto auto auto;
+    grid-template-areas:   "date badge amount expand edit delete"
+                           "notes notes notes notes notes notes";
+    grid-template-columns: auto 1fr auto auto auto auto;
     grid-template-rows:    auto auto;
     gap:       4px 8px;
     padding:   12px 14px;
@@ -168,6 +204,7 @@ html, body {
   .contrib-badge  { grid-area: badge;  justify-self: end; font-size: 9px !important; }
   .contrib-amount { grid-area: amount; }
   .contrib-expand { grid-area: expand; }
+  .contrib-edit   { grid-area: edit; }
   .contrib-delete { grid-area: delete; }
   .contrib-notes  { grid-area: notes;  overflow: hidden; }
   .contrib-btc    { display: none !important; }

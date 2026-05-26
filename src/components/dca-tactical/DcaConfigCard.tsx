@@ -71,7 +71,7 @@ export default function DcaConfigCard({ config, monthlyAmount, onUpdate }: Props
         /* Read-only summary */
         <div style={{
           display:   'grid',
-          gridTemplateColumns: 'repeat(auto-fill, minmax(140px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fill, minmax(130px, 190px))',
           gap:       '1px',
           background: 'var(--border-dim)',
         }}>

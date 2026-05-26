@@ -1,4 +1,5 @@
 // src/app/page.tsx
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LandingHeader          from '@/components/landing/LandingHeader'
 import LandingHero            from '@/components/landing/LandingHero'
@@ -14,6 +15,8 @@ export default async function LandingPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   const isAuthenticated = !!user
+
+  if (isAuthenticated) redirect('/resumo')
 
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>

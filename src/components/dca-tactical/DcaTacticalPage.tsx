@@ -9,11 +9,15 @@ import { calculateDcaOpportunityScore, classifyDcaMarketState, buildIndicatorSig
 import { calculateDcaAllocation } from '@/lib/dca-tactical/allocation'
 import type { IndicatorGroup } from '@lib/shared/types/signal'
 
+import Tooltip               from '@/components/shared/Tooltip'
 import DcaConfigCard         from './DcaConfigCard'
 import DcaRecommendationCard from './DcaRecommendationCard'
 import DcaIndicatorBreakdown from './DcaIndicatorBreakdown'
 import DcaStatusDoMesCard    from './DcaStatusDoMesCard'
 import DcaEducationalNotice  from './DcaEducationalNotice'
+
+const fmt = (n: number) =>
+  new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
 const STORAGE_KEY = 'btcm_dca_tac_cfg_v1'
 
@@ -224,10 +228,41 @@ export default function DcaTacticalPage({ plan }: Props) {
   }
 
   const tacticalPool = monthlyAmount - (allocation?.structuralDcaAmount ?? 0)
+  const remaining    = Math.max(0, tacticalPool - usedThisMonth)
 
   // ── Main render ────────────────────────────────────────────
   return (
     <div>
+
+      {/* KPI cards — allocation summary */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
+        <TacticalKPICard
+          accent="var(--orange)"
+          label="DCA Estrutural"
+          value={fmt(allocation?.structuralDcaAmount ?? 0)}
+          tooltip="Aporte fixo recorrente, executado independente de mercado. Não conta no caixa tático."
+        />
+        <TacticalKPICard
+          accent="#6366F1"
+          label="Caixa Tático"
+          value={fmt(tacticalPool)}
+          tooltip="Total disponível para alocação tática este mês = aporte mensal − DCA estrutural."
+        />
+        <TacticalKPICard
+          accent={usedThisMonth > 0 ? 'var(--orange)' : 'var(--border-strong)'}
+          label="Já aportado"
+          value={fmt(usedThisMonth)}
+          valueColor={usedThisMonth > 0 ? 'var(--orange)' : 'var(--text-muted)'}
+          tooltip="Soma dos aportes táticos e manuais registrados neste mês."
+        />
+        <TacticalKPICard
+          accent={remaining > 0 ? '#22C55E' : 'var(--text-muted)'}
+          label="Disponível"
+          value={fmt(remaining)}
+          valueColor={remaining > 0 ? '#22C55E' : 'var(--text-muted)'}
+          tooltip="Caixa tático ainda disponível para aportar neste mês."
+        />
+      </div>
 
       {/* §1 + §2 — Cenário Atual + Ação Recomendada */}
       {allocation && (
@@ -270,6 +305,20 @@ export default function DcaTacticalPage({ plan }: Props) {
 
       {/* Disclaimer */}
       <DcaEducationalNotice />
+    </div>
+  )
+}
+
+function TacticalKPICard({ accent, label, value, valueColor, tooltip }: {
+  accent: string; label: string; value: string; valueColor?: string; tooltip: string
+}) {
+  return (
+    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '18px 22px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>{label}</span>
+        <Tooltip text={tooltip} position="bottom" wide />
+      </div>
+      <div style={{ fontSize: '22px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
     </div>
   )
 }

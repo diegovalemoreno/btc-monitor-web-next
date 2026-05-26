@@ -21,6 +21,12 @@ const THEMES: { value: Theme; label: string; desc: string; preview: string[] }[]
     desc:    'Para bitcoiners. Escuro com maior presença de laranja.',
     preview: ['#0c0a02', '#141004', '#f09830'],
   },
+  {
+    value:   'celeste',
+    label:   'Celeste',
+    desc:    'Escuro com accent azul céu. Alternativa ao tema laranja.',
+    preview: ['#04080f', '#0a1220', '#38bdf8'],
+  },
 ]
 
 export default function ThemePicker() {

@@ -77,7 +77,7 @@ export default function DcaStatusDoMesCard({
   const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const today = new Date().toISOString().slice(0, 10)
-  const [amount,        setAmount]       = useState('')
+  const [amountMask,    setAmountMask]   = useState('')
   const [date,          setDate]         = useState(today)
   const [type,          setType]         = useState<ContributionType>('TACTICAL')
   const [notes,         setNotes]        = useState('')
@@ -87,12 +87,11 @@ export default function DcaStatusDoMesCard({
 
   const status = getMonthStatus(usedThisMonth, tacticalPool)
   const meta   = STATUS_META[status]
-  const remaining = Math.max(0, tacticalPool - usedThisMonth)
   const pctUsed   = tacticalPool > 0 ? Math.min(100, (usedThisMonth / tacticalPool) * 100) : 0
 
   const btcFloat   = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
   const parsedSats = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
-  const parsedAmount      = parseFloat(amount) || 0
+  const parsedAmount      = parseBRLMask(amountMask) ?? 0
   const parsedOutrosCustos = parseBRLMask(outrosCustos) ?? 0
   const calculatedEffectivePrice = parsedSats && parsedSats > 0 && parsedAmount > 0
     ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
@@ -100,7 +99,7 @@ export default function DcaStatusDoMesCard({
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    const parsed = parseFloat(amount)
+    const parsed = parseBRLMask(amountMask)
     if (!parsed || parsed <= 0) { setFormError('Valor inválido'); return }
     if (!parsedSats || parsedSats <= 0) { setFormError('Informe a quantidade de BTC comprado'); return }
     if (!parseBRLMask(btcPriceMask)) { setFormError('Informe a cotação do mercado'); return }
@@ -123,7 +122,7 @@ export default function DcaStatusDoMesCard({
         btc_price_brl:       parsedMarketPrice,
         effective_price_brl: calculatedEffectivePrice,
       })
-      setAmount('')
+      setAmountMask('')
       setDate(today)
       setType('TACTICAL')
       setNotes('')
@@ -164,9 +163,6 @@ export default function DcaStatusDoMesCard({
         <div>
           <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
             Status do Mês — Caixa Tático
-          </div>
-          <div style={{ fontSize: '13px', color: 'var(--text-sec)', marginTop: '2px' }}>
-            {fmt(structuralDcaAmount)} estrutural + {fmt(tacticalPool)} tático = {fmt(monthlyContribution)} total
           </div>
         </div>
         <div style={{
@@ -223,39 +219,6 @@ export default function DcaStatusDoMesCard({
         </div>
       </div>
 
-      {/* Stats row */}
-      <div style={{
-        display:    'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(120px, 1fr))',
-        gap:        '1px',
-        background: 'var(--border-dim)',
-        borderBottom: '1px solid var(--border-dim)',
-      }}>
-        <StatCell
-          label="DCA Estrutural"
-          tooltip="Aporte fixo recorrente, executado independente de mercado. Não conta no caixa tático."
-          value={fmt(structuralDcaAmount)}
-          color="var(--orange)"
-        />
-        <StatCell
-          label="Caixa Tático"
-          tooltip="Total disponível para alocação tática este mês = aporte mensal − DCA estrutural."
-          value={fmt(tacticalPool)}
-        />
-        <StatCell
-          label="Já aportado"
-          tooltip="Soma dos aportes táticos e manuais registrados neste mês."
-          value={fmt(usedThisMonth)}
-          color={usedThisMonth > 0 ? 'var(--orange)' : undefined}
-        />
-        <StatCell
-          label="Disponível"
-          tooltip="Caixa tático ainda disponível para aportar neste mês."
-          value={fmt(remaining)}
-          color={remaining > 0 ? '#22C55E' : 'var(--text-muted)'}
-        />
-      </div>
-
       {/* Register form */}
       {showForm && (
         <form onSubmit={handleSubmit} style={{
@@ -272,13 +235,11 @@ export default function DcaStatusDoMesCard({
             <div>
               <div style={labelStyle}>Valor (R$)</div>
               <input
-                type="number"
-                value={amount}
-                onChange={e => setAmount(e.target.value)}
-                placeholder="500"
-                min="0.01"
-                step="0.01"
-                required
+                type="text"
+                inputMode="numeric"
+                value={amountMask}
+                onChange={e => setAmountMask(applyBRLMask(e.target.value))}
+                placeholder="R$ 0,00"
                 style={inputStyle}
               />
             </div>
@@ -380,7 +341,7 @@ export default function DcaStatusDoMesCard({
                 <div>
                   <span style={{ color: 'var(--text-muted)' }}>Custo total: </span>
                   <span style={{ fontWeight: 700, color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parseFloat(amount) + parsedOutrosCustos)}
+                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parsedAmount + parsedOutrosCustos)}
                   </span>
                 </div>
               )}
@@ -529,21 +490,6 @@ export default function DcaStatusDoMesCard({
   )
 }
 
-function StatCell({ label, tooltip, value, color }: { label: string; tooltip: string; value: string; color?: string }) {
-  return (
-    <div style={{ padding: '14px 20px', background: 'var(--surface)' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginBottom: '4px' }}>
-        <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-          {label}
-        </span>
-        <Tooltip text={tooltip} position="top" wide />
-      </div>
-      <div style={{ fontSize: '14px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>
-        {value}
-      </div>
-    </div>
-  )
-}
 
 const labelStyle: React.CSSProperties = {
   fontSize:    '11px',

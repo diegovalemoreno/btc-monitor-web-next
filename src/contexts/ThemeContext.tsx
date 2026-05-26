@@ -2,9 +2,9 @@
 
 import { createContext, useContext, useEffect, useState } from 'react'
 
-export type Theme = 'dark' | 'light' | 'orange'
+export type Theme = 'dark' | 'light' | 'orange' | 'celeste'
 
-const THEMES: Theme[] = ['dark', 'light', 'orange']
+const THEMES: Theme[] = ['dark', 'light', 'orange', 'celeste']
 const STORAGE_KEY = 'btc-theme'
 
 interface ThemeContextValue {
@@ -42,4 +42,4 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
 
 export const useTheme = () => useContext(ThemeContext)
 
-export const THEME_INIT_SCRIPT = `(function(){var t=localStorage.getItem('btc-theme');if(t==='dark'||t==='light'||t==='orange')document.documentElement.setAttribute('data-theme',t);})()`
+export const THEME_INIT_SCRIPT = `(function(){var t=localStorage.getItem('btc-theme');if(t==='dark'||t==='light'||t==='orange'||t==='celeste')document.documentElement.setAttribute('data-theme',t);})()`
