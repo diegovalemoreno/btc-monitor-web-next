@@ -6,19 +6,16 @@ import type { BinanceKline } from '../types/indicator'
 const BINANCE_BASE = process.env.BINANCE_BASE_URL ?? 'https://data-api.binance.vision'
 
 async function fetchCurrentBrlPrice(): Promise<number> {
-  const res = await fetch(
-    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl',
-    { headers: { Accept: 'application/json' }, next: { revalidate: 120 } }
+  const data = await fetchJson<{ bitcoin?: { brl?: number } }>(
+    'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl'
   )
-  if (!res.ok) throw new Error(`CoinGecko returned ${res.status}`)
-  const data = await res.json() as { bitcoin?: { brl?: number } }
   const price = data.bitcoin?.brl
-  if (!price || price <= 0) throw new Error('coingecko: invalid price')
+  if (!price || price <= 0) throw new Error('CoinGecko: invalid BRL price')
   return price
 }
 
 async function _fetchBtcPriceHistoryBrl(): Promise<{ history: PricePoint[]; currentPrice: number }> {
-  const url = `${BINANCE_BASE}/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1100`
+  const url = `${BINANCE_BASE}/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500`
   const [klines, currentBrlPrice] = await Promise.all([
     fetchJson<BinanceKline[]>(url),
     fetchCurrentBrlPrice(),

@@ -16,7 +16,16 @@ export default function AporteHeatmap({ heatmap }: Props) {
 
   const years = Array.from(new Set(heatmap.map(c => c.year))).sort()
 
-  const lookup = new Map(heatmap.map(c => [`${c.year}-${c.month}`, c]))
+  const lookup = new Map<string, { cell: HeatmapCell; totalAmountBrl: number }>()
+  for (const c of heatmap) {
+    const key = `${c.year}-${c.month}`
+    const existing = lookup.get(key)
+    if (!existing || c.returnPct > existing.cell.returnPct) {
+      lookup.set(key, { cell: c, totalAmountBrl: (existing?.totalAmountBrl ?? 0) + c.amountBrl })
+    } else {
+      lookup.set(key, { ...existing, totalAmountBrl: existing.totalAmountBrl + c.amountBrl })
+    }
+  }
 
   return (
     <div style={{
@@ -44,18 +53,19 @@ export default function AporteHeatmap({ heatmap }: Props) {
             {year}
           </div>
           {Array.from({ length: 12 }, (_, i) => i + 1).map(month => {
-            const cell = lookup.get(`${year}-${month}`)
-            if (!cell) {
+            const entry = lookup.get(`${year}-${month}`)
+            if (!entry) {
               return (
                 <div key={month} style={{ height: '22px', borderRadius: '3px', background: 'rgba(255,255,255,0.06)' }} />
               )
             }
+            const { cell, totalAmountBrl } = entry
             const bg   = colorForReturn(cell.returnPct)
             const text = textColorForReturn(cell.returnPct)
             return (
               <div
                 key={month}
-                title={`${new Date(cell.date + 'T00:00:00').toLocaleDateString('pt-BR')} · ${formatReturn(cell.returnPct)} · R$${Math.round(cell.amountBrl).toLocaleString('pt-BR')}`}
+                title={`${new Date(cell.date + 'T00:00:00').toLocaleDateString('pt-BR')} · ${formatReturn(cell.returnPct)} · R$${Math.round(totalAmountBrl).toLocaleString('pt-BR')}`}
                 style={{
                   height:          '22px',
                   borderRadius:    '3px',
