@@ -5,6 +5,7 @@ import { deriveSnapshotScores } from '@/domain/snapshot-scores'
 import AppNav from '@/components/shared/AppNav'
 import HeroSection from '@/components/dashboard/HeroSection'
 import DimensionGrid from '@/components/dashboard/DimensionGrid'
+import ConsensusSection from '@/components/dashboard/ConsensusSection'
 import InsightsPanel from '@/components/dashboard/InsightsPanel'
 
 export const metadata = { title: 'Dashboard — BTC Monitor' }
@@ -19,12 +20,12 @@ export default async function DashboardPage() {
   const scores = deriveSnapshotScores(signal)
 
   const updatedAt = new Intl.DateTimeFormat('pt-BR', {
-    timeZone:  'America/Sao_Paulo',
-    day:       '2-digit',
-    month:     '2-digit',
-    year:      'numeric',
-    hour:      '2-digit',
-    minute:    '2-digit',
+    timeZone: 'America/Sao_Paulo',
+    day:      '2-digit',
+    month:    '2-digit',
+    year:     'numeric',
+    hour:     '2-digit',
+    minute:   '2-digit',
   }).format(new Date(signal.generatedAt))
 
   const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
@@ -40,6 +41,7 @@ export default async function DashboardPage() {
             updatedAt={updatedAt}
           />
           <DimensionGrid groups={signal.indicatorGroups} />
+          <ConsensusSection groups={signal.indicatorGroups} />
           <InsightsPanel insights={signal.insights} />
         </div>
       </main>
