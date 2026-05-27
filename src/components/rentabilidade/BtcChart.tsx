@@ -21,15 +21,16 @@ function CustomDot(props: { cx?: number; cy?: number; payload?: ScatterPoint }) 
   const color = colorForReturn(payload?.returnPct ?? 0)
   return (
     <g>
-      <circle cx={cx} cy={cy} r={6} fill={color} stroke="var(--bg)" strokeWidth={1.5} opacity={0.9} />
+      <circle cx={cx} cy={cy} r={6} fill={color} stroke="#0d1117" strokeWidth={1.5} opacity={0.9} />
     </g>
   )
 }
 
 function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<{ payload: ScatterPoint | { ts: number; price: number } }> }) {
   if (!active || !payload?.length) return null
-  const d = payload[0]?.payload
-  if (!d || !('returnPct' in d)) return null
+  const scatterPayload = payload.find(p => 'returnPct' in p.payload)
+  const d = scatterPayload?.payload as ScatterPoint | undefined
+  if (!d) return null
   const color = colorForReturn(d.returnPct)
   return (
     <div style={{
@@ -66,6 +67,8 @@ export default function BtcChart({ patrimonio }: Props) {
   const { priceHistory, contributions, avgPrice } = patrimonio
   const areaData    = buildAreaData(priceHistory)
   const scatterData = buildScatterData(contributions)
+
+  if (!areaData.length) return null
 
   const minTs = areaData[0]?.ts ?? 0
   const maxTs = areaData[areaData.length - 1]?.ts ?? Date.now()
