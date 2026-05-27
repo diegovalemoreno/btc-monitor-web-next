@@ -1,5 +1,7 @@
 // src/components/dashboard/HeroSection.tsx
+'use client'
 import type { TacticalSignal, MarketRegime, RiskLevel, ActionBias } from '@lib/shared/types/signal'
+import Tooltip from '@/components/shared/Tooltip'
 
 const REGIME_LABEL: Record<MarketRegime, string> = {
   CAPITULATION_ZONE:       'Capitulação',
@@ -109,15 +111,29 @@ export default function HeroSection({ signal, opportunityScore, updatedAt }: Her
 
       {/* Label */}
       <div style={{
-        fontSize:      '10px',
-        fontWeight:    700,
-        letterSpacing: '0.2em',
-        color:         'var(--orange)',
-        textTransform: 'uppercase',
-        marginBottom:  '16px',
-        position:      'relative',
+        display:        'inline-flex',
+        alignItems:     'center',
+        gap:            '6px',
+        justifyContent: 'center',
+        fontSize:       '10px',
+        fontWeight:     700,
+        letterSpacing:  '0.2em',
+        color:          'var(--orange)',
+        textTransform:  'uppercase',
+        marginBottom:   '16px',
+        position:       'relative',
       }}>
         Oportunidade de Entrada
+        <Tooltip
+          position="bottom"
+          wide
+          text={
+            'Termômetro de momento de compra (0–100).\n\n' +
+            '0 → pior momento: mercado em euforia, preço esticado, alavancagem excessiva.\n\n' +
+            '100 → melhor momento histórico: pânico, capitulação, preço deprimido — padrão que historicamente precedeu grandes altas.\n\n' +
+            'O número agrega todos os indicadores: tendência, on-chain, sentimento, derivativos e macro. Quanto mais alto, mais a maioria dos dados aponta que BTC está barato ou em zona de medo.'
+          }
+        />
       </div>
 
       {/* Score */}
