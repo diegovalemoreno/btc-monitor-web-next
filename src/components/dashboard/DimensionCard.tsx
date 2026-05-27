@@ -320,17 +320,17 @@ export default function DimensionCard({ group, variant = 'medium' }: DimensionCa
           </div>
 
           <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginBottom: '8px' }}>
-            <MiniGauge value={pct} color={color} size={40} />
+            <MiniGauge value={pct} color={color} size={44} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: '11px', fontWeight: 800, color, lineHeight: 1.3, marginBottom: '2px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 800, color, lineHeight: 1.3, marginBottom: '3px' }}>
                 {insight}
               </div>
-              <div style={{ fontSize: '9px', color: 'var(--text-muted)' }}>{scoreStr}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{scoreStr}</div>
             </div>
           </div>
 
           <div style={{
-            fontSize: '9px', color: 'var(--text-muted)', lineHeight: 1.5,
+            fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.6,
             borderLeft: `2px solid ${color}20`, paddingLeft: '8px', marginBottom: '10px',
           }}>
             {quote}
@@ -394,13 +394,13 @@ export default function DimensionCard({ group, variant = 'medium' }: DimensionCa
 
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: '8px', color: 'var(--text-muted)', fontWeight: 600,
-            textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '1px',
+            fontSize: '9px', color: 'var(--text-muted)', fontWeight: 600,
+            textTransform: 'uppercase', letterSpacing: '0.1em', marginBottom: '2px',
           }}>
             {icon} {group.label}
           </div>
           <div style={{
-            fontSize: '10px', fontWeight: 700, color,
+            fontSize: '12px', fontWeight: 700, color,
             whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis',
           }}>
             {insight}
@@ -408,7 +408,7 @@ export default function DimensionCard({ group, variant = 'medium' }: DimensionCa
         </div>
 
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-          <span style={{ fontSize: '14px', fontWeight: 900, color }}>{scoreStr}</span>
+          <span style={{ fontSize: '16px', fontWeight: 900, color }}>{scoreStr}</span>
           <motion.span
             animate={{ rotate: expanded ? 180 : 0 }}
             transition={{ duration: 0.2 }}

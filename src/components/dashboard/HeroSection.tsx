@@ -122,13 +122,13 @@ export default function HeroSection({ signal, opportunityScore, updatedAt }: Her
 
       {/* Score */}
       <div style={{
-        fontSize:      '88px',
+        fontSize:      'clamp(120px, 16vw, 200px)',
         fontWeight:    900,
         color:         numColor,
         lineHeight:    1,
-        letterSpacing: '-4px',
+        letterSpacing: '-6px',
         position:      'relative',
-        textShadow:    `0 0 80px ${numColor}30`,
+        textShadow:    `0 0 120px ${numColor}40`,
       }}>
         {Math.round(opportunityScore)}
       </div>
