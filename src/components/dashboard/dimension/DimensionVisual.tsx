@@ -176,31 +176,54 @@ function CycleArc({ score }: { score: number }) {
 }
 
 function MacroCompass({ score }: { score: number }) {
-  const uid     = useId()
-  const gradId  = `macro-grad-${uid}`
-  const pct     = normalizeToPct(score)
+  const uid    = useId()
+  const gradId = `macro-grad-${uid}`
+  // Macro group has 1 indicator (DXY) with score -2..+2 — normalize to that range
+  const pct     = Math.min(100, Math.max(0, (score + 2) / 4 * 100))
   const needleX = 10 + (pct / 100) * 180
   const color   = score > 0 ? '#00C853' : score < 0 ? '#FF6D00' : '#607D8B'
+  const label   = score >= 2  ? 'Macro muito favorável'
+    : score > 0  ? 'Macro favorável'
+    : score === 0 ? 'Neutro'
+    : score > -2 ? 'Pressão moderada'
+    : 'Macro desfavorável'
 
   return (
-    <svg width="100%" height="48" viewBox="0 0 200 48" preserveAspectRatio="none">
+    <svg width="100%" height="54" viewBox="0 0 200 54" preserveAspectRatio="xMidYMid meet">
       <defs>
         <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
-          <stop offset="0%"   stopColor="#FF3D00" stopOpacity={0.4} />
-          <stop offset="50%"  stopColor="#455A64" stopOpacity={0.2} />
-          <stop offset="100%" stopColor="#00C853" stopOpacity={0.4} />
+          <stop offset="0%"   stopColor="#FF3D00" stopOpacity={0.7} />
+          <stop offset="50%"  stopColor="#607D8B" stopOpacity={0.3} />
+          <stop offset="100%" stopColor="#00C853" stopOpacity={0.7} />
         </linearGradient>
       </defs>
-      <rect x={10} y={20} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
-      <rect x={10} y={20} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} rx={5} />
-      <text x={10}  y={40} textAnchor="start"  fontSize="7" fill="#FF3D00" opacity={0.8}>Pressão USD</text>
-      <text x={100} y={40} textAnchor="middle" fontSize="7" fill="var(--text-muted)">Neutro</text>
-      <text x={190} y={40} textAnchor="end"    fontSize="7" fill="#00C853" opacity={0.8}>Favorável</text>
-      <line x1={needleX} y1={16} x2={needleX} y2={34} stroke="rgba(255,255,255,0.5)" strokeWidth={1.5} strokeLinecap="round" />
-      <circle cx={needleX} cy={25} r={4.5} fill={color} />
-      <text x={needleX} y={12} textAnchor="middle" fontSize="9" fill={color} fontWeight="800">
+
+      {/* Track */}
+      <rect x={10} y={22} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
+      <rect x={10} y={22} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} rx={5} />
+
+      {/* Center tick */}
+      <line x1={100} y1={23} x2={100} y2={31} stroke="rgba(255,255,255,0.18)" strokeWidth={0.75} />
+
+      {/* Needle */}
+      <line x1={needleX} y1={17} x2={needleX} y2={37}
+        stroke="white" strokeWidth={1.5} strokeLinecap="round" opacity={0.45} />
+      <circle cx={needleX} cy={27} r={6} fill={color} />
+      <circle cx={needleX} cy={27} r={2.5} fill="var(--surface)" />
+
+      {/* Score above needle */}
+      <text x={needleX} y={13} textAnchor="middle" fontSize="9" fill={color} fontWeight="800">
         {score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1)}
       </text>
+
+      {/* Dynamic label centered below */}
+      <text x={100} y={50} textAnchor="middle" fontSize="8" fill={color} fontWeight="600" opacity={0.9}>
+        {label}
+      </text>
+
+      {/* Edge anchors */}
+      <text x={10}  y={50} textAnchor="start" fontSize="7" fill="rgba(255,61,0,0.55)">Pressão</text>
+      <text x={190} y={50} textAnchor="end"   fontSize="7" fill="rgba(0,200,83,0.55)">Favorável</text>
     </svg>
   )
 }
