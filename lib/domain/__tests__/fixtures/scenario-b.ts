@@ -1,5 +1,5 @@
 // Scenario B: today, signals weakened slightly, expected raw score ~83
-import type { IndicatorScore } from '../../shared/types/signal'
+import type { IndicatorScore } from '../../../shared/types/signal'
 
 export const SCENARIO_B_INDICATORS: IndicatorScore[] = [
   { name: 'Medo & Ganância',     score:  2, summary: 'Medo (35)' },

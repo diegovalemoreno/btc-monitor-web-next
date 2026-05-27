@@ -1,5 +1,5 @@
 // Scenario A: yesterday, strong buy signals, expected raw score ~90
-import type { IndicatorScore } from '../../shared/types/signal'
+import type { IndicatorScore } from '../../../shared/types/signal'
 
 export const SCENARIO_A_INDICATORS: IndicatorScore[] = [
   { name: 'Medo & Ganância',     score:  2, summary: 'Medo extremo (18)' },
