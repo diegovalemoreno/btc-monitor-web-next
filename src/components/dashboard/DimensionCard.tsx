@@ -120,41 +120,44 @@ function IndicatorsList({ group, color }: IndicatorsListProps) {
         const indTooltip = INDICATOR_TOOLTIP[ind.name]
         return (
           <div key={ind.name} style={{
-            display:     'flex',
-            alignItems:  'center',
-            gap:         '8px',
             padding:     '8px 14px 8px 12px',
             borderLeft:  `2px solid ${color}33`,
             marginLeft:  '8px',
             marginRight: '8px',
             marginTop:   '4px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', width: '110px', flexShrink: 0 }}>
-              <span style={{
-                fontSize: '12px', color: 'var(--text-sec)',
-                overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                minWidth: 0, flex: 1,
-              }}>
-                {ind.name}
-              </span>
-              {indTooltip && (
-                <span onClick={e => e.stopPropagation()}>
-                  <Tooltip text={indTooltip} position="right" wide />
+            {/* Row 1: name + score */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '3px', flex: 1, minWidth: 0 }}>
+                <span style={{
+                  fontSize: '12px', fontWeight: 600, color: 'var(--text)',
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                  minWidth: 0,
+                }}>
+                  {ind.name}
                 </span>
-              )}
+                {indTooltip && (
+                  <span onClick={e => e.stopPropagation()} style={{ flexShrink: 0 }}>
+                    <Tooltip text={indTooltip} position="right" wide />
+                  </span>
+                )}
+              </div>
+              <span style={{
+                fontSize: '12px', color: indColor, fontWeight: 700,
+                flexShrink: 0, minWidth: '36px', textAlign: 'right',
+              }}>
+                {ind.score > 0 ? `+${ind.score.toFixed(1)}` : ind.score.toFixed(1)}
+              </span>
             </div>
-            <span style={{
-              fontSize: '12px', color: 'var(--text-muted)', flex: 1,
-              overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-            }}>
-              {ind.summary}
-            </span>
-            <span style={{
-              fontSize: '12px', color: indColor, fontWeight: 700,
-              flexShrink: 0, minWidth: '36px', textAlign: 'right',
-            }}>
-              {ind.score > 0 ? `+${ind.score.toFixed(1)}` : ind.score.toFixed(1)}
-            </span>
+            {/* Row 2: summary */}
+            {ind.summary && (
+              <div style={{
+                fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4,
+                paddingRight: '44px',
+              }}>
+                {ind.summary}
+              </div>
+            )}
           </div>
         )
       })}
