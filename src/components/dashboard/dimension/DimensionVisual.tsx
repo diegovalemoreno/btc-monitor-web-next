@@ -1,4 +1,5 @@
 'use client'
+import { useId } from 'react'
 import type { IndicatorGroupKey, IndicatorScore } from '@lib/shared/types/signal'
 
 interface DimensionVisualProps {
@@ -27,10 +28,10 @@ function TrendMeter({ score }: { score: number }) {
   return (
     <svg width="100%" height="48" viewBox="0 0 200 48" preserveAspectRatio="none">
       {zones.map((z, i) => (
-        <rect key={i} x={10 + i * 36} y={16} width={36} height={12} fill={z.color} opacity={0.2} />
+        <rect key={z.label} x={10 + i * 36} y={16} width={36} height={12} fill={z.color} opacity={0.2} />
       ))}
       {zones.map((z, i) => (
-        <text key={`label-${i}`} x={10 + i * 36 + 18} y={40} textAnchor="middle" fontSize="6.5" fill={z.color} opacity={0.75}>
+        <text key={`lbl-${z.label}`} x={10 + i * 36 + 18} y={40} textAnchor="middle" fontSize="6.5" fill={z.color} opacity={0.75}>
           {z.label}
         </text>
       ))}
@@ -47,6 +48,8 @@ function TrendMeter({ score }: { score: number }) {
 }
 
 function SentimentSpectrum({ score }: { score: number }) {
+  const uid     = useId()
+  const gradId  = `sent-grad-${uid}`
   const pct     = normalizeToPct(score)
   const needleX = 10 + (pct / 100) * 180
   const color   = score > 2 ? '#00C853' : score < -2 ? '#1565C0' : '#607D8B'
@@ -54,14 +57,14 @@ function SentimentSpectrum({ score }: { score: number }) {
   return (
     <svg width="100%" height="48" viewBox="0 0 200 48" preserveAspectRatio="none">
       <defs>
-        <linearGradient id="sent-grad" x1="0" x2="1" y1="0" y2="0">
+        <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0%"   stopColor="#1565C0" stopOpacity={0.5} />
           <stop offset="40%"  stopColor="#455A64" stopOpacity={0.3} />
           <stop offset="60%"  stopColor="#455A64" stopOpacity={0.3} />
           <stop offset="100%" stopColor="#E53935" stopOpacity={0.5} />
         </linearGradient>
       </defs>
-      <rect x={10} y={20} width={180} height={10} fill="url(#sent-grad)" rx={5} />
+      <rect x={10} y={20} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
       <rect x={10} y={20} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} rx={5} />
       <text x={10}  y={40} textAnchor="start"  fontSize="7" fill="#1565C0" opacity={0.8}>Medo extremo</text>
       <text x={100} y={40} textAnchor="middle" fontSize="7" fill="var(--text-muted)">Neutro</text>
@@ -98,8 +101,8 @@ function LeveragePressure({ indicators }: { indicators: IndicatorScore[] }) {
             <div style={{ flex: 1, height: '7px', background: 'var(--surface3)', borderRadius: '4px', overflow: 'hidden' }}>
               <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '4px', transition: 'width 0.4s ease' }} />
             </div>
-            <span style={{ fontSize: '9px', color, fontWeight: 700, width: '20px', textAlign: 'right', flexShrink: 0 }}>
-              {item.score > 0 ? `+${item.score}` : item.score}
+            <span style={{ fontSize: '9px', color, fontWeight: 700, width: '28px', textAlign: 'right', flexShrink: 0 }}>
+              {item.score > 0 ? `+${item.score.toFixed(1)}` : item.score.toFixed(1)}
             </span>
           </div>
         )
@@ -131,11 +134,11 @@ function CycleArc({ score }: { score: number }) {
     <svg width="100%" height="60" viewBox="0 0 200 60" preserveAspectRatio="xMidYMid meet">
       <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 0 1 ${cx + r} ${cy}`}
         fill="none" stroke="var(--surface3)" strokeWidth={7} strokeLinecap="round" />
-      {pct > 1 && pct < 99 && (
+      {pct > 0 && pct < 100 && (
         <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 ${largeArc} 1 ${dotX} ${dotY}`}
           fill="none" stroke={color} strokeWidth={7} strokeLinecap="round" />
       )}
-      {pct >= 99 && (
+      {pct >= 100 && (
         <path d={`M ${cx - r} ${cy} A ${r} ${r} 0 1 1 ${cx + r} ${cy}`}
           fill="none" stroke={color} strokeWidth={7} strokeLinecap="round" />
       )}
@@ -151,6 +154,8 @@ function CycleArc({ score }: { score: number }) {
 }
 
 function MacroCompass({ score }: { score: number }) {
+  const uid     = useId()
+  const gradId  = `macro-grad-${uid}`
   const pct     = normalizeToPct(score)
   const needleX = 10 + (pct / 100) * 180
   const color   = score > 0 ? '#00C853' : score < 0 ? '#FF6D00' : '#607D8B'
@@ -158,13 +163,13 @@ function MacroCompass({ score }: { score: number }) {
   return (
     <svg width="100%" height="48" viewBox="0 0 200 48" preserveAspectRatio="none">
       <defs>
-        <linearGradient id="macro-grad" x1="0" x2="1" y1="0" y2="0">
+        <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
           <stop offset="0%"   stopColor="#FF3D00" stopOpacity={0.4} />
           <stop offset="50%"  stopColor="#455A64" stopOpacity={0.2} />
           <stop offset="100%" stopColor="#00C853" stopOpacity={0.4} />
         </linearGradient>
       </defs>
-      <rect x={10} y={20} width={180} height={10} fill="url(#macro-grad)" rx={5} />
+      <rect x={10} y={20} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
       <rect x={10} y={20} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} rx={5} />
       <text x={10}  y={40} textAnchor="start"  fontSize="7" fill="#FF3D00" opacity={0.8}>Pressão USD</text>
       <text x={100} y={40} textAnchor="middle" fontSize="7" fill="var(--text-muted)">Neutro</text>
