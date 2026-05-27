@@ -1,13 +1,12 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getCurrentMarketData } from '@/services/market-data'
-import { deriveSnapshotScores } from '@/domain/snapshot-scores'
 import AppNav from '@/components/shared/AppNav'
 import HeroSection from '@/components/dashboard/HeroSection'
 import DimensionGrid from '@/components/dashboard/DimensionGrid'
 import ConsensusSection from '@/components/dashboard/ConsensusSection'
 import InsightsPanel from '@/components/dashboard/InsightsPanel'
-import ScoreBreakdown from '@/components/dashboard/ScoreBreakdown'
+import ScoreWhyPanel from '@/components/dashboard/ScoreWhyPanel'
 
 export const metadata = { title: 'Dashboard — BTC Monitor' }
 export const dynamic = 'force-dynamic'
@@ -18,7 +17,6 @@ export default async function DashboardPage() {
   if (!user) redirect('/login')
 
   const { signal } = await getCurrentMarketData()
-  const scores = deriveSnapshotScores(signal)
 
   const updatedAt = new Intl.DateTimeFormat('pt-BR', {
     timeZone: 'America/Sao_Paulo',
@@ -38,14 +36,10 @@ export default async function DashboardPage() {
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <HeroSection
             signal={signal}
-            opportunityScore={scores.opportunityScore}
+            opportunityScore={signal.explanation.smoothedScore}
             updatedAt={updatedAt}
           />
-          <ScoreBreakdown
-            indicators={signal.indicators}
-            weightedScore={signal.score.weighted}
-            finalScore={scores.opportunityScore}
-          />
+          <ScoreWhyPanel explanation={signal.explanation} />
           <DimensionGrid groups={signal.indicatorGroups} />
           <ConsensusSection groups={signal.indicatorGroups} />
           <InsightsPanel insights={signal.insights} />
