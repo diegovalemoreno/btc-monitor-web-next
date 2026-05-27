@@ -49,6 +49,9 @@ function scoreLongShort(ratio: number): number {
 }
 
 function buildResult(ratio: number, longPct: number, shortPct: number): LongShortRatioResult {
+  if (!Number.isFinite(ratio) || !Number.isFinite(longPct) || !Number.isFinite(shortPct)) {
+    throw new Error(`Valores inválidos: ratio=${ratio} longPct=${longPct} shortPct=${shortPct}`);
+  }
   const score      = scoreLongShort(ratio);
   const scoreLabel = score > 0 ? `+${score}` : String(score);
   return {
