@@ -10,7 +10,7 @@ async function fetchCurrentBrlPrice(): Promise<number> {
     'https://api.coingecko.com/api/v3/simple/price?ids=bitcoin&vs_currencies=brl',
     { headers: { Accept: 'application/json' }, next: { revalidate: 120 } }
   )
-  if (!res.ok) throw new Error(`coingecko ${res.status}`)
+  if (!res.ok) throw new Error(`CoinGecko returned ${res.status}`)
   const data = await res.json() as { bitcoin?: { brl?: number } }
   const price = data.bitcoin?.brl
   if (!price || price <= 0) throw new Error('coingecko: invalid price')
@@ -26,14 +26,20 @@ async function _fetchBtcPriceHistoryBrl(): Promise<{ history: PricePoint[]; curr
 
   const closes = klines.map(k => parseFloat(k[4]))
   const lastUsdtClose = closes[closes.length - 1]
-  if (!lastUsdtClose || lastUsdtClose <= 0) throw new Error('Invalid BTCUSDT data')
+  if (!lastUsdtClose || lastUsdtClose <= 0) throw new Error(`Binance: invalid BTCUSDT data (lastClose=${lastUsdtClose})`)
 
   const usdToBrl = currentBrlPrice / lastUsdtClose
 
-  const history: PricePoint[] = klines.map(k => ({
-    date:  new Date(k[0]).toISOString().slice(0, 10),
-    price: Math.round(parseFloat(k[4]) * usdToBrl),
-  }))
+  const history: PricePoint[] = klines
+    .map(k => {
+      const closeUsdt = parseFloat(k[4])
+      if (isNaN(closeUsdt)) return null
+      return {
+        date:  new Date(k[0]).toISOString().slice(0, 10),
+        price: Math.round(closeUsdt * usdToBrl),
+      }
+    })
+    .filter((p): p is PricePoint => p !== null)
 
   return { history, currentPrice: currentBrlPrice }
 }
