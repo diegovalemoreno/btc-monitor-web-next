@@ -32,11 +32,17 @@ export default function InsightsPanel({ insights }: Props) {
   const accuracy = totalCount > 0 ? Math.round((profitableCount / totalCount) * 100) : 0
 
   const dcaInsight = dcaVsLumpSumPct !== null
-    ? {
-        value:      `DCA gerou ${dcaVsLumpSumPct >= 0 ? '+' : ''}${dcaVsLumpSumPct.toFixed(1)}% extra`,
-        valueColor: dcaVsLumpSumPct >= 0 ? '#fbbf24' : '#ef4444',
-        sub:        `vs compra única no primeiro aporte`,
-      }
+    ? dcaVsLumpSumPct >= 0
+      ? {
+          value:      `DCA gerou +${dcaVsLumpSumPct.toFixed(1)}% extra`,
+          valueColor: '#fbbf24',
+          sub:        'vs compra única no primeiro aporte',
+        }
+      : {
+          value:      `Compra única superou DCA em ${Math.abs(dcaVsLumpSumPct).toFixed(1)}%`,
+          valueColor: 'rgba(255,255,255,0.5)',
+          sub:        'DCA protegeu contra concentração de risco',
+        }
     : { value: 'Dados insuficientes', valueColor: 'rgba(255,255,255,0.4)', sub: 'Precisa de ao menos 2 aportes' }
 
   return (

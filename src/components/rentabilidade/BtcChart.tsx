@@ -14,14 +14,21 @@ const fmtDate = (ts: number) => {
   return d.toLocaleDateString('pt-BR', { month: 'short', year: '2-digit' })
 }
 
-type ScatterPoint = { ts: number; y: number; returnPct: number; amountBrl: number; btcAmount: number }
+type ScatterPoint = {
+  ts: number
+  y: number           // Y position = price from history (same source as area chart)
+  btcPriceBrl: number // actual price paid, for tooltip
+  returnPct: number
+  amountBrl: number
+  btcAmount: number
+}
 
 function CustomDot(props: { cx?: number; cy?: number; payload?: ScatterPoint }) {
   const { cx = 0, cy = 0, payload } = props
   const color = colorForReturn(payload?.returnPct ?? 0)
   return (
     <g>
-      <circle cx={cx} cy={cy} r={6} fill={color} stroke="#0d1117" strokeWidth={1.5} opacity={0.9} />
+      <circle cx={cx} cy={cy} r={5} fill={color} stroke="#0d1117" strokeWidth={1.5} opacity={0.92} />
     </g>
   )
 }
@@ -41,7 +48,7 @@ function CustomTooltip({ active, payload }: { active?: boolean; payload?: Array<
       <div style={{ color, fontWeight: 700 }}>
         {d.returnPct >= 0 ? '+' : ''}{d.returnPct.toFixed(1).replace('.', ',')}%
       </div>
-      <div style={{ color: 'rgba(255,255,255,0.6)' }}>{fmtBrl(d.y)} (entrada)</div>
+      <div style={{ color: 'rgba(255,255,255,0.6)' }}>{fmtBrl(d.btcPriceBrl)} (preço pago)</div>
       <div style={{ color: 'rgba(255,255,255,0.6)' }}>{fmtBrl(d.amountBrl)} · {d.btcAmount.toFixed(6)} BTC</div>
     </div>
   )
@@ -51,13 +58,17 @@ function buildAreaData(history: PatrimonioData['priceHistory']) {
   return history.map(p => ({ ts: new Date(p.date).getTime(), price: p.price }))
 }
 
-function buildScatterData(contributions: PatrimonioData['contributions']): ScatterPoint[] {
+function buildScatterData(
+  contributions: PatrimonioData['contributions'],
+  priceByDate: Map<string, number>,
+): ScatterPoint[] {
   return contributions.map(c => ({
-    ts:        new Date(c.date).getTime(),
-    y:         c.btcPriceBrl,
-    returnPct: c.returnPct,
-    amountBrl: c.amountBrl,
-    btcAmount: c.btcAmount,
+    ts:          new Date(c.date).getTime(),
+    y:           priceByDate.get(c.date) ?? c.btcPriceBrl,
+    btcPriceBrl: c.btcPriceBrl,
+    returnPct:   c.returnPct,
+    amountBrl:   c.amountBrl,
+    btcAmount:   c.btcAmount,
   }))
 }
 
@@ -66,7 +77,8 @@ interface Props { patrimonio: PatrimonioData }
 export default function BtcChart({ patrimonio }: Props) {
   const { priceHistory, contributions, avgPrice } = patrimonio
   const areaData    = buildAreaData(priceHistory)
-  const scatterData = buildScatterData(contributions)
+  const priceByDate = new Map(priceHistory.map(p => [p.date, p.price]))
+  const scatterData = buildScatterData(contributions, priceByDate)
 
   if (!areaData.length) return null
 
