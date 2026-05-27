@@ -55,7 +55,7 @@ export default function InsightsPanel({ insights }: Props) {
 
       <InsightCard
         label="Melhor aporte"
-        value={`${bestContribution.label} · +${bestContribution.returnPct.toFixed(0)}%`}
+        value={`${bestContribution.label} · ${bestContribution.returnPct >= 0 ? '+' : ''}${bestContribution.returnPct.toFixed(0)}%`}
         valueColor="#4ade80"
         sub="Maior retorno individual da sua carteira"
       />
