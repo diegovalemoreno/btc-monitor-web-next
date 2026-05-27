@@ -179,6 +179,31 @@ html, body {
   .mobile-text-sm { font-size: 12px !important; }
 }
 
+/* ── Dashboard dimension grid ─────────────────────────────── */
+
+.grid-dimension {
+  display:               grid;
+  grid-template-columns: 2fr 1fr 1fr;
+  gap:                   12px;
+  margin-bottom:         24px;
+}
+
+.grid-dimension-compact {
+  grid-column:           1 / -1;
+  display:               grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap:                   12px;
+}
+
+@media (max-width: 960px) {
+  .grid-dimension { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 640px) {
+  .grid-dimension         { grid-template-columns: 1fr; }
+  .grid-dimension-compact { grid-template-columns: 1fr; }
+}
+
 /* ── Contribution history row ─────────────────────────────── */
 
 .contrib-row {
