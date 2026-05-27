@@ -7,6 +7,7 @@ import HeroSection from '@/components/dashboard/HeroSection'
 import DimensionGrid from '@/components/dashboard/DimensionGrid'
 import ConsensusSection from '@/components/dashboard/ConsensusSection'
 import InsightsPanel from '@/components/dashboard/InsightsPanel'
+import ScoreBreakdown from '@/components/dashboard/ScoreBreakdown'
 
 export const metadata = { title: 'Dashboard — BTC Monitor' }
 export const dynamic = 'force-dynamic'
@@ -39,6 +40,11 @@ export default async function DashboardPage() {
             signal={signal}
             opportunityScore={scores.opportunityScore}
             updatedAt={updatedAt}
+          />
+          <ScoreBreakdown
+            indicators={signal.indicators}
+            weightedScore={signal.score.weighted}
+            finalScore={scores.opportunityScore}
           />
           <DimensionGrid groups={signal.indicatorGroups} />
           <ConsensusSection groups={signal.indicatorGroups} />

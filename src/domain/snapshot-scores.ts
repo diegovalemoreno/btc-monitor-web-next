@@ -51,9 +51,10 @@ function clamp(v: number, min: number, max: number): number {
   return Math.max(min, Math.min(max, v))
 }
 
-// weighted score range: roughly -20..+20; classify() considers >= 12 "very interesting"
+// weighted score range (19 base indicators, no derived): ~-30..+30
+// center=0, half-range=30 → (weighted+30)/60*100
 function opportunityFromWeighted(weighted: number): number {
-  return clamp(Math.round((weighted + 20) / 40 * 100), 0, 100)
+  return clamp(Math.round((weighted + 30) / 60 * 100), 0, 100)
 }
 
 // onchain + trend combined range: roughly -20..+20

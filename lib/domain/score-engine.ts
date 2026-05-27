@@ -88,34 +88,35 @@ export function withOpenInterestContext(indicators: AllIndicators) {
 }
 
 export function calculateTotalScore(indicators: AllIndicators): ScoreResult {
-  const perIndicator: Record<IndicatorKey, IndicatorResult> = {
-    fearGreed:       indicators.fearGreed,
-    weeklyCandle:    indicators.weeklyCandle,
-    fundingRate:     indicators.fundingRate,
-    sellerPressure:  indicators.sellerPressure,
-    movingAverages:  indicators.movingAverages,
-    openInterest:    indicators.openInterest,
-    mvrv:            indicators.mvrv,
-    realizedPrice:   indicators.realizedPrice,
-    hashRibbon:      indicators.hashRibbon,
-    mayerMultiple:   indicators.mayerMultiple,
-    liquidations:    indicators.liquidations,
-    etfFlow:         indicators.etfFlow,
-    piCycle:         indicators.piCycle,
-    bollinger:       indicators.bollinger,
-    dxy:             indicators.dxy,
-    longShortRatio:  indicators.longShortRatio,
-    btcDominance:    indicators.btcDominance,
-    stablecoinRatio: indicators.stablecoinRatio,
-    marketRegime:    indicators.marketRegime,
-    compositeSignal: indicators.compositeSignal,
+  // marketRegime e compositeSignal são derivados dos indicadores base —
+  // incluí-los causaria double-counting (o mesmo dado contado 2-3x).
+  // Eles ainda guiam o regime/regime-label, mas não entram no weighted score.
+  const perIndicator: Partial<Record<IndicatorKey, IndicatorResult>> = {
+    fearGreed:          indicators.fearGreed,
+    weeklyCandle:       indicators.weeklyCandle,
+    fundingRate:        indicators.fundingRate,
+    sellerPressure:     indicators.sellerPressure,
+    movingAverages:     indicators.movingAverages,
+    openInterest:       indicators.openInterest,
+    mvrv:               indicators.mvrv,
+    realizedPrice:      indicators.realizedPrice,
+    hashRibbon:         indicators.hashRibbon,
+    mayerMultiple:      indicators.mayerMultiple,
+    liquidations:       indicators.liquidations,
+    etfFlow:            indicators.etfFlow,
+    piCycle:            indicators.piCycle,
+    bollinger:          indicators.bollinger,
+    dxy:                indicators.dxy,
+    longShortRatio:     indicators.longShortRatio,
+    btcDominance:       indicators.btcDominance,
+    stablecoinRatio:    indicators.stablecoinRatio,
     liquidationHeatmap: indicators.liquidationHeatmap,
   };
 
   let rawTotal = 0;
   let weightedTotal = 0;
-  for (const key of Object.keys(perIndicator) as IndicatorKey[]) {
-    const s = safeScore(perIndicator[key]);
+  for (const [key, result] of Object.entries(perIndicator) as [IndicatorKey, IndicatorResult][]) {
+    const s = safeScore(result);
     rawTotal += s;
     weightedTotal += s * WEIGHTS[key];
   }
