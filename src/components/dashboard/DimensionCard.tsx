@@ -61,21 +61,19 @@ function IndicatorRow({ name, score, summary }: { name: string; score: number; s
   return (
     <div style={{
       padding:      '6px 18px',
-      display:      'flex',
-      alignItems:   'center',
-      gap:          '10px',
       borderBottom: '1px solid var(--border-dim)',
     }}>
-      <span style={{ flex: 1, fontSize: '11px', color: 'var(--text)', fontWeight: 500 }}>{name}</span>
-      <span style={{
-        fontSize: '10px', color: 'var(--text-muted)', textAlign: 'right',
-        maxWidth: '140px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-      }}>
-        {summary}
-      </span>
-      <span style={{ fontSize: '11px', color, fontWeight: 700, minWidth: '28px', textAlign: 'right', flexShrink: 0 }}>
-        {score > 0 ? `+${score}` : score}
-      </span>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '2px' }}>
+        <span style={{ flex: 1, fontSize: '11px', color: 'var(--text)', fontWeight: 500 }}>{name}</span>
+        <span style={{ fontSize: '11px', color, fontWeight: 700, flexShrink: 0 }}>
+          {score > 0 ? `+${score}` : score}
+        </span>
+      </div>
+      {summary && (
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
+          {summary}
+        </div>
+      )}
     </div>
   )
 }
