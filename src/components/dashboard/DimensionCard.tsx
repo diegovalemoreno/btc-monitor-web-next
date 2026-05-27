@@ -123,15 +123,15 @@ function IndicatorsList({ group, color }: IndicatorsListProps) {
             display:     'flex',
             alignItems:  'center',
             gap:         '8px',
-            padding:     '6px 14px 6px 12px',
+            padding:     '8px 14px 8px 12px',
             borderLeft:  `2px solid ${color}33`,
             marginLeft:  '8px',
             marginRight: '8px',
             marginTop:   '4px',
           }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', width: '100px', flexShrink: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '3px', width: '110px', flexShrink: 0 }}>
               <span style={{
-                fontSize: '11px', color: 'var(--text-sec)',
+                fontSize: '12px', color: 'var(--text-sec)',
                 overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                 minWidth: 0, flex: 1,
               }}>
@@ -144,13 +144,13 @@ function IndicatorsList({ group, color }: IndicatorsListProps) {
               )}
             </div>
             <span style={{
-              fontSize: '11px', color: 'var(--text-muted)', flex: 1,
+              fontSize: '12px', color: 'var(--text-muted)', flex: 1,
               overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
             }}>
               {ind.summary}
             </span>
             <span style={{
-              fontSize: '11px', color: indColor, fontWeight: 600,
+              fontSize: '12px', color: indColor, fontWeight: 700,
               flexShrink: 0, minWidth: '36px', textAlign: 'right',
             }}>
               {ind.score > 0 ? `+${ind.score.toFixed(1)}` : ind.score.toFixed(1)}
@@ -172,7 +172,7 @@ interface DimensionCardProps {
 }
 
 export default function DimensionCard({ group, variant = 'medium' }: DimensionCardProps) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(variant === 'medium')
 
   const color    = GROUP_COLOR[group.key]   ?? 'var(--text-sec)'
   const icon     = GROUP_ICON[group.key]    ?? '·'
