@@ -44,6 +44,8 @@ import {
   buildInterpretation,
   formatInterpretation,
 } from "../domain/interpretation";
+import { classifyRegime } from "../rules/regime-classifier";
+import { evaluateCompositeRules } from "../rules/composite-rules";
 import {
   AllIndicators,
   IndicatorResult,
@@ -217,13 +219,12 @@ export async function gatherReport(): Promise<MonitorReport> {
   const score = calculateTotalScore(indicators);
   const emoji = getClassificationEmoji(score.classification);
 
-  const regimeKind =
-    indicators.marketRegime.value?.regime ?? "neutral";
-  const compositeKind =
-    indicators.compositeSignal.value?.kind ?? "none";
+  const triggeredRules = evaluateCompositeRules(indicators);
+  const regimeClassified = classifyRegime(score.weightedTotal, triggeredRules);
+  const compositeKind = indicators.compositeSignal.value?.kind ?? "none";
 
   const interpretation = formatInterpretation(
-    buildInterpretation(indicators, score, regimeKind, compositeKind)
+    buildInterpretation(indicators, score, regimeClassified, compositeKind)
   );
 
   return { btcPrice, indicators, score, emoji, interpretation };

@@ -6,10 +6,10 @@
 
 import {
   AllIndicators,
-  MarketRegime,
   CompositeKind,
   ScoreResult,
 } from "../types/indicator";
+import { MarketRegime } from "../shared/types/signal";
 
 interface Bullets {
   observations: string[];
@@ -85,7 +85,6 @@ function noEuphoriaLine(ind: AllIndicators): string | null {
 function reading(
   regime: MarketRegime,
   composite: CompositeKind,
-  classification: ScoreResult["classification"]
 ): string {
   if (composite === "bullish-capitulation") {
     return "Confluência de sinais raramente vista. Historicamente esse tipo de ambiente foi favorável para acumulação de longo prazo.";
@@ -93,22 +92,26 @@ function reading(
   if (composite === "euphoria-risk") {
     return "Confluência de sinais de aquecimento extremo. Histórico sugere cautela com alocações táticas adicionais.";
   }
-  if (regime === "capitulation") {
-    return "Mercado em capitulação. Ambiente historicamente favorável para acumulação.";
+  switch (regime) {
+    case "CAPITULATION_ZONE":
+      return "Mercado em capitulação. Ambiente historicamente favorável para acumulação agressiva.";
+    case "TACTICAL_BUY_AGGRESSIVE":
+      return "Múltiplos indicadores em zona de compra. Momento favorável para acumulação tática agressiva.";
+    case "TACTICAL_BUY_MODERATE":
+      return "Indicadores majoritariamente favoráveis. Acumulação tática moderada recomendada.";
+    case "TACTICAL_BUY_LIGHT":
+      return "Assimetria leve de compra identificada. DCA com viés de acumulação leve.";
+    case "NEUTRAL":
+      return "Mercado sem extremos relevantes. Manter DCA padrão sem exposição tática adicional.";
+    case "RISK_OFF":
+      return "Pressão vendedora presente. Priorizar DCA padrão e aguardar melhora dos indicadores.";
+    case "EXTREME_RISK":
+      return "Indicadores em zona de risco extremo. Evitar alocações táticas — manter apenas DCA padrão.";
+    case "OVERLEVERAGED_MARKET":
+      return "Mercado sobrelavancado. Risco elevado de flush — aguardar desalavancagem antes de aportes táticos.";
+    case "EUPHORIA_ZONE":
+      return "Euforia detectada. Histórico sugere evitar alocações adicionais e considerar gestão de risco.";
   }
-  if (regime === "deleveraging") {
-    return "Limpeza de alavancagem em curso. Ambiente favorável para continuidade de DCA e possível compra tática.";
-  }
-  if (regime === "euphoria") {
-    return "Mercado em euforia. Histórico sugere manter DCA padrão e evitar alocações táticas adicionais.";
-  }
-  if (regime === "healthy-trend") {
-    return "Tendência saudável sem extremos. Manter DCA padrão.";
-  }
-  if (classification === "Apenas DCA normal") {
-    return "Nenhuma assimetria histórica relevante. Manter DCA padrão.";
-  }
-  return "Sinais mistos. DCA padrão com viés para acumulação conforme classificação acima.";
 }
 
 export function buildInterpretation(
@@ -128,7 +131,7 @@ export function buildInterpretation(
 
   return {
     observations,
-    reading: reading(regime, composite, score.classification),
+    reading: reading(regime, composite),
   };
 }
 

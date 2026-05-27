@@ -117,9 +117,8 @@ export async function runSignalEngine(): Promise<TacticalSignal> {
   const regime         = classifyRegime(score.weightedTotal, triggeredRules);
   const playbook       = selectPlaybook(regime);
 
-  const regimeKind    = indicators.marketRegime.value?.regime ?? "neutral";
   const compositeKind = indicators.compositeSignal.value?.kind ?? "none";
-  const interp        = buildInterpretation(indicators, score, regimeKind, compositeKind);
+  const interp        = buildInterpretation(indicators, score, regime, compositeKind);
   const summary       = formatInterpretation(interp);
 
   const scoresList      = indicatorsToScores(indicators);
