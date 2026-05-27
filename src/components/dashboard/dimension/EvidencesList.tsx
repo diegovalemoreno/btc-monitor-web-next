@@ -41,8 +41,8 @@ export default function EvidencesList({ indicators, maxPositive = 3, maxNegative
   if (evidences.length === 0) return null
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-      {evidences.map((ev, i) => (
-        <div key={i} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+      {evidences.map((ev) => (
+        <div key={ev.symbol + ev.name} style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
           <span style={{
             fontSize: '10px', flexShrink: 0, marginTop: '1px',
             color: ev.symbol === '✓' ? '#00C853' : '#FF6D00',
