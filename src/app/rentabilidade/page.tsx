@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { listDcaContributions } from '@/repositories/dca-contributions'
-import { fetchBtcPriceHistoryBrl } from '@/lib/rentabilidade/fetch-price-history'
-import { computePatrimonio } from '@/lib/rentabilidade/compute'
+import { fetchBtcPriceHistoryBrl } from '@lib/rentabilidade/fetch-price-history'
+import { computePatrimonio } from '@lib/rentabilidade/compute'
 import AppNav from '@/components/shared/AppNav'
 import RentabilidadeView from '@/components/rentabilidade/RentabilidadeView'
 
@@ -28,17 +28,7 @@ export default async function RentabilidadePage() {
       <main style={{ padding: '32px 24px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
-          <div style={{ marginBottom: '32px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
-              Performance
-            </div>
-            <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Rentabilidade</h1>
-            <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Retorno por ano e mês de aporte, calculado sobre o preço atual do Bitcoin.
-            </p>
-          </div>
-
-          <RentabilidadeView initialContributions={patrimonio.contributions} />
+          <RentabilidadeView patrimonio={patrimonio} />
 
         </div>
       </main>
