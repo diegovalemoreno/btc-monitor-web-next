@@ -13,36 +13,58 @@ function normalizeToPct(score: number): number {
 }
 
 function TrendMeter({ score }: { score: number }) {
+  const uid     = useId()
+  const gradId  = `trend-grad-${uid}`
   const pct     = normalizeToPct(score)
-  const markerX = pct * 1.8 + 10
-  const zoneColor = score > 4 ? '#00C853' : score > 0 ? '#4CAF50' : score === 0 ? '#607D8B' : score > -4 ? '#FF9800' : '#FF3D00'
-
-  const zones = [
-    { label: 'Bear Forte', color: '#FF3D00' },
-    { label: 'Fraco',      color: '#FF9800' },
-    { label: 'Neutro',     color: '#607D8B' },
-    { label: 'Forte',      color: '#4CAF50' },
-    { label: 'Bull',       color: '#00C853' },
-  ]
+  const needleX = 10 + (pct / 100) * 180
+  const color   = score > 4 ? '#00C853' : score > 0 ? '#4CAF50' : score === 0 ? '#607D8B' : score > -4 ? '#FF9800' : '#FF3D00'
+  const label   = score > 6  ? 'Bull forte'
+    : score > 2  ? 'Alta confirmada'
+    : score >= -2 ? 'Neutro'
+    : score > -6 ? 'Fraqueza'
+    : 'Bear forte'
 
   return (
-    <svg width="100%" height="48" viewBox="0 0 200 48" preserveAspectRatio="none">
-      {zones.map((z, i) => (
-        <rect key={z.label} x={10 + i * 36} y={16} width={36} height={12} fill={z.color} opacity={0.2} />
+    <svg width="100%" height="54" viewBox="0 0 200 54" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0%"   stopColor="#FF3D00" stopOpacity={0.7} />
+          <stop offset="25%"  stopColor="#FF9800" stopOpacity={0.5} />
+          <stop offset="50%"  stopColor="#607D8B" stopOpacity={0.3} />
+          <stop offset="75%"  stopColor="#4CAF50" stopOpacity={0.5} />
+          <stop offset="100%" stopColor="#00C853" stopOpacity={0.7} />
+        </linearGradient>
+      </defs>
+
+      {/* Track */}
+      <rect x={10} y={22} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
+      <rect x={10} y={22} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} rx={5} />
+
+      {/* Quarter tick marks */}
+      {[25, 50, 75].map(p => (
+        <line key={p} x1={10 + p * 1.8} y1={23} x2={10 + p * 1.8} y2={31}
+          stroke="rgba(255,255,255,0.18)" strokeWidth={0.75} />
       ))}
-      {zones.map((z, i) => (
-        <text key={`lbl-${z.label}`} x={10 + i * 36 + 18} y={40} textAnchor="middle" fontSize="6.5" fill={z.color} opacity={0.75}>
-          {z.label}
-        </text>
-      ))}
-      <rect x={10} y={16} width={180} height={12} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} rx={2} />
-      <text x={markerX} y={12} textAnchor="middle" fontSize="9" fill={zoneColor} fontWeight="800">
+
+      {/* Needle */}
+      <line x1={needleX} y1={17} x2={needleX} y2={37}
+        stroke="white" strokeWidth={1.5} strokeLinecap="round" opacity={0.45} />
+      <circle cx={needleX} cy={27} r={6} fill={color} />
+      <circle cx={needleX} cy={27} r={2.5} fill="var(--surface)" />
+
+      {/* Score above needle */}
+      <text x={needleX} y={13} textAnchor="middle" fontSize="9" fill={color} fontWeight="800">
         {score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1)}
       </text>
-      <polygon
-        points={`${markerX},16 ${markerX + 4},22 ${markerX},28 ${markerX - 4},22`}
-        fill={zoneColor}
-      />
+
+      {/* Dynamic zone label centered below track */}
+      <text x={100} y={50} textAnchor="middle" fontSize="8" fill={color} fontWeight="600" opacity={0.9}>
+        {label}
+      </text>
+
+      {/* Edge anchors */}
+      <text x={10}  y={50} textAnchor="start" fontSize="7" fill="rgba(255,61,0,0.55)">Bear</text>
+      <text x={190} y={50} textAnchor="end"   fontSize="7" fill="rgba(0,200,83,0.55)">Bull</text>
     </svg>
   )
 }
