@@ -1,0 +1,915 @@
+# Dashboard Redesign — Análise Tática BTC
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Reescrever completamente a tela `/dashboard` como painel tático institucional (estilo Glassnode) com hero, dimensões expansíveis e insights — leitura em < 5 segundos.
+
+**Architecture:** Server Components para hero, gauge e insights; Client Components (`'use client'`) para cards expansíveis com Framer Motion. `page.tsx` busca os dados e passa como props — sem fetch no client.
+
+**Tech Stack:** Next.js App Router, framer-motion, TypeScript, CSS variables (sem Tailwind classes), SVG puro para gauge.
+
+---
+
+## File Map
+
+| Ação | Arquivo | Responsabilidade |
+|---|---|---|
+| CREATE | `src/components/dashboard/ScoreGauge.tsx` | SVG radial gauge (0–100) |
+| CREATE | `src/components/dashboard/ConsensusBadge.tsx` | Contagem positivos/neutros/alertas |
+| CREATE | `src/components/dashboard/HeroSection.tsx` | Hero completo — regime, preço, gauge, pills |
+| CREATE | `src/components/dashboard/DimensionCard.tsx` | Card expansível por dimensão (`'use client'`) |
+| CREATE | `src/components/dashboard/DimensionGrid.tsx` | Grid de 6 DimensionCards (`'use client'`) |
+| CREATE | `src/components/dashboard/InsightsPanel.tsx` | Lista de insights |
+| MODIFY | `src/app/globals.css` | Adicionar `.grid-3` responsivo |
+| MODIFY | `src/app/dashboard/page.tsx` | Usar novos componentes |
+| DELETE | `src/components/dashboard/RegimeCard.tsx` | Substituído por HeroSection |
+| DELETE | `src/components/dashboard/DimensionScores.tsx` | Absorvido por HeroSection |
+| DELETE | `src/components/dashboard/IndicatorGroups.tsx` | Substituído por DimensionGrid |
+
+---
+
+## Task 1: Instalar framer-motion e recharts
+
+**Files:**
+- Modify: `package.json` (via npm install)
+
+- [ ] **Step 1: Instalar dependências**
+
+```bash
+cd /Users/diegomoreno/development/btc-monitor-web-next
+npm install framer-motion recharts
+```
+
+Expected: `added N packages` sem erros.
+
+- [ ] **Step 2: Verificar instalação**
+
+```bash
+ls node_modules/framer-motion/package.json && ls node_modules/recharts/package.json && echo "ok"
+```
+
+Expected: dois caminhos de arquivo seguidos de `ok`.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add package.json package-lock.json
+git commit -m "chore: add framer-motion and recharts"
+```
+
+---
+
+## Task 2: Adicionar classe CSS `.grid-3` responsiva
+
+**Files:**
+- Modify: `src/app/globals.css`
+
+- [ ] **Step 1: Adicionar ao final do bloco `/* ── Responsive */` em `globals.css`**
+
+Localizar o bloco `@media (max-width: 640px)` existente e adicionar ANTES dele:
+
+```css
+.grid-3 {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   16px;
+}
+
+@media (max-width: 960px) {
+  .grid-3 { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .grid-3 { grid-template-columns: 1fr; }
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/app/globals.css
+git commit -m "style: add .grid-3 responsive grid class"
+```
+
+---
+
+## Task 3: Criar ScoreGauge
+
+**Files:**
+- Create: `src/components/dashboard/ScoreGauge.tsx`
+
+- [ ] **Step 1: Criar o componente**
+
+```tsx
+// src/components/dashboard/ScoreGauge.tsx
+interface ScoreGaugeProps {
+  value: number   // 0–100
+  size?: number
+}
+
+export default function ScoreGauge({ value, size = 88 }: ScoreGaugeProps) {
+  const r      = (size / 2) - 9
+  const circ   = 2 * Math.PI * r
+  const pct    = Math.min(100, Math.max(0, value))
+  const dash   = (pct / 100) * circ
+  const color  = pct > 60 ? '#00C853' : pct > 40 ? '#e08a3a' : '#FF1744'
+  const cx     = size / 2
+  const cy     = size / 2
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+      <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none" stroke="var(--surface3)" strokeWidth="7"
+        />
+        <circle
+          cx={cx} cy={cy} r={r}
+          fill="none" stroke={color} strokeWidth="7"
+          strokeDasharray={`${dash} ${circ}`}
+          strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`}
+        />
+        <text
+          x={cx} y={cy + 5}
+          textAnchor="middle"
+          fill={color}
+          fontSize="15"
+          fontWeight="700"
+          fontFamily="Inter, system-ui, sans-serif"
+        >
+          {Math.round(pct)}
+        </text>
+      </svg>
+      <span style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+        Oportunidade
+      </span>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/dashboard/ScoreGauge.tsx
+git commit -m "feat(dashboard): add ScoreGauge SVG component"
+```
+
+---
+
+## Task 4: Criar ConsensusBadge
+
+**Files:**
+- Create: `src/components/dashboard/ConsensusBadge.tsx`
+
+- [ ] **Step 1: Criar o componente**
+
+```tsx
+// src/components/dashboard/ConsensusBadge.tsx
+import type { IndicatorGroup } from '@lib/shared/types/signal'
+
+interface ConsensusBadgeProps {
+  groups: IndicatorGroup[]
+}
+
+export default function ConsensusBadge({ groups }: ConsensusBadgeProps) {
+  const all = groups.flatMap(g => g.indicators)
+  const pos = all.filter(i => i.score > 1).length
+  const neu = all.filter(i => i.score >= -1 && i.score <= 1).length
+  const neg = all.filter(i => i.score < -1).length
+
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+      <span style={{ fontSize: '12px', color: '#00C853', fontWeight: 600 }}>{pos} positivos</span>
+      <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>·</span>
+      <span style={{ fontSize: '12px', color: 'var(--text-muted)', fontWeight: 600 }}>{neu} neutros</span>
+      <span style={{ fontSize: '12px', color: 'var(--text-dim)' }}>·</span>
+      <span style={{ fontSize: '12px', color: '#e08a3a', fontWeight: 600 }}>{neg} alertas</span>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/dashboard/ConsensusBadge.tsx
+git commit -m "feat(dashboard): add ConsensusBadge component"
+```
+
+---
+
+## Task 5: Criar HeroSection
+
+**Files:**
+- Create: `src/components/dashboard/HeroSection.tsx`
+
+- [ ] **Step 1: Criar o componente**
+
+```tsx
+// src/components/dashboard/HeroSection.tsx
+import type { TacticalSignal, MarketRegime, RiskLevel, ActionBias } from '@lib/shared/types/signal'
+import ScoreGauge from './ScoreGauge'
+import ConsensusBadge from './ConsensusBadge'
+
+const REGIME_LABEL: Record<MarketRegime, string> = {
+  CAPITULATION_ZONE:       'Capitulação',
+  TACTICAL_BUY_AGGRESSIVE: 'Compra tática agressiva',
+  TACTICAL_BUY_MODERATE:   'Compra tática moderada',
+  TACTICAL_BUY_LIGHT:      'Compra tática leve',
+  NEUTRAL:                 'Neutro',
+  RISK_OFF:                'Risk-off',
+  EXTREME_RISK:            'Risco extremo',
+  OVERLEVERAGED_MARKET:    'Mercado alavancado',
+  EUPHORIA_ZONE:           'Euforia',
+}
+
+const REGIME_COLOR: Record<MarketRegime, string> = {
+  CAPITULATION_ZONE:       '#69F0AE',
+  TACTICAL_BUY_AGGRESSIVE: '#00C853',
+  TACTICAL_BUY_MODERATE:   '#00BCD4',
+  TACTICAL_BUY_LIGHT:      '#e08a3a',
+  NEUTRAL:                 '#b0a090',
+  RISK_OFF:                '#FFD600',
+  EXTREME_RISK:            '#FF6D00',
+  OVERLEVERAGED_MARKET:    '#FF1744',
+  EUPHORIA_ZONE:           '#b71c1c',
+}
+
+const RISK_LABEL: Record<RiskLevel, string> = {
+  LOW:     'Baixo',
+  MEDIUM:  'Médio',
+  HIGH:    'Alto',
+  EXTREME: 'Extremo',
+}
+
+const RISK_COLOR: Record<RiskLevel, string> = {
+  LOW:     '#00C853',
+  MEDIUM:  '#e08a3a',
+  HIGH:    '#FF6D00',
+  EXTREME: '#FF1744',
+}
+
+const BIAS_LABEL: Record<ActionBias, string> = {
+  DCA_NORMAL:               'DCA Normal',
+  TACTICAL_BUY_LIGHT:       'Compra leve',
+  TACTICAL_BUY_MODERATE:    'Compra moderada',
+  TACTICAL_BUY_AGGRESSIVE:  'Compra agressiva',
+  WAIT:                     'Aguardar',
+  RISK_OFF:                 'Risk-off',
+}
+
+function formatBTC(price: number | null): string {
+  if (!price) return '—'
+  return new Intl.NumberFormat('en-US', {
+    style:                 'currency',
+    currency:              'USD',
+    maximumFractionDigits: 0,
+  }).format(price)
+}
+
+interface HeroSectionProps {
+  signal:           TacticalSignal
+  opportunityScore: number
+  updatedAt:        string
+}
+
+export default function HeroSection({ signal, opportunityScore, updatedAt }: HeroSectionProps) {
+  const color      = REGIME_COLOR[signal.regime]    ?? '#b0a090'
+  const label      = REGIME_LABEL[signal.regime]    ?? signal.regime
+  const riskColor  = RISK_COLOR[signal.riskLevel]   ?? 'var(--text-muted)'
+  const riskLabel  = RISK_LABEL[signal.riskLevel]   ?? signal.riskLevel
+  const biasLabel  = BIAS_LABEL[signal.actionBias]  ?? signal.actionBias
+
+  return (
+    <div style={{
+      background:      'var(--surface)',
+      border:          '1px solid var(--border-dim)',
+      borderLeft:      `4px solid ${color}`,
+      borderRadius:    '12px',
+      padding:         '28px 28px 24px',
+      marginBottom:    '24px',
+      boxShadow:       `inset 0 0 80px ${color}08`,
+      display:         'flex',
+      alignItems:      'flex-start',
+      justifyContent:  'space-between',
+      gap:             '24px',
+      flexWrap:        'wrap',
+    }}>
+
+      {/* Left: regime info */}
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{
+          fontSize:       '11px',
+          fontWeight:     600,
+          letterSpacing:  '0.15em',
+          color:          'var(--orange)',
+          textTransform:  'uppercase',
+          marginBottom:   '6px',
+        }}>
+          Análise Tática
+        </div>
+
+        <div style={{ fontSize: '22px', fontWeight: 700, color, marginBottom: '4px' }}>
+          {label}
+        </div>
+
+        <div style={{
+          fontSize:     '32px',
+          fontWeight:   700,
+          color:        'var(--text)',
+          marginBottom: '12px',
+          lineHeight:   1.1,
+        }}>
+          {formatBTC(signal.btcPrice)}
+        </div>
+
+        {signal.reading && (
+          <p style={{
+            margin:     '0 0 14px',
+            fontSize:   '13px',
+            color:      'var(--text-sec)',
+            lineHeight: 1.6,
+            maxWidth:   '520px',
+            overflow:   'hidden',
+            maxHeight:  '2.8em',
+          }}>
+            {signal.reading}
+          </p>
+        )}
+
+        <ConsensusBadge groups={signal.indicatorGroups} />
+      </div>
+
+      {/* Right: gauge + pills */}
+      <div style={{
+        display:        'flex',
+        flexDirection:  'column',
+        alignItems:     'center',
+        gap:            '14px',
+        flexShrink:     0,
+      }}>
+        <ScoreGauge value={opportunityScore} size={88} />
+
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-end' }}>
+          <div style={{
+            background:   `${riskColor}15`,
+            border:       `1px solid ${riskColor}33`,
+            borderRadius: '6px',
+            padding:      '4px 12px',
+            fontSize:     '11px',
+            fontWeight:   600,
+            color:        riskColor,
+          }}>
+            Risco: {riskLabel}
+          </div>
+
+          <div style={{
+            background:   'var(--surface2)',
+            border:       '1px solid var(--border-dim)',
+            borderRadius: '6px',
+            padding:      '4px 12px',
+            fontSize:     '11px',
+            fontWeight:   600,
+            color:        'var(--text-sec)',
+          }}>
+            {biasLabel}
+          </div>
+
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
+            {updatedAt}
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/dashboard/HeroSection.tsx
+git commit -m "feat(dashboard): add HeroSection component"
+```
+
+---
+
+## Task 6: Criar DimensionCard
+
+**Files:**
+- Create: `src/components/dashboard/DimensionCard.tsx`
+
+- [ ] **Step 1: Criar o componente**
+
+```tsx
+// src/components/dashboard/DimensionCard.tsx
+'use client'
+
+import { useState } from 'react'
+import { motion, AnimatePresence } from 'framer-motion'
+import type { IndicatorGroup } from '@lib/shared/types/signal'
+import Tooltip from '@/components/shared/Tooltip'
+
+const GROUP_COLOR: Record<string, string> = {
+  sentiment:   '#e08a3a',
+  derivatives: '#FF6D00',
+  onchain:     '#00C853',
+  trend:       '#00BCD4',
+  macro:       '#8B8FA8',
+  synthesis:   '#FFD600',
+}
+
+const GROUP_ICON: Record<string, string> = {
+  sentiment:   '🧠',
+  derivatives: '📊',
+  onchain:     '⛓',
+  trend:       '📈',
+  macro:       '🌐',
+  synthesis:   '✨',
+}
+
+const GROUP_TOOLTIP: Record<string, string> = {
+  sentiment:   'Agrega Fear & Greed, Long/Short Ratio e BTC Dominância.\n\nFavorável = medo elevado + shorts dominantes + Bitcoin liderando o mercado.\nAlerta = euforia + longs dominantes + altcoins em destaque.\n\nSentimento é contrário por natureza — extremos costumam ser sinais de reversão.',
+  derivatives: 'Agrega Funding Rate, Open Interest, Liquidações e Stablecoin Ratio.\n\nFavorável = funding negativo + OI em queda + longs liquidados + stablecoins aguardando entrada.\nAlerta = funding muito alto + OI crescendo + mercado sobreaquecido.\n\nDerivativos refletem alavancagem acumulada — principal fator de risco de curto prazo.',
+  onchain:     'Agrega MVRV, Preço Realizado, Hash Ribbon, Pressão de Venda e ETF Institucional.\n\nFavorável = MVRV baixo + preço próximo do realizado + mineradores se recuperando + instituições comprando.\nAlerta = MVRV em zona de euforia + whales distribuindo.\n\nOn-chain revela o comportamento real dos holders de longo prazo — o dado mais difícil de falsificar.',
+  trend:       'Agrega Médias Móveis, Variação 7d, Bollinger %B, Mayer Multiple e Pi Cycle Top.\n\nFavorável = preço abaixo das médias históricas + Mayer < 0,8 + Bollinger em oversold.\nAlerta = preço muito acima das médias + Mayer > 2,4 + Pi Cycle próximo do cruzamento histórico.\n\nTendência mostra a saúde estrutural do movimento — contexto de onde o preço está no ciclo.',
+  macro:       'Influências externas como dólar (DXY), taxa de juros e fluxos de capital global.\n\nDXY caindo = dólar enfraquecendo = ambiente favorável para Bitcoin.\nDXY subindo forte = pressão sobre ativos de risco.',
+  synthesis:   'Confluência de múltiplos indicadores extremos ao mesmo tempo.\n\nQuando vários indicadores batem limites históricos juntos, o sinal de compra é muito mais confiável do que qualquer indicador isolado.',
+}
+
+const INDICATOR_TOOLTIP: Record<string, string> = {
+  'Medo & Ganância':      'Mede o sentimento geral do mercado de 0 (pânico total) a 100 (euforia total).\n\nAbaixo de 25 = medo extremo — historicamente bom momento para comprar.\nAcima de 75 = euforia — risco alto de correção.',
+  'Taxa de Funding':      'Taxa paga entre traders de futuros a cada 8 horas.\n\nPositiva e alta (>0,03%) = a maioria está alavancada comprando — mercado sobreaquecido.\nNegativa = maioria apostando na queda — sinal de fundo.',
+  'Variação 7d':          'Variação percentual do BTC nos últimos 7 dias.\n\nQuedas fortes (>10% em uma semana) costumam ser bons pontos de entrada para DCA tático.',
+  'Open Interest':        'Valor total de contratos futuros abertos no mercado.\n\nPreço cai + OI cai forte = desalavancagem saudável.\nPreço sobe + OI sobe muito = mercado cada vez mais alavancado.',
+  'Liq. de Longs':        'Volume de posições compradas forçadas a fechar por falta de margem.\n\nLiquidações massivas costumam marcar fundos de curto prazo.',
+  'MVRV':                 'Market Value to Realized Value.\n\nAbaixo de 1 = zona de capitulação histórica.\nAcima de 6 = zona de euforia.',
+  'Preço Realizado':      'Preço médio ao qual cada BTC foi movimentado pela última vez.\n\nBTC abaixo do preço realizado = oportunidade histórica muito rara.',
+  'Mayer Multiple':       'Preço atual dividido pela média móvel de 200 dias.\n\nAbaixo de 0,8 = BTC extremamente barato.\nAcima de 2,4 = zona de topo de ciclo.',
+  'Hash Ribbon':          'Compara o poder computacional de mineração dos últimos 30 e 60 dias.\n\nCapitulação dos mineradores terminando = um dos sinais de compra mais confiáveis.',
+  'Pressão venda':        'Mede a proporção de volume de venda em relação ao de compra.\n\nAlta pressão = whales distribuindo BTC.',
+  'Médias Móveis':        'Posição do preço em relação às médias de 50d, 200d e 50 semanas.\n\nAbaixo das três = zona historicamente barata.',
+  'ETF Institucional':    'Monitora o volume dos maiores ETFs de Bitcoin: IBIT, FBTC, GBTC e ARKB.',
+  'Pi Cycle Top':         'Indicador técnico que compara médias móveis de longo prazo.\n\nCruzamento = sinal histórico de topo de ciclo.',
+  'Bollinger %B':         'Mostra onde o preço está dentro das Bandas de Bollinger.\n\n0% ou abaixo = muito vendido. 100% ou acima = muito comprado.',
+  'DXY (Dólar Index)':    'Índice que mede a força do dólar americano.\n\nDXY subindo = pressão sobre Bitcoin. DXY caindo = ambiente favorável.',
+  'Long/Short Ratio':     'Proporção de traders com posições compradas versus vendidas.\n\nRatio acima de 1,5 = risco elevado. Abaixo de 0,7 = possível reversão.',
+  'BTC Dominância':       'Percentual do Bitcoin no valor total do mercado cripto.\n\nAcima de 60% = bom contexto para acumular. Abaixo de 40% = euforia extrema.',
+  'Stablecoin Ratio':     'Compara o mercado de stablecoins com o market cap do Bitcoin.\n\nSSR baixo = força compradora disponível.',
+  'Heatmap Liquidações':  'Estima onde estão as liquidações forçadas por faixa de preço.\n\nCluster acima = shorts em risco. Cluster abaixo = longs em risco.',
+}
+
+interface DimensionCardProps {
+  group: IndicatorGroup
+}
+
+export default function DimensionCard({ group }: DimensionCardProps) {
+  const [expanded, setExpanded] = useState(false)
+
+  const color   = GROUP_COLOR[group.key]   ?? 'var(--text-sec)'
+  const icon    = GROUP_ICON[group.key]    ?? '·'
+  const tooltip = GROUP_TOOLTIP[group.key]
+  const pct     = Math.min(100, Math.max(0, (group.score + 10) / 20 * 100))
+
+  return (
+    <div style={{
+      background:   'var(--surface)',
+      border:       '1px solid var(--border-dim)',
+      borderTop:    `3px solid ${color}`,
+      borderRadius: '12px',
+      overflow:     'hidden',
+    }}>
+      {/* Header — always visible, clickable */}
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setExpanded(v => !v)}
+        onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setExpanded(v => !v) }}
+        style={{ padding: '14px 16px', cursor: 'pointer', userSelect: 'none' }}
+      >
+        <div style={{
+          display:        'flex',
+          alignItems:     'center',
+          justifyContent: 'space-between',
+          marginBottom:   '10px',
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '14px' }}>{icon}</span>
+            <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text)' }}>{group.label}</span>
+            {tooltip && (
+              <span onClick={e => e.stopPropagation()}>
+                <Tooltip text={tooltip} position="right" wide />
+              </span>
+            )}
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '13px', fontWeight: 700, color }}>
+              {group.score > 0 ? `+${group.score.toFixed(1)}` : group.score.toFixed(1)}
+            </span>
+            <motion.span
+              animate={{ rotate: expanded ? 180 : 0 }}
+              transition={{ duration: 0.2 }}
+              style={{ display: 'inline-block', color: 'var(--text-muted)', fontSize: '12px', lineHeight: 1 }}
+            >
+              ▾
+            </motion.span>
+          </div>
+        </div>
+
+        {/* Score bar */}
+        <div style={{ height: '3px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden' }}>
+          <div style={{ width: `${pct}%`, height: '3px', background: color, borderRadius: '2px' }} />
+        </div>
+      </div>
+
+      {/* Expandable indicators list */}
+      <AnimatePresence initial={false}>
+        {expanded && (
+          <motion.div
+            key="indicators"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ borderTop: '1px solid var(--border-dim)', paddingBottom: '8px' }}>
+              {group.indicators.map(ind => {
+                const indColor   = ind.score > 0 ? '#00C853' : ind.score < 0 ? '#FF6D00' : 'var(--text-muted)'
+                const indTooltip = INDICATOR_TOOLTIP[ind.name]
+                return (
+                  <div key={ind.name} style={{
+                    display:     'flex',
+                    alignItems:  'center',
+                    gap:         '8px',
+                    padding:     '6px 14px 6px 12px',
+                    borderLeft:  `2px solid ${color}33`,
+                    marginLeft:  '8px',
+                    marginRight: '8px',
+                    marginTop:   '4px',
+                  }}>
+                    <div style={{
+                      display:    'flex',
+                      alignItems: 'center',
+                      gap:        '3px',
+                      width:      '100px',
+                      flexShrink: 0,
+                    }}>
+                      <span style={{
+                        fontSize:     '11px',
+                        color:        'var(--text-sec)',
+                        overflow:     'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace:   'nowrap',
+                        minWidth:     0,
+                        flex:         1,
+                      }}>
+                        {ind.name}
+                      </span>
+                      {indTooltip && (
+                        <span onClick={e => e.stopPropagation()}>
+                          <Tooltip text={indTooltip} position="right" wide />
+                        </span>
+                      )}
+                    </div>
+                    <span style={{
+                      fontSize:     '11px',
+                      color:        'var(--text-muted)',
+                      flex:         1,
+                      overflow:     'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace:   'nowrap',
+                    }}>
+                      {ind.summary}
+                    </span>
+                    <span style={{
+                      fontSize:   '11px',
+                      color:      indColor,
+                      fontWeight: 600,
+                      flexShrink: 0,
+                      minWidth:   '36px',
+                      textAlign:  'right',
+                    }}>
+                      {ind.score > 0 ? `+${ind.score.toFixed(1)}` : ind.score.toFixed(1)}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/dashboard/DimensionCard.tsx
+git commit -m "feat(dashboard): add DimensionCard client component with Framer Motion expand"
+```
+
+---
+
+## Task 7: Criar DimensionGrid
+
+**Files:**
+- Create: `src/components/dashboard/DimensionGrid.tsx`
+
+- [ ] **Step 1: Criar o componente**
+
+```tsx
+// src/components/dashboard/DimensionGrid.tsx
+'use client'
+
+import type { IndicatorGroup } from '@lib/shared/types/signal'
+import DimensionCard from './DimensionCard'
+
+interface DimensionGridProps {
+  groups: IndicatorGroup[]
+}
+
+export default function DimensionGrid({ groups }: DimensionGridProps) {
+  if (!groups || groups.length === 0) return null
+
+  return (
+    <div style={{ marginBottom: '24px' }}>
+      <div style={{ marginBottom: '12px' }}>
+        <span style={{
+          fontSize:      '11px',
+          fontWeight:    600,
+          color:         'var(--text-muted)',
+          textTransform: 'uppercase',
+          letterSpacing: '0.1em',
+        }}>
+          Indicadores por dimensão
+        </span>
+      </div>
+      <div className="grid-3">
+        {groups.map(g => <DimensionCard key={g.key} group={g} />)}
+      </div>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/dashboard/DimensionGrid.tsx
+git commit -m "feat(dashboard): add DimensionGrid component"
+```
+
+---
+
+## Task 8: Criar InsightsPanel
+
+**Files:**
+- Create: `src/components/dashboard/InsightsPanel.tsx`
+
+- [ ] **Step 1: Criar o componente**
+
+```tsx
+// src/components/dashboard/InsightsPanel.tsx
+interface InsightsPanelProps {
+  insights: string[]
+}
+
+export default function InsightsPanel({ insights }: InsightsPanelProps) {
+  if (!insights || insights.length === 0) return null
+
+  return (
+    <div style={{
+      background:   'var(--surface)',
+      border:       '1px solid var(--border-dim)',
+      borderRadius: '12px',
+      padding:      '20px 24px',
+      marginBottom: '24px',
+    }}>
+      <div style={{
+        fontSize:      '11px',
+        fontWeight:    600,
+        color:         'var(--text-muted)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        marginBottom:  '14px',
+      }}>
+        Observações
+      </div>
+      <ul style={{
+        margin:         0,
+        padding:        0,
+        listStyle:      'none',
+        display:        'flex',
+        flexDirection:  'column',
+        gap:            '8px',
+      }}>
+        {insights.map((ins, i) => (
+          <li key={i} style={{
+            display:    'flex',
+            gap:        '10px',
+            fontSize:   '13px',
+            color:      'var(--text-sec)',
+            lineHeight: 1.6,
+          }}>
+            <span style={{ color: 'var(--orange)', flexShrink: 0 }}>·</span>
+            {ins}
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros.
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add src/components/dashboard/InsightsPanel.tsx
+git commit -m "feat(dashboard): add InsightsPanel component"
+```
+
+---
+
+## Task 9: Atualizar page.tsx e remover componentes antigos
+
+**Files:**
+- Modify: `src/app/dashboard/page.tsx`
+- Delete: `src/components/dashboard/RegimeCard.tsx`
+- Delete: `src/components/dashboard/DimensionScores.tsx`
+- Delete: `src/components/dashboard/IndicatorGroups.tsx`
+
+- [ ] **Step 1: Substituir conteúdo de `page.tsx`**
+
+Substituir o conteúdo completo de `src/app/dashboard/page.tsx` por:
+
+```tsx
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/server'
+import { getCurrentMarketData } from '@/services/market-data'
+import { deriveSnapshotScores } from '@/domain/snapshot-scores'
+import AppNav from '@/components/shared/AppNav'
+import HeroSection from '@/components/dashboard/HeroSection'
+import DimensionGrid from '@/components/dashboard/DimensionGrid'
+import InsightsPanel from '@/components/dashboard/InsightsPanel'
+
+export const metadata = { title: 'Dashboard — BTC Monitor' }
+export const dynamic = 'force-dynamic'
+
+export default async function DashboardPage() {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) redirect('/login')
+
+  const { signal } = await getCurrentMarketData()
+  const scores = deriveSnapshotScores(signal)
+
+  const updatedAt = new Intl.DateTimeFormat('pt-BR', {
+    timeZone:  'America/Sao_Paulo',
+    day:       '2-digit',
+    month:     '2-digit',
+    year:      'numeric',
+    hour:      '2-digit',
+    minute:    '2-digit',
+  }).format(new Date(signal.generatedAt))
+
+  const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
+
+  return (
+    <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
+      <AppNav userEmail={user.email ?? ''} userAvatarUrl={avatarUrl} />
+      <main style={{ padding: '32px 24px' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
+          <HeroSection
+            signal={signal}
+            opportunityScore={scores.opportunityScore}
+            updatedAt={updatedAt}
+          />
+          <DimensionGrid groups={signal.indicatorGroups} />
+          <InsightsPanel insights={signal.insights} />
+        </div>
+      </main>
+    </div>
+  )
+}
+```
+
+- [ ] **Step 2: Deletar componentes antigos**
+
+```bash
+rm src/components/dashboard/RegimeCard.tsx
+rm src/components/dashboard/DimensionScores.tsx
+rm src/components/dashboard/IndicatorGroups.tsx
+```
+
+- [ ] **Step 3: Type-check**
+
+```bash
+npm run type-check
+```
+
+Expected: zero erros. Se houver erro de import não encontrado, verificar se algum outro arquivo ainda importa os componentes deletados.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add src/app/dashboard/page.tsx
+git add src/components/dashboard/
+git commit -m "feat(dashboard): wire new components, remove RegimeCard/DimensionScores/IndicatorGroups"
+```
+
+---
+
+## Task 10: Build final e verificação
+
+**Files:** nenhum
+
+- [ ] **Step 1: Build de produção**
+
+```bash
+npm run build
+```
+
+Expected: `✓ Compiled successfully` sem erros de TypeScript ou módulo não encontrado.
+
+- [ ] **Step 2: Rodar em dev e verificar visualmente**
+
+```bash
+npm run dev
+```
+
+Abrir `http://localhost:3000/dashboard` e verificar:
+- [ ] Hero aparece com regime colorido, preço BTC, gauge e pills
+- [ ] Grid de 6 cards de dimensão renderiza em 3 colunas
+- [ ] Clicar em card expande/colapsa com animação suave
+- [ ] Múltiplos cards podem estar expandidos ao mesmo tempo
+- [ ] Indicadores internos mostram nome + summary + score colorido
+- [ ] InsightsPanel renderiza bullets
+- [ ] Responsivo: reduzir janela abaixo de 960px → 2 colunas; abaixo de 640px → 1 coluna
+
+- [ ] **Step 3: Commit final se necessário**
+
+```bash
+git add -A
+git commit -m "feat(dashboard): complete redesign — premium institutional tactical panel"
+```
