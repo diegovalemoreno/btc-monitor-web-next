@@ -164,11 +164,13 @@ export function scoreFundingRate(rate: number): number {
 export function scoreMovingAverages(
   belowMa200d: boolean,
   belowMa50w:  boolean,
+  belowMa100d: boolean,
   belowMa50d:  boolean,
 ): number {
   let score = 0;
   if (belowMa200d) score += 1;
   if (belowMa50w)  score += 1;
+  if (belowMa100d) score += 1;
   if (belowMa50d)  score += 1;
   return score;
 }

@@ -40,11 +40,13 @@ export interface SellerPressureValue {
 
 export interface MovingAveragesValue {
   ma50d:        number;
+  ma100d:       number;
   ma200d:       number;
   ma50w:        number;
   currentPrice: number;
   belowMa200d:  boolean;
   belowMa50w:   boolean;
+  belowMa100d:  boolean;
   belowMa50d:   boolean;
 }
 
