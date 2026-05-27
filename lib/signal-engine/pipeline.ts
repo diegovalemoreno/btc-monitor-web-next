@@ -9,6 +9,7 @@ import { evaluateCompositeRules } from "../rules/composite-rules";
 import { classifyRegime, riskLevelForRegime, actionBiasForRegime } from "../rules/regime-classifier";
 import { selectPlaybook } from "../playbooks/playbook-selector";
 import { buildInterpretation, formatInterpretation } from "../domain/interpretation";
+import { buildScoreExplanation } from "../domain/score-explanation";
 import {
   TacticalSignal,
   IndicatorScore,
@@ -124,6 +125,10 @@ export async function runSignalEngine(): Promise<TacticalSignal> {
   const scoresList      = indicatorsToScores(indicators);
   const indicatorGroups = buildIndicatorGroups(scoresList);
   const dimensionScores = buildDimensionScores(indicatorGroups);
+  const explanation     = buildScoreExplanation({
+    indicators: scoresList,
+    previousScore: null,  // smoothing applied later in market-data.ts after DB fetch
+  });
 
   return {
     asset:            "BTC",
@@ -141,5 +146,6 @@ export async function runSignalEngine(): Promise<TacticalSignal> {
     reading:          interp.reading,
     dimensionScores,
     indicatorGroups,
+    explanation,
   };
 }

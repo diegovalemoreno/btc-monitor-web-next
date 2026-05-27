@@ -5,6 +5,8 @@
 // dependem destes tipos — nunca do contrário.
 // ============================================================
 
+import type { TacticalScoreExplanation } from './score-explanation'
+
 // ─── Regime de Mercado (9 valores) ───────────────────────────
 
 export type MarketRegime =
@@ -101,4 +103,5 @@ export interface TacticalSignal {
   reading: string;              // leitura narrativa isolada
   dimensionScores: DimensionScores;
   indicatorGroups: IndicatorGroup[];
+  explanation: TacticalScoreExplanation;
 }
