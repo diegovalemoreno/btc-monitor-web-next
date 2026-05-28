@@ -13,9 +13,8 @@ import { STATE_COLOR, STATE_LABEL } from './DcaScoreGauge'
 import DcaRecommendationCard from './DcaRecommendationCard'
 import DcaIndicatorBreakdown from './DcaIndicatorBreakdown'
 import DcaStatusDoMesCard    from './DcaStatusDoMesCard'
-import DcaScoreGauge         from './DcaScoreGauge'
 
-const fmt = (n: number) =>
+const fmt0 = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
 
 const STORAGE_KEY = 'btcm_dca_tac_cfg_v1'
@@ -38,43 +37,49 @@ interface MarketSnapshot {
   marketRegime:      string
 }
 
-interface Props {
-  plan: DcaPlanRow | null
-}
+interface Props { plan: DcaPlanRow | null }
 
 function currentYearMonth() {
   const n = new Date()
   return { year: n.getFullYear(), month: n.getMonth() + 1 }
 }
 
-// ── Market context card ───────────────────────────────────────────
-function ContextCard({ label, score, qualifier, color }: {
-  label: string; score?: number; qualifier: string; color: string
+// ── Institutional market context card ────────────────────────────────────────
+function MarketContextCard({ label, score, qualifier, color, showBar = true }: {
+  label: string; score?: number; qualifier: string; color: string; showBar?: boolean
 }) {
+  const pct = score !== undefined ? Math.min(100, Math.max(0, score)) : null
   return (
     <div style={{
-      flex:         1,
-      minWidth:     '120px',
+      flex:         '1 1 140px',
       padding:      '16px 18px',
       background:   'rgba(255,255,255,0.02)',
       border:       '1px solid rgba(255,255,255,0.07)',
+      borderTop:    `3px solid ${color}`,
       borderRadius: '10px',
     }}>
-      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '8px' }}>
+      <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
         {label}
       </div>
-      {score !== undefined ? (
-        <div style={{ fontSize: '22px', fontWeight: 800, color, letterSpacing: '-0.5px', marginBottom: '4px' }}>
-          {score}<span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>/100</span>
-        </div>
+      {pct !== null ? (
+        <>
+          <div style={{ fontSize: '26px', fontWeight: 800, color, letterSpacing: '-0.5px', marginBottom: '6px' }}>
+            {score}<span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>/100</span>
+          </div>
+          {showBar && (
+            <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden', marginBottom: '8px' }}>
+              <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '2px' }} />
+            </div>
+          )}
+        </>
       ) : (
-        <div style={{ fontSize: '18px', fontWeight: 700, color, marginBottom: '4px' }}>{qualifier}</div>
+        <div style={{ fontSize: '20px', fontWeight: 700, color, marginBottom: '8px' }}>{qualifier}</div>
       )}
       <div style={{
         display:      'inline-block',
         padding:      '2px 8px',
-        background:   `${color}18`,
-        border:       `1px solid ${color}30`,
+        background:   `${color}14`,
+        border:       `1px solid ${color}28`,
         borderRadius: '4px',
         fontSize:     '10px',
         fontWeight:   600,
@@ -86,12 +91,12 @@ function ContextCard({ label, score, qualifier, color }: {
   )
 }
 
-// ── Opportunities history (derived from contributions) ────────────
+// ── Opportunities history — timeline style ───────────────────────────────────
 function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaContributionRow[] }) {
-  const tactical = contributions
+  const entries = contributions
     .filter(c => c.market_score_snapshot !== null)
     .sort((a, b) => b.contribution_date.localeCompare(a.contribution_date))
-    .slice(0, 10)
+    .slice(0, 8)
 
   return (
     <div style={{
@@ -99,76 +104,105 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '12px',
       overflow:     'hidden',
-      marginBottom: '16px',
     }}>
       <div style={{
-        padding:      '14px 24px',
-        borderBottom: '1px solid rgba(255,255,255,0.06)',
-        display:      'flex',
-        alignItems:   'center',
+        padding:        '14px 24px',
+        borderBottom:   '1px solid rgba(255,255,255,0.06)',
+        display:        'flex',
+        alignItems:     'center',
         justifyContent: 'space-between',
       }}>
         <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
           Histórico de oportunidades
         </div>
-        {tactical.length > 0 && (
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)' }}>{tactical.length} entradas</span>
+        {entries.length > 0 && (
+          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>{entries.length} entradas</span>
         )}
       </div>
 
-      {tactical.length === 0 ? (
-        <div style={{ padding: '32px 24px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
-          Nenhum aporte com contexto de mercado registrado ainda.
+      {entries.length === 0 ? (
+        <div style={{ padding: '32px 24px', textAlign: 'center' }}>
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
+            Nenhum aporte com contexto de mercado ainda.
+          </div>
+          <div style={{ marginTop: '10px' }}>
+            <a href="/lancamento" style={{ fontSize: '12px', color: '#f59e0b', textDecoration: 'none', fontWeight: 500 }}>
+              Registrar primeiro aporte →
+            </a>
+          </div>
         </div>
       ) : (
-        <>
-          {/* Header row */}
-          <div style={{
-            display: 'grid',
-            gridTemplateColumns: '120px 1fr 80px 80px 120px',
-            gap: '12px', padding: '10px 24px',
-            background: 'rgba(255,255,255,0.01)',
-            borderBottom: '1px solid rgba(255,255,255,0.05)',
-          }}>
-            {['Data', 'Notas', 'DCA Score', 'Aporte', 'Estado'].map(h => (
-              <span key={h} style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.2px' }}>{h}</span>
-            ))}
-          </div>
-
-          {tactical.map((c, i) => {
-            const score = c.market_score_snapshot ?? 0
-            const state = c.market_state_snapshot as DcaMarketState | null
-            const color = state ? STATE_COLOR[state] : '#fbbf24'
-            const label = state ? STATE_LABEL[state] : '—'
-            const isLast = i === tactical.length - 1
-            const dateLabel = new Date(c.contribution_date + 'T00:00:00')
-              .toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' })
+        <div style={{ padding: '8px 0' }}>
+          {entries.map((c, i) => {
+            const score   = c.market_score_snapshot ?? 0
+            const state   = c.market_state_snapshot as DcaMarketState | null
+            const color   = state ? STATE_COLOR[state] : '#fbbf24'
+            const label   = state ? STATE_LABEL[state] : '—'
+            const dateStr = new Date(c.contribution_date + 'T00:00:00')
+              .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: '2-digit' })
+            const isLast  = i === entries.length - 1
             return (
               <div key={c.id} style={{
-                display:     'grid',
-                gridTemplateColumns: '120px 1fr 80px 80px 120px',
-                gap:         '12px',
-                padding:     '12px 24px',
+                display:      'flex',
+                alignItems:   'center',
+                gap:          '16px',
+                padding:      '14px 24px',
                 borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.04)',
-                alignItems:  'center',
-              }}>
-                <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>{dateLabel}</span>
-                <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                  {c.notes ?? '—'}
-                </span>
-                <span style={{ fontSize: '13px', fontWeight: 700, color }}>{score}</span>
-                <span style={{ fontSize: '12px', fontWeight: 600, color: '#fff' }}>{fmt(c.amount)}</span>
-                <span style={{
-                  padding: '2px 8px', background: `${color}18`,
-                  border: `1px solid ${color}28`, borderRadius: '4px',
-                  fontSize: '10px', fontWeight: 600, color, display: 'inline-block', width: 'fit-content',
+                borderLeft:   `3px solid ${color}`,
+                marginLeft:   '0',
+                transition:   'background 0.12s',
+              }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.02)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
+              >
+                {/* Score chip */}
+                <div style={{
+                  width:          '44px',
+                  height:         '44px',
+                  borderRadius:   '10px',
+                  background:     `${color}14`,
+                  border:         `1px solid ${color}28`,
+                  display:        'flex',
+                  flexDirection:  'column',
+                  alignItems:     'center',
+                  justifyContent: 'center',
+                  flexShrink:     0,
                 }}>
-                  {label}
-                </span>
+                  <div style={{ fontSize: '16px', fontWeight: 800, color, lineHeight: 1 }}>{score}</div>
+                  <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.5px' }}>SCR</div>
+                </div>
+
+                {/* Date + state */}
+                <div style={{ flexShrink: 0, minWidth: '90px' }}>
+                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 500, marginBottom: '3px' }}>{dateStr}</div>
+                  <span style={{
+                    padding:      '1px 7px',
+                    background:   `${color}14`,
+                    border:       `1px solid ${color}28`,
+                    borderRadius: '4px',
+                    fontSize:     '10px',
+                    fontWeight:   600,
+                    color,
+                  }}>
+                    {label}
+                  </span>
+                </div>
+
+                {/* Notes */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                    {c.notes ?? '—'}
+                  </span>
+                </div>
+
+                {/* Amount */}
+                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                  {fmt0(c.amount)}
+                </div>
               </div>
             )
           })}
-        </>
+        </div>
       )}
 
       <div style={{ padding: '12px 24px', borderTop: '1px solid rgba(255,255,255,0.05)', textAlign: 'right' }}>
@@ -180,7 +214,7 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
   )
 }
 
-// ── Main page ─────────────────────────────────────────────────────
+// ── Main page ─────────────────────────────────────────────────────────────────
 export default function DcaTacticalPage({ plan }: Props) {
   const [config,        setConfig]        = useState<DcaTacticalConfig>(DEFAULT_TACTICAL_CONFIG)
   const [market,        setMarket]        = useState<MarketSnapshot | null>(null)
@@ -188,7 +222,6 @@ export default function DcaTacticalPage({ plan }: Props) {
   const [loading,       setLoading]       = useState(true)
   const [error,         setError]         = useState<string | null>(null)
 
-  // Load config from localStorage
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY)
@@ -200,28 +233,22 @@ export default function DcaTacticalPage({ plan }: Props) {
     } catch {}
   }, [plan])
 
-  // Fetch live market data
   useEffect(() => {
     fetch('/api/market-snapshot/current')
-      .then(r => {
-        if (!r.ok) throw new Error('Falha ao buscar dados de mercado')
-        return r.json() as Promise<MarketSnapshot>
-      })
+      .then(r => { if (!r.ok) throw new Error('Falha ao buscar dados'); return r.json() as Promise<MarketSnapshot> })
       .then(data => { setMarket(data); setLoading(false) })
-      .catch(err => { setError(err instanceof Error ? err.message : 'Erro desconhecido'); setLoading(false) })
+      .catch(err => { setError(err instanceof Error ? err.message : 'Erro'); setLoading(false) })
   }, [])
 
-  // Fetch this month's contributions (read-only)
   const fetchContributions = useCallback(() => {
     fetch('/api/dca/contributions?limit=100')
       .then(r => r.json())
       .then(({ contributions: all }: { contributions: DcaContributionRow[] }) => {
         const { year, month } = currentYearMonth()
-        const thisMonth = (all ?? []).filter(c => {
+        setContributions((all ?? []).filter(c => {
           const d = new Date(c.contribution_date + 'T00:00:00')
           return d.getFullYear() === year && d.getMonth() + 1 === month
-        })
-        setContributions(thisMonth)
+        }))
       })
       .catch(() => {})
   }, [])
@@ -244,30 +271,30 @@ export default function DcaTacticalPage({ plan }: Props) {
       })
     : 0
 
-  const marketState = classifyDcaMarketState(score)
-
-  const configWithDerived: DcaTacticalConfig = { ...config, usedThisMonth }
-
-  const allocation: DcaAllocation | null = monthlyAmount > 0
+  const marketState        = classifyDcaMarketState(score)
+  const configWithDerived  : DcaTacticalConfig = { ...config, usedThisMonth }
+  const allocation         : DcaAllocation | null = monthlyAmount > 0
     ? calculateDcaAllocation(monthlyAmount, configWithDerived, score, marketState)
     : null
-
-  const indicators: DcaIndicatorSignal[] = market?.indicatorGroups
+  const indicators         : DcaIndicatorSignal[] = market?.indicatorGroups
     ? buildIndicatorSignals(market.indicatorGroups)
     : []
-
   const tacticalPool = monthlyAmount - (allocation?.structuralDcaAmount ?? 0)
 
-  // Derive liquidity / trend qualitative labels
-  const liquidityScore  = market ? Math.round((100 - (market.euphoriaScore ?? 50)) * 0.6 + market.convictionScore * 0.4) : null
-  const liquidityLabel  = liquidityScore == null ? 'Neutra' : liquidityScore >= 60 ? 'Alta' : liquidityScore >= 35 ? 'Neutra' : 'Baixa'
-  const liquidityColor  = liquidityScore == null ? '#fbbf24' : liquidityScore >= 60 ? '#4ade80' : liquidityScore >= 35 ? '#fbbf24' : '#f87171'
+  // Qualitative labels derived from scores
+  const liquidityScore = market
+    ? Math.round((100 - (market.euphoriaScore ?? 50)) * 0.6 + market.convictionScore * 0.4)
+    : null
+  const liquidityLabel = liquidityScore == null ? 'Neutra'
+    : liquidityScore >= 60 ? 'Alta' : liquidityScore >= 35 ? 'Neutra' : 'Baixa'
+  const liquidityColor = liquidityScore == null ? '#fbbf24'
+    : liquidityScore >= 60 ? '#4ade80' : liquidityScore >= 35 ? '#fbbf24' : '#f87171'
 
-  const regime = (market?.marketRegime ?? '').toLowerCase()
+  const regime     = (market?.marketRegime ?? '').toLowerCase()
   const trendLabel = regime.includes('bull') ? 'Alta' : regime.includes('bear') ? 'Baixa' : 'Lateral'
   const trendColor = trendLabel === 'Alta' ? '#4ade80' : trendLabel === 'Baixa' ? '#f87171' : '#fbbf24'
 
-  // ── Loading ──────────────────────────────────────────────────────
+  // ── Loading ──────────────────────────────────────────────────────────────────
   if (loading) {
     return (
       <div style={{ padding: '48px 0', textAlign: 'center' }}>
@@ -283,110 +310,104 @@ export default function DcaTacticalPage({ plan }: Props) {
     )
   }
 
-  // ── Error ────────────────────────────────────────────────────────
   if (error) {
     return (
-      <div style={{ padding: '20px 24px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.2)', borderRadius: '10px' }}>
-        <div style={{ fontSize: '12px', color: '#EF4444' }}>Erro ao carregar dados de mercado: {error}</div>
+      <div style={{ padding: '20px 24px', background: 'rgba(248,113,113,0.08)', border: '1px solid rgba(248,113,113,0.2)', borderRadius: '10px' }}>
+        <div style={{ fontSize: '12px', color: '#f87171' }}>Erro ao carregar dados: {error}</div>
       </div>
     )
   }
 
-  // ── No plan ──────────────────────────────────────────────────────
   if (monthlyAmount === 0) {
     return (
-      <div style={{ padding: '20px 24px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.2)', borderRadius: '10px', fontSize: '13px', color: 'rgba(255,255,255,0.55)' }}>
-        Configure o aporte mensal na aba DCA Inteligente para receber a sugestão de alocação tática.
+      <div style={{ padding: '20px 24px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: '10px', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
+        Configure o aporte mensal na aba <strong style={{ color: '#f59e0b' }}>DCA Inteligente</strong> para ativar a análise tática.
       </div>
     )
   }
 
-  // ── Main render ──────────────────────────────────────────────────
+  // ── Main render ───────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-      {/* "Como funciona" card */}
+      {/* "Como funciona" — compact educational note */}
       <div style={{
-        display:      'flex',
-        alignItems:   'flex-start',
-        gap:          '10px',
-        padding:      '16px 20px',
-        background:   'rgba(255,255,255,0.02)',
-        border:       '1px solid rgba(255,255,255,0.07)',
-        borderRadius: '12px',
+        display:    'flex',
+        alignItems: 'center',
+        gap:        '12px',
+        padding:    '12px 20px',
+        background: 'rgba(245,158,11,0.05)',
+        border:     '1px solid rgba(245,158,11,0.15)',
+        borderRadius: '10px',
       }}>
-        <div style={{
-          width: '30px', height: '30px', borderRadius: '8px', flexShrink: 0,
-          background: 'rgba(245,158,11,0.1)', border: '1px solid rgba(245,158,11,0.2)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-        }}>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
-          </svg>
-        </div>
-        <div style={{ flex: 1 }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>Como funciona</div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.6 }}>
-            O DCA Tático identifica janelas de oportunidade excepcional no mercado para acelerar aportes.
-            Decida aqui — execute em{' '}
-            <a href="/lancamento" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 500 }}>Lançamentos</a>.
-          </div>
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+          <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
+        </svg>
+        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, flex: 1 }}>
+          <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Como funciona: </span>
+          O DCA Tático identifica janelas de oportunidade excepcional para acelerar aportes. Decida aqui — execute em{' '}
+          <a href="/lancamento" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>Lançamentos</a>.
         </div>
       </div>
 
       {/* KPI summary cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '12px' }}>
         {[
           {
-            label:   'DCA Estrutural',
-            value:   fmt(allocation?.structuralDcaAmount ?? 0),
-            sub:     'Valor mensal base',
-            accent:  '#f59e0b',
+            label:    'DCA Estrutural',
+            value:    fmt0(allocation?.structuralDcaAmount ?? 0),
+            sub:      'Valor mensal base',
+            topColor: '#f59e0b',
+            valColor: '#fff',
           },
           {
-            label:   'Caixa Tático',
-            value:   fmt(tacticalPool),
-            sub:     'Fundo destinado para oportunidades',
-            accent:  '#6366f1',
+            label:    'Caixa Tático',
+            value:    fmt0(tacticalPool),
+            sub:      'Fundo para oportunidades',
+            topColor: '#6366f1',
+            valColor: '#fff',
           },
           {
-            label:   'Já aportado (mês)',
-            value:   fmt(usedThisMonth),
-            sub:     usedThisMonth > tacticalPool ? `${Math.round((usedThisMonth / tacticalPool) * 100)}% da caixa tático utilizada` : `${Math.round((usedThisMonth / tacticalPool) * 100)}% utilizado`,
-            accent:  usedThisMonth > tacticalPool ? '#ef4444' : usedThisMonth > 0 ? '#f59e0b' : 'rgba(255,255,255,0.2)',
-            valueColor: usedThisMonth > tacticalPool ? '#ef4444' : undefined,
+            label:    'Já aportado (mês)',
+            value:    fmt0(usedThisMonth),
+            sub:      usedThisMonth > tacticalPool
+              ? `${Math.round((usedThisMonth / tacticalPool) * 100)}% da caixa tático utilizada`
+              : `${Math.round(tacticalPool > 0 ? (usedThisMonth / tacticalPool) * 100 : 0)}% utilizado`,
+            topColor: usedThisMonth > tacticalPool ? '#f87171' : usedThisMonth > 0 ? '#f59e0b' : 'rgba(255,255,255,0.1)',
+            valColor: usedThisMonth > tacticalPool ? '#f87171' : '#fff',
           },
           {
-            label:   'Disponível',
-            value:   fmt(Math.max(0, tacticalPool - usedThisMonth)),
-            sub:     'Restante para oportunidades',
-            accent:  (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'rgba(255,255,255,0.2)',
-            valueColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'rgba(255,255,255,0.3)',
+            label:    'Disponível',
+            value:    fmt0(Math.max(0, tacticalPool - usedThisMonth)),
+            sub:      'Restante para oportunidades',
+            topColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'rgba(255,255,255,0.1)',
+            valColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'rgba(255,255,255,0.25)',
           },
-        ].map(({ label, value, sub, accent, valueColor }) => (
+        ].map(({ label, value, sub, topColor, valColor }) => (
           <div key={label} style={{
             padding:      '18px 20px',
             background:   'rgba(255,255,255,0.02)',
             border:       '1px solid rgba(255,255,255,0.07)',
-            borderRadius: '12px',
+            borderTop:    `3px solid ${topColor}`,
+            borderRadius: '10px',
           }}>
-            <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '10px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
               {label}
             </div>
-            <div style={{ fontSize: '20px', fontWeight: 800, color: valueColor ?? '#fff', letterSpacing: '-0.5px', marginBottom: '4px' }}>
+            <div style={{ fontSize: '22px', fontWeight: 800, color: valColor, letterSpacing: '-0.5px', marginBottom: '4px' }}>
               {value}
             </div>
-            <div style={{ fontSize: '11px', color: accent === 'rgba(255,255,255,0.2)' ? 'rgba(255,255,255,0.2)' : `${accent}cc` }}>
+            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.4 }}>
               {sub}
             </div>
           </div>
         ))}
       </div>
 
-      {/* Hero recommendation */}
+      {/* Hero recommendation — dominant */}
       {allocation && <DcaRecommendationCard allocation={allocation} summary={market?.summary} />}
 
-      {/* Market context */}
+      {/* Market context — institutional */}
       {market && (
         <div style={{
           padding:      '18px 20px',
@@ -394,40 +415,12 @@ export default function DcaTacticalPage({ plan }: Props) {
           border:       '1px solid rgba(255,255,255,0.07)',
           borderRadius: '12px',
         }}>
-          <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '14px' }}>
-            Contexto do mercado
-          </div>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <ContextCard
-              label="Oportunidade"
-              score={market.opportunityScore}
-              qualifier={market.opportunityScore >= 70 ? 'Favorável' : market.opportunityScore >= 40 ? 'Neutro' : 'Desfavorável'}
-              color={market.opportunityScore >= 70 ? '#4ade80' : market.opportunityScore >= 40 ? '#fbbf24' : '#f87171'}
-            />
-            <ContextCard
-              label="Risco"
-              score={market.riskScore}
-              qualifier={market.riskScore < 30 ? 'Baixo' : market.riskScore < 60 ? 'Médio' : 'Alto'}
-              color={market.riskScore < 30 ? '#4ade80' : market.riskScore < 60 ? '#fbbf24' : '#f87171'}
-            />
-            <ContextCard
-              label="Convicção"
-              score={market.convictionScore}
-              qualifier={market.convictionScore >= 70 ? 'Alta' : market.convictionScore >= 40 ? 'Média' : 'Baixa'}
-              color={market.convictionScore >= 70 ? '#4ade80' : market.convictionScore >= 40 ? '#fbbf24' : '#f87171'}
-            />
-            <ContextCard
-              label="Liquidez"
-              qualifier={liquidityLabel}
-              color={liquidityColor}
-            />
-            <ContextCard
-              label="Tendência"
-              qualifier={trendLabel}
-              color={trendColor}
-            />
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+              Contexto do mercado
+            </div>
             {/* Legend */}
-            <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', paddingBottom: '4px', marginLeft: 'auto' }}>
+            <div style={{ display: 'flex', gap: '14px' }}>
               {[
                 { label: '≥ 70 Favorável',    color: '#4ade80' },
                 { label: '40–70 Neutro',      color: '#fbbf24' },
@@ -435,15 +428,47 @@ export default function DcaTacticalPage({ plan }: Props) {
               ].map(l => (
                 <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: l.color, display: 'inline-block', flexShrink: 0 }} />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{l.label}</span>
+                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>{l.label}</span>
                 </div>
               ))}
             </div>
           </div>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <MarketContextCard
+              label="Oportunidade"
+              score={market.opportunityScore}
+              qualifier={market.opportunityScore >= 70 ? 'Favorável' : market.opportunityScore >= 40 ? 'Neutro' : 'Desfavorável'}
+              color={market.opportunityScore >= 70 ? '#4ade80' : market.opportunityScore >= 40 ? '#fbbf24' : '#f87171'}
+            />
+            <MarketContextCard
+              label="Risco"
+              score={market.riskScore}
+              qualifier={market.riskScore < 30 ? 'Baixo' : market.riskScore < 60 ? 'Médio' : 'Alto'}
+              color={market.riskScore < 30 ? '#4ade80' : market.riskScore < 60 ? '#fbbf24' : '#f87171'}
+            />
+            <MarketContextCard
+              label="Convicção"
+              score={market.convictionScore}
+              qualifier={market.convictionScore >= 70 ? 'Alta' : market.convictionScore >= 40 ? 'Média' : 'Baixa'}
+              color={market.convictionScore >= 70 ? '#4ade80' : market.convictionScore >= 40 ? '#fbbf24' : '#f87171'}
+            />
+            <MarketContextCard
+              label="Liquidez"
+              qualifier={liquidityLabel}
+              color={liquidityColor}
+              showBar={false}
+            />
+            <MarketContextCard
+              label="Tendência"
+              qualifier={trendLabel}
+              color={trendColor}
+              showBar={false}
+            />
+          </div>
         </div>
       )}
 
-      {/* Month status (read-only) */}
+      {/* Month status */}
       <DcaStatusDoMesCard
         tacticalPool={tacticalPool}
         contributions={contributions}

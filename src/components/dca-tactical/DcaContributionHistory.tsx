@@ -174,6 +174,7 @@ export default function DcaContributionHistory({ initialContributions, initialTa
   const [activeTab, setActiveTab]             = useState<ActiveTab>(initialTab ?? 'consolidacao')
   const [expandedId, setExpandedId]           = useState<string | null>(null)
   const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
+  const [showRegisterModal,   setShowRegisterModal]   = useState(false)
 
   // Period navigator
   const [viewMonth, setViewMonth]         = useState(() => new Date())
@@ -285,6 +286,11 @@ export default function DcaContributionHistory({ initialContributions, initialTa
     setEditingContribution(null)
   }
 
+  function handleCreate(created: DcaContributionRow) {
+    setContributions(prev => [created, ...prev].sort((a, b) => b.contribution_date.localeCompare(a.contribution_date)))
+    setShowRegisterModal(false)
+  }
+
   function handleGoToPage(e: React.FormEvent) {
     e.preventDefault()
     const n = parseInt(goToPageInput, 10)
@@ -326,10 +332,37 @@ export default function DcaContributionHistory({ initialContributions, initialTa
         />
       )}
 
+      {/* Register modal */}
+      {showRegisterModal && typeof document !== 'undefined' && (
+        <RegisterContributionModal
+          onClose={() => setShowRegisterModal(false)}
+          onCreate={handleCreate}
+        />
+      )}
+
       {/* Tab bar */}
-      <div style={{ display: 'flex', gap: '0', marginBottom: '28px', borderBottom: '1px solid var(--border)', overflowX: 'auto' }}>
-        <button onClick={() => setActiveTab('consolidacao')} style={tabBtnStyle(activeTab === 'consolidacao')}>Consolidação de Aportes</button>
-        <button onClick={() => setActiveTab('evolucao')}     style={tabBtnStyle(activeTab === 'evolucao')}>Evolução do Preço Médio</button>
+      <div style={{ display: 'flex', alignItems: 'center', marginBottom: '28px', borderBottom: '1px solid var(--border)' }}>
+        <div style={{ display: 'flex', gap: '0', overflowX: 'auto' }}>
+          <button onClick={() => setActiveTab('consolidacao')} style={tabBtnStyle(activeTab === 'consolidacao')}>Consolidação de Aportes</button>
+          <button onClick={() => setActiveTab('evolucao')}     style={tabBtnStyle(activeTab === 'evolucao')}>Evolução do Preço Médio</button>
+        </div>
+        <button
+          onClick={() => setShowRegisterModal(true)}
+          style={{
+            marginLeft:   'auto',
+            flexShrink:   0,
+            padding:      '7px 16px',
+            background:   'var(--orange)',
+            color:        '#000',
+            border:       'none',
+            borderRadius: '8px',
+            fontSize:     '12px',
+            fontWeight:   700,
+            cursor:       'pointer',
+          }}
+        >
+          + Registrar aporte
+        </button>
       </div>
 
       {/* ══════════════════════════════════════════════════════════
@@ -816,5 +849,165 @@ function FeeMetric({ label, value, color, hint, tooltip }: { label: string; valu
       <div style={{ fontSize: '15px', fontWeight: 700, color: color ?? 'var(--text)', fontFamily: "'Courier New', monospace" }}>{value}</div>
       {hint && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '2px' }}>{hint}</div>}
     </div>
+  )
+}
+
+// ─── Register new contribution modal ──────────────────────────────────────────
+
+function RegisterContributionModal({ onClose, onCreate }: {
+  onClose: () => void
+  onCreate: (c: DcaContributionRow) => void
+}) {
+  const today = new Date().toISOString().slice(0, 10)
+
+  const [amountMask,       setAmountMask]       = useState('')
+  const [date,             setDate]             = useState(today)
+  const [type,             setType]             = useState<ContributionType>('TACTICAL')
+  const [btcInput,         setBtcInput]         = useState('')
+  const [btcPriceMask,     setBtcPriceMask]     = useState('')
+  const [outrosCustosMask, setOutrosCustosMask] = useState('')
+  const [notes,            setNotes]            = useState('')
+  const [saving,           setSaving]           = useState(false)
+  const [error,            setError]            = useState<string | null>(null)
+
+  const parsedAmount       = parseBRLMask(amountMask) ?? 0
+  const parsedSats         = btcInput ? Math.round(parseFloat(btcInput.replace(',', '.')) * 1e8) : null
+  const parsedBtcPrice     = parseBRLMask(btcPriceMask) ?? 0
+  const parsedOutrosCustos = parseBRLMask(outrosCustosMask) ?? 0
+  const calcEffective      = parsedSats && parsedSats > 0 && parsedAmount > 0
+    ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
+    : null
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    if (!parsedAmount || parsedAmount <= 0) { setError('Informe o valor do aporte'); return }
+    setSaving(true); setError(null)
+    const notesWithFee = parsedOutrosCustos > 0
+      ? (notes.trim() ? `${notes.trim()} · taxa R$${parsedOutrosCustos.toFixed(2)}` : `taxa R$${parsedOutrosCustos.toFixed(2)}`)
+      : (notes.trim() || null)
+    try {
+      const res = await fetch('/api/dca/contributions', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({
+          amount:             parsedAmount,
+          contribution_date:  date,
+          contribution_type:  type,
+          notes:              notesWithFee,
+          sats_purchased:     parsedSats && parsedSats > 0 ? parsedSats : null,
+          btc_price_brl:      parsedBtcPrice > 0 ? parsedBtcPrice : null,
+          effective_price_brl: calcEffective,
+        }),
+      })
+      if (!res.ok) {
+        const d = await res.json() as { error?: string }
+        throw new Error(d.error ?? 'Erro ao registrar')
+      }
+      const { contribution } = await res.json() as { contribution: DcaContributionRow }
+      onCreate(contribution)
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Erro ao registrar')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inp: React.CSSProperties = {
+    width: '100%', padding: '9px 12px',
+    background: 'var(--bg)', border: '1px solid var(--border)',
+    borderRadius: '8px', color: 'var(--text)', fontSize: '14px', boxSizing: 'border-box',
+  }
+  const lbl: React.CSSProperties = {
+    display: 'block', fontSize: '11px', fontWeight: 600,
+    color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: '6px',
+  }
+
+  return createPortal(
+    <div
+      style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }}
+      onClick={onClose}
+    >
+      <div
+        style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }}
+        onClick={e => e.stopPropagation()}
+      >
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>Registrar aporte</h3>
+            <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Novo lançamento de compra de Bitcoin.</p>
+          </div>
+          <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '2px 6px' }}>✕</button>
+        </div>
+        <form onSubmit={handleSubmit}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div>
+              <label style={lbl}>Valor *</label>
+              <input type="text" inputMode="numeric" value={amountMask} onChange={e => setAmountMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} />
+            </div>
+            <div>
+              <label style={lbl}>Data *</label>
+              <input type="date" value={date} onChange={e => setDate(e.target.value)} max={today} style={inp} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label style={lbl}>Tipo</label>
+            <select value={type} onChange={e => setType(e.target.value as ContributionType)} style={{ ...inp, cursor: 'pointer' }}>
+              {(Object.entries(TYPE_META) as [ContributionType, { label: string }][]).map(([k, v]) => (
+                <option key={k} value={k}>{v.label}</option>
+              ))}
+            </select>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+            <div>
+              <label style={lbl}>BTC comprado</label>
+              <input type="text" inputMode="decimal" value={btcInput} onChange={e => setBtcInput(e.target.value)} placeholder="0.00000000" style={inp} />
+              {parsedSats && parsedSats > 0 && (
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
+                  = {parsedSats.toLocaleString('pt-BR')} sats
+                </div>
+              )}
+            </div>
+            <div>
+              <label style={lbl}>Cotação do mercado</label>
+              <input type="text" inputMode="numeric" value={btcPriceMask} onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} />
+            </div>
+          </div>
+
+          <div style={{ marginBottom: '14px' }}>
+            <label style={lbl}>Outros custos (opcional)</label>
+            <input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00 — taxas, spread…" style={inp} />
+          </div>
+
+          {calcEffective !== null && (
+            <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)' }}>
+              Preço efetivo: <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>{fmtBRL0(calcEffective)}/BTC</strong>
+            </div>
+          )}
+
+          <div style={{ marginBottom: '20px' }}>
+            <label style={lbl}>Observações</label>
+            <textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas opcionais…" rows={2} style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} />
+          </div>
+
+          {error && (
+            <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '14px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>
+              {error}
+            </div>
+          )}
+
+          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
+            <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>
+              Cancelar
+            </button>
+            <button type="submit" disabled={saving} style={{ padding: '9px 24px', background: 'var(--orange)', border: 'none', borderRadius: '8px', color: '#000', fontSize: '13px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>
+              {saving ? 'Salvando…' : 'Registrar aporte'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>,
+    document.body
   )
 }
