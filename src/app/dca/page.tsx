@@ -28,7 +28,7 @@ export default async function DcaPage({ searchParams }: { searchParams: SearchPa
   const [latestRec, history] = plan
     ? await Promise.all([
         getLatestRecommendation(supabase, user.id),
-        getRecentRecommendations(supabase, user.id, 10),
+        getRecentRecommendations(supabase, user.id, 100),
       ])
     : [null, []]
 
