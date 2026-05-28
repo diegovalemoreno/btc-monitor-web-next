@@ -47,13 +47,13 @@ function KpiCol({
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
         <div style={{
           width: '22px', height: '22px', borderRadius: '50%',
-          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+          background: 'var(--bg)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '9px', color: 'rgba(255,255,255,0.5)', flexShrink: 0,
+          fontSize: '9px', color: 'var(--text-sec)', flexShrink: 0,
         }}>
           {icon}
         </div>
-        <div style={{ fontSize: '7.5px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1.2 }}>
+        <div style={{ fontSize: '7.5px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1.2 }}>
           {label}
         </div>
       </div>
@@ -96,13 +96,13 @@ export default function PatrimonioHero({ patrimonio }: Props) {
         {/* Left: value + return + sparkline */}
         <div>
           <div style={{
-            fontSize: '8px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
+            fontSize: '8px', color: 'var(--text-sec)', textTransform: 'uppercase',
             letterSpacing: '2px', marginBottom: '8px',
           }}>
             Patrimônio atual
           </div>
           <div style={{
-            fontSize: '36px', fontWeight: 900, color: '#fff',
+            fontSize: '36px', fontWeight: 900, color: 'var(--text)',
             letterSpacing: '-1.5px', lineHeight: 1, marginBottom: '8px',
           }}>
             {fmt0(currentValue)}
@@ -116,7 +116,7 @@ export default function PatrimonioHero({ patrimonio }: Props) {
             }}>
               {arrow} {Math.abs(totalReturn).toFixed(1).replace('.', ',')}%
             </span>
-            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-sec)' }}>
               {totalReturn >= 0 ? '+' : ''}{fmt0(totalReturnBrl)} total
             </span>
           </div>

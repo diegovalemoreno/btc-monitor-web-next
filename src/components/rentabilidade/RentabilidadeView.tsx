@@ -15,9 +15,9 @@ export default function RentabilidadeView({ patrimonio }: Props) {
   if (patrimonio.contributionCount === 0) {
     return (
       <div style={{
-        padding: '32px 24px', background: 'rgba(255,255,255,0.02)',
+        padding: '32px 24px', background: 'var(--surface2)',
         border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px',
-        fontSize: '13px', color: 'rgba(255,255,255,0.4)', textAlign: 'center',
+        fontSize: '13px', color: 'var(--text-sec)', textAlign: 'center',
       }}>
         Nenhum aporte com BTC registrado encontrado.
       </div>
@@ -29,10 +29,10 @@ export default function RentabilidadeView({ patrimonio }: Props) {
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: '#fff', margin: '0 0 4px' }}>
+        <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>
           Rentabilidade
         </h1>
-        <p style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', margin: 0 }}>
+        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
           Retorno por aporte, calculado sobre o preço atual do Bitcoin.
         </p>
       </div>
@@ -54,7 +54,7 @@ export default function RentabilidadeView({ patrimonio }: Props) {
       <div style={{
         textAlign:  'center',
         fontSize:   '10px',
-        color:      'rgba(255,255,255,0.2)',
+        color:      'var(--text-muted)',
         padding:    '8px 0',
         display:    'flex',
         alignItems: 'center',

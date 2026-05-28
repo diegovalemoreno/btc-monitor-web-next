@@ -39,7 +39,7 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface2)',
       border:       `1px solid ${color}30`,
       borderRadius: '16px',
       overflow:     'hidden',
@@ -57,8 +57,8 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
         <div style={{ fontSize: '10px', fontWeight: 700, color: color, textTransform: 'uppercase', letterSpacing: '2px' }}>
           Recomendação atual · DCA Tático
         </div>
-        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>
-          Perfil: <span style={{ color: 'rgba(255,255,255,0.6)', fontWeight: 500 }}>{PROFILE_LABEL[strategyProfile]}</span>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
+          Perfil: <span style={{ color: 'var(--text)', fontWeight: 500 }}>{PROFILE_LABEL[strategyProfile]}</span>
         </div>
       </div>
 
@@ -87,10 +87,10 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
 
           {/* Primary: suggested tactical now */}
           <div>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '6px' }}>
               Aporte tático sugerido agora
             </div>
-            <div style={{ fontSize: '36px', fontWeight: 800, color: noCapital ? 'rgba(255,255,255,0.3)' : color, letterSpacing: '-1px', lineHeight: 1 }}>
+            <div style={{ fontSize: '36px', fontWeight: 800, color: noCapital ? 'var(--text-muted)' : color, letterSpacing: '-1px', lineHeight: 1 }}>
               {fmt(Math.max(0, suggestedAmount))}
             </div>
           </div>
@@ -98,7 +98,7 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
           {/* Secondary row: structural + reserve */}
           <div style={{ display: 'flex', gap: '28px', flexWrap: 'wrap' }}>
             <div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '4px' }}>
                 DCA estrutural (mês)
               </div>
               <div style={{ fontSize: '16px', fontWeight: 700, color: '#f59e0b', fontVariantNumeric: 'tabular-nums' }}>
@@ -106,10 +106,10 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
               </div>
             </div>
             <div>
-              <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '4px' }}>
+              <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '4px' }}>
                 Reserva tática
               </div>
-              <div style={{ fontSize: '16px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', fontVariantNumeric: 'tabular-nums' }}>
+              <div style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-muted)', fontVariantNumeric: 'tabular-nums' }}>
                 {fmt(tacticalReserveAmount)}
               </div>
             </div>
@@ -118,15 +118,15 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
           {/* Racional — premium block */}
           <div style={{
             padding:      '14px 16px',
-            background:   'rgba(255,255,255,0.03)',
+            background:   'var(--surface2)',
             border:       '1px solid rgba(255,255,255,0.07)',
             borderLeft:   `3px solid ${color}60`,
             borderRadius: '8px',
           }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '2px', marginBottom: '8px' }}>
               Racional
             </div>
-            <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>
+            <p style={{ margin: 0, fontSize: '12px', color: 'var(--text)', lineHeight: 1.7 }}>
               {rationaleText}
             </p>
             {rationaleNote && (
@@ -149,15 +149,15 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
       <div style={{
         padding:        '14px 28px',
         borderTop:      `1px solid ${color}18`,
-        background:     'rgba(0,0,0,0.2)',
+        background:     'var(--surface2)',
         display:        'flex',
         alignItems:     'center',
         gap:            '16px',
         flexWrap:       'wrap',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>Total planejado:</span>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: 'rgba(255,255,255,0.7)', fontVariantNumeric: 'tabular-nums' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Total planejado:</span>
+          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>
             {fmt(monthlyContribution)}
           </span>
         </div>

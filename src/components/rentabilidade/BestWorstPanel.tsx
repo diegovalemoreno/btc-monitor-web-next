@@ -10,7 +10,7 @@ function Row({ entry, isPositive }: { entry: BestWorstEntry; isPositive: boolean
       alignItems: 'center',
       padding:    '6px 0',
     }}>
-      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>
+      <span style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>
         {entry.label}
       </span>
       <span style={{ fontSize: '12px', fontWeight: 700, color }}>
@@ -28,12 +28,12 @@ interface Props {
 export default function BestWorstPanel({ bestPeriods, worstPeriods }: Props) {
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.015)',
+      background:   'var(--surface2)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '16px',
       padding:      '20px 22px',
     }}>
-      <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '18px' }}>
+      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '18px' }}>
         Melhores e piores períodos de compra
       </div>
 

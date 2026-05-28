@@ -22,14 +22,14 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.015)',
+      background:   'var(--surface2)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '16px',
       padding:      '20px 22px',
       display:      'flex',
       flexDirection: 'column',
     }}>
-      <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '18px' }}>
+      <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '18px' }}>
         Aportes em lucro / prejuízo
       </div>
 
@@ -59,10 +59,10 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
             alignItems: 'center', justifyContent: 'center',
             pointerEvents: 'none',
           }}>
-            <div style={{ fontSize: '18px', fontWeight: 800, color: '#fff', lineHeight: 1 }}>
+            <div style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>
               {totalCount}
             </div>
-            <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            <div style={{ fontSize: '8px', color: 'var(--text-sec)', marginTop: '2px', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
               aportes
             </div>
           </div>
@@ -74,9 +74,9 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '2px' }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', display: 'inline-block', flexShrink: 0 }} />
               <span style={{ fontSize: '16px', fontWeight: 800, color: '#22c55e' }}>{profitableCount}</span>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>em lucro</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-sec)' }}>em lucro</span>
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', paddingLeft: '17px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: '17px' }}>
               {profitPct}%
             </div>
           </div>
@@ -84,9 +84,9 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
             <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '2px' }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#ef4444', display: 'inline-block', flexShrink: 0 }} />
               <span style={{ fontSize: '16px', fontWeight: 800, color: '#ef4444' }}>{lossCount}</span>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.5)' }}>em prejuízo</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-sec)' }}>em prejuízo</span>
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', paddingLeft: '17px' }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', paddingLeft: '17px' }}>
               {lossPct}%
             </div>
           </div>
@@ -98,7 +98,7 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
         paddingTop: '12px',
         borderTop:  '1px solid rgba(255,255,255,0.05)',
         fontSize:   '9px',
-        color:      'rgba(255,255,255,0.3)',
+        color:      'var(--text-muted)',
         lineHeight: 1.5,
       }}>
         Lucro/Prejuízo calculado sobre o preço atual do BTC ({fmt0(currentBtcPrice)}).

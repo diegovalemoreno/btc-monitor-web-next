@@ -38,12 +38,12 @@ function TrendMeter({ score }: { score: number }) {
 
       {/* Track */}
       <rect x={10} y={22} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
-      <rect x={10} y={22} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} rx={5} />
+      <rect x={10} y={22} width={180} height={10} fill="none" stroke="var(--border-dim)" strokeWidth={0.5} rx={5} />
 
       {/* Quarter tick marks */}
       {[25, 50, 75].map(p => (
         <line key={p} x1={10 + p * 1.8} y1={23} x2={10 + p * 1.8} y2={31}
-          stroke="rgba(255,255,255,0.18)" strokeWidth={0.75} />
+          stroke="var(--text-muted)" strokeWidth={0.75} />
       ))}
 
       {/* Needle */}
@@ -87,11 +87,11 @@ function SentimentSpectrum({ score }: { score: number }) {
         </linearGradient>
       </defs>
       <rect x={10} y={20} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
-      <rect x={10} y={20} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth={0.5} rx={5} />
+      <rect x={10} y={20} width={180} height={10} fill="none" stroke="var(--border-dim)" strokeWidth={0.5} rx={5} />
       <text x={10}  y={40} textAnchor="start"  fontSize="7" fill="#1565C0" opacity={0.8}>Medo extremo</text>
       <text x={100} y={40} textAnchor="middle" fontSize="7" fill="var(--text-muted)">Neutro</text>
       <text x={190} y={40} textAnchor="end"    fontSize="7" fill="#E53935" opacity={0.8}>Euforia</text>
-      <line x1={needleX} y1={16} x2={needleX} y2={34} stroke="rgba(255,255,255,0.5)" strokeWidth={1.5} strokeLinecap="round" />
+      <line x1={needleX} y1={16} x2={needleX} y2={34} stroke="var(--text-muted)" strokeWidth={1.5} strokeLinecap="round" />
       <circle cx={needleX} cy={25} r={4.5} fill={color} />
       <text x={needleX} y={12} textAnchor="middle" fontSize="9" fill={color} fontWeight="800">
         {score > 0 ? `+${score.toFixed(1)}` : score.toFixed(1)}
@@ -200,10 +200,10 @@ function MacroCompass({ score }: { score: number }) {
 
       {/* Track */}
       <rect x={10} y={22} width={180} height={10} fill={`url(#${gradId})`} rx={5} />
-      <rect x={10} y={22} width={180} height={10} fill="none" stroke="rgba(255,255,255,0.06)" strokeWidth={0.5} rx={5} />
+      <rect x={10} y={22} width={180} height={10} fill="none" stroke="var(--border-dim)" strokeWidth={0.5} rx={5} />
 
       {/* Center tick */}
-      <line x1={100} y1={23} x2={100} y2={31} stroke="rgba(255,255,255,0.18)" strokeWidth={0.75} />
+      <line x1={100} y1={23} x2={100} y2={31} stroke="var(--text-muted)" strokeWidth={0.75} />
 
       {/* Needle */}
       <line x1={needleX} y1={17} x2={needleX} y2={37}

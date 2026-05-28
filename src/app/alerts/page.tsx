@@ -33,10 +33,10 @@ export default async function AlertsPage() {
               <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '2px', color: '#f59e0b', textTransform: 'uppercase', marginBottom: '6px' }}>
                 Monitoramento
               </div>
-              <h1 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 700, color: '#fff' }}>
+              <h1 style={{ margin: '0 0 6px', fontSize: '24px', fontWeight: 700, color: 'var(--text)' }}>
                 Alertas de mercado
               </h1>
-              <p style={{ margin: 0, fontSize: '12px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.5 }}>
+              <p style={{ margin: 0, fontSize: '12px', color: 'var(--text-sec)', lineHeight: 1.5 }}>
                 Notificações automáticas quando condições relevantes de mercado são detectadas.
               </p>
             </div>

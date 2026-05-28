@@ -53,21 +53,21 @@ function MarketContextCard({ label, score, qualifier, color, showBar = true }: {
     <div style={{
       flex:         '1 1 140px',
       padding:      '16px 18px',
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface3)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderTop:    `3px solid ${color}`,
       borderRadius: '10px',
     }}>
-      <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
+      <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
         {label}
       </div>
       {pct !== null ? (
         <>
           <div style={{ fontSize: '26px', fontWeight: 800, color, letterSpacing: '-0.5px', marginBottom: '6px' }}>
-            {score}<span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.25)', fontWeight: 400 }}>/100</span>
+            {score}<span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>/100</span>
           </div>
           {showBar && (
-            <div style={{ height: '3px', background: 'rgba(255,255,255,0.06)', borderRadius: '2px', overflow: 'hidden', marginBottom: '8px' }}>
+            <div style={{ height: '3px', background: 'var(--surface3)', borderRadius: '2px', overflow: 'hidden', marginBottom: '8px' }}>
               <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '2px' }} />
             </div>
           )}
@@ -100,7 +100,7 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface3)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '12px',
       overflow:     'hidden',
@@ -112,17 +112,17 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
         alignItems:     'center',
         justifyContent: 'space-between',
       }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
           Histórico de oportunidades
         </div>
         {entries.length > 0 && (
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.2)' }}>{entries.length} entradas</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{entries.length} entradas</span>
         )}
       </div>
 
       {entries.length === 0 ? (
         <div style={{ padding: '32px 24px', textAlign: 'center' }}>
-          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
             Nenhum aporte com contexto de mercado ainda.
           </div>
           <div style={{ marginTop: '10px' }}>
@@ -152,7 +152,7 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
                 marginLeft:   '0',
                 transition:   'background 0.12s',
               }}
-                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'rgba(255,255,255,0.02)' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLDivElement).style.background = 'var(--text-dim)' }}
                 onMouseLeave={e => { (e.currentTarget as HTMLDivElement).style.background = 'transparent' }}
               >
                 {/* Score chip */}
@@ -169,12 +169,12 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
                   flexShrink:     0,
                 }}>
                   <div style={{ fontSize: '16px', fontWeight: 800, color, lineHeight: 1 }}>{score}</div>
-                  <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.3)', fontWeight: 600, letterSpacing: '0.5px' }}>SCR</div>
+                  <div style={{ fontSize: '8px', color: 'var(--text-muted)', fontWeight: 600, letterSpacing: '0.5px' }}>SCR</div>
                 </div>
 
                 {/* Date + state */}
                 <div style={{ flexShrink: 0, minWidth: '90px' }}>
-                  <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', fontWeight: 500, marginBottom: '3px' }}>{dateStr}</div>
+                  <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500, marginBottom: '3px' }}>{dateStr}</div>
                   <span style={{
                     padding:      '1px 7px',
                     background:   `${color}14`,
@@ -190,13 +190,13 @@ function TacticalOpportunitiesHistory({ contributions }: { contributions: DcaCon
 
                 {/* Notes */}
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                     {c.notes ?? '—'}
                   </span>
                 </div>
 
                 {/* Amount */}
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#fff', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
+                <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', flexShrink: 0, fontVariantNumeric: 'tabular-nums' }}>
                   {fmt0(c.amount)}
                 </div>
               </div>
@@ -298,7 +298,7 @@ export default function DcaTacticalPage({ plan }: Props) {
   if (loading) {
     return (
       <div style={{ padding: '48px 0', textAlign: 'center' }}>
-        <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.3)', marginBottom: '16px' }}>
+        <div style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '16px' }}>
           Carregando dados de mercado…
         </div>
         <div style={{ display: 'flex', justifyContent: 'center', gap: '8px' }}>
@@ -320,7 +320,7 @@ export default function DcaTacticalPage({ plan }: Props) {
 
   if (monthlyAmount === 0) {
     return (
-      <div style={{ padding: '20px 24px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: '10px', fontSize: '13px', color: 'rgba(255,255,255,0.5)' }}>
+      <div style={{ padding: '20px 24px', background: 'rgba(245,158,11,0.06)', border: '1px solid rgba(245,158,11,0.18)', borderRadius: '10px', fontSize: '13px', color: 'var(--text-sec)' }}>
         Configure o aporte mensal na aba <strong style={{ color: '#f59e0b' }}>DCA Inteligente</strong> para ativar a análise tática.
       </div>
     )
@@ -343,8 +343,8 @@ export default function DcaTacticalPage({ plan }: Props) {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
           <circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/>
         </svg>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5, flex: 1 }}>
-          <span style={{ color: 'rgba(255,255,255,0.7)', fontWeight: 600 }}>Como funciona: </span>
+        <div style={{ fontSize: '12px', color: 'var(--text-sec)', lineHeight: 1.5, flex: 1 }}>
+          <span style={{ color: 'var(--text)', fontWeight: 600 }}>Como funciona: </span>
           O DCA Tático identifica janelas de oportunidade excepcional para acelerar aportes. Decida aqui — execute em{' '}
           <a href="/lancamento" style={{ color: '#f59e0b', textDecoration: 'none', fontWeight: 600 }}>Lançamentos</a>.
         </div>
@@ -373,31 +373,31 @@ export default function DcaTacticalPage({ plan }: Props) {
             sub:      usedThisMonth > tacticalPool
               ? `${Math.round((usedThisMonth / tacticalPool) * 100)}% da caixa tático utilizada`
               : `${Math.round(tacticalPool > 0 ? (usedThisMonth / tacticalPool) * 100 : 0)}% utilizado`,
-            topColor: usedThisMonth > tacticalPool ? '#f87171' : usedThisMonth > 0 ? '#f59e0b' : 'rgba(255,255,255,0.1)',
+            topColor: usedThisMonth > tacticalPool ? '#f87171' : usedThisMonth > 0 ? '#f59e0b' : 'var(--text-dim)',
             valColor: usedThisMonth > tacticalPool ? '#f87171' : '#fff',
           },
           {
             label:    'Disponível',
             value:    fmt0(Math.max(0, tacticalPool - usedThisMonth)),
             sub:      'Restante para oportunidades',
-            topColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'rgba(255,255,255,0.1)',
-            valColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'rgba(255,255,255,0.25)',
+            topColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'var(--text-dim)',
+            valColor: (tacticalPool - usedThisMonth) > 0 ? '#4ade80' : 'var(--text-muted)',
           },
         ].map(({ label, value, sub, topColor, valColor }) => (
           <div key={label} style={{
             padding:      '18px 20px',
-            background:   'rgba(255,255,255,0.02)',
+            background:   'var(--surface3)',
             border:       '1px solid rgba(255,255,255,0.07)',
             borderTop:    `3px solid ${topColor}`,
             borderRadius: '10px',
           }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '10px' }}>
               {label}
             </div>
             <div style={{ fontSize: '22px', fontWeight: 800, color: valColor, letterSpacing: '-0.5px', marginBottom: '4px' }}>
               {value}
             </div>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', lineHeight: 1.4 }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', lineHeight: 1.4 }}>
               {sub}
             </div>
           </div>
@@ -411,12 +411,12 @@ export default function DcaTacticalPage({ plan }: Props) {
       {market && (
         <div style={{
           padding:      '18px 20px',
-          background:   'rgba(255,255,255,0.02)',
+          background:   'var(--surface2)',
           border:       '1px solid rgba(255,255,255,0.07)',
           borderRadius: '12px',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
-            <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+            <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
               Contexto do mercado
             </div>
             {/* Legend */}
@@ -428,7 +428,7 @@ export default function DcaTacticalPage({ plan }: Props) {
               ].map(l => (
                 <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                   <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: l.color, display: 'inline-block', flexShrink: 0 }} />
-                  <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)' }}>{l.label}</span>
+                  <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{l.label}</span>
                 </div>
               ))}
             </div>

@@ -41,7 +41,7 @@ function SummaryCard({
 }) {
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface2)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '12px',
       padding:      '18px 20px',
@@ -54,14 +54,14 @@ function SummaryCard({
         }}>
           {icon}
         </div>
-        <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>
+        <span style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 600 }}>
           {label}
         </span>
       </div>
       <div style={{ fontSize: '28px', fontWeight: 800, color: accentColor, lineHeight: 1, marginBottom: '4px' }}>
         {count}
       </div>
-      <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{sub}</div>
+      <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{sub}</div>
     </div>
   )
 }
@@ -126,8 +126,8 @@ function SelectInput({ value, onChange, children, minWidth }: {
       onChange={e => onChange(e.target.value)}
       style={{
         padding: '7px 10px', fontSize: '12px', cursor: 'pointer',
-        background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)',
-        borderRadius: '8px', color: '#fff', minWidth: minWidth ?? 130,
+        background: 'var(--bg)', border: '1px solid var(--border)',
+        borderRadius: '8px', color: 'var(--text)', minWidth: minWidth ?? 130,
       }}
     >
       {children}
@@ -224,7 +224,7 @@ export default function AlertsView({ alerts }: Props) {
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px' }}>
         <SummaryCard
           label="Total de alertas" count={alerts.length} sub="Últimos 30 dias" accentColor="#fff"
-          icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>}
+          icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>}
         />
         <SummaryCard
           label="Alta prioridade" count={alta} sub="Requer atenção" accentColor="#f87171"
@@ -242,7 +242,7 @@ export default function AlertsView({ alerts }: Props) {
 
       {/* Filter bar */}
       <div style={{
-        background:   'rgba(255,255,255,0.02)',
+        background:   'var(--surface2)',
         border:       '1px solid rgba(255,255,255,0.07)',
         borderRadius: '12px',
         padding:      '16px 20px',
@@ -251,25 +251,25 @@ export default function AlertsView({ alerts }: Props) {
 
           {/* Period */}
           <div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 600, marginBottom: '6px' }}>Período</div>
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 600, marginBottom: '6px' }}>Período</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <input
                 type="date" value={dateFrom}
                 onChange={e => { setDateFrom(e.target.value); setPage(1) }}
-                style={{ padding: '7px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '12px', colorScheme: 'dark' }}
+                style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '12px' }}
               />
-              <span style={{ color: 'rgba(255,255,255,0.3)' }}>→</span>
+              <span style={{ color: 'var(--text-muted)' }}>→</span>
               <input
                 type="date" value={dateTo}
                 onChange={e => { setDateTo(e.target.value); setPage(1) }}
-                style={{ padding: '7px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '12px', colorScheme: 'dark' }}
+                style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '12px' }}
               />
             </div>
           </div>
 
           {/* Priority */}
           <div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 600, marginBottom: '6px' }}>Prioridade</div>
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 600, marginBottom: '6px' }}>Prioridade</div>
             <SelectInput value={priority} onChange={v => { setPriority(v as PriorityFilter); setPage(1) }}>
               <option value="TODAS">Todas</option>
               <option value="ALTA">Alta</option>
@@ -280,7 +280,7 @@ export default function AlertsView({ alerts }: Props) {
 
           {/* Type */}
           <div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 600, marginBottom: '6px' }}>Tipo de alerta</div>
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 600, marginBottom: '6px' }}>Tipo de alerta</div>
             <SelectInput value={typeFilter} onChange={v => { setTypeFilter(v); setPage(1) }} minWidth={170}>
               <option value="TODOS">Todos</option>
               {uniqueTypes.map(t => <option key={t} value={t}>{TYPE_LABEL[t] ?? t}</option>)}
@@ -291,13 +291,13 @@ export default function AlertsView({ alerts }: Props) {
           <div style={{ flex: 1, minWidth: '160px' }}>
             <div style={{ fontSize: '9px', color: 'transparent', marginBottom: '6px' }}>-</div>
             <div style={{ position: 'relative' }}>
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.3)" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" strokeWidth="2" style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)' }}>
                 <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
               </svg>
               <input
                 type="text" placeholder="Buscar alerta..." value={search}
                 onChange={e => { setSearch(e.target.value); setPage(1) }}
-                style={{ width: '100%', padding: '7px 12px 7px 30px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '8px', color: '#fff', fontSize: '12px', boxSizing: 'border-box' }}
+                style={{ width: '100%', padding: '7px 12px 7px 30px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text)', fontSize: '12px', boxSizing: 'border-box' }}
               />
             </div>
           </div>
@@ -306,7 +306,7 @@ export default function AlertsView({ alerts }: Props) {
         <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             onClick={clearFilters}
-            style={{ padding: '6px 16px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: 'rgba(255,255,255,0.5)', fontSize: '12px', cursor: 'pointer' }}
+            style={{ padding: '6px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text-sec)', fontSize: '12px', cursor: 'pointer' }}
           >
             Limpar filtros
           </button>
@@ -315,7 +315,7 @@ export default function AlertsView({ alerts }: Props) {
 
       {/* Alert table */}
       <div style={{
-        background:   'rgba(255,255,255,0.02)',
+        background:   'var(--surface2)',
         border:       '1px solid rgba(255,255,255,0.07)',
         borderRadius: '12px',
         overflow:     'hidden',
@@ -325,15 +325,15 @@ export default function AlertsView({ alerts }: Props) {
           display: 'grid', gridTemplateColumns: '1fr 90px 100px 100px 24px',
           gap: '12px', padding: '11px 20px',
           borderBottom: '1px solid rgba(255,255,255,0.06)',
-          background: 'rgba(255,255,255,0.02)',
+          background: 'var(--surface2)',
         }}>
           {['Alerta', 'Prioridade', 'Data ↓', 'Status', ''].map((h, i) => (
-            <span key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{h}</span>
+            <span key={i} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{h}</span>
           ))}
         </div>
 
         {paginated.length === 0 ? (
-          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'rgba(255,255,255,0.3)', fontSize: '13px' }}>
+          <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
             Nenhum alerta encontrado com os filtros aplicados.
           </div>
         ) : paginated.map((alert, i) => {
@@ -356,7 +356,7 @@ export default function AlertsView({ alerts }: Props) {
       {/* Pagination */}
       {filtered.length > 0 && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
             Mostrando {Math.min((safePage - 1) * pageSize + 1, filtered.length)} a {Math.min(safePage * pageSize, filtered.length)} de {filtered.length} alertas
           </span>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -368,7 +368,7 @@ export default function AlertsView({ alerts }: Props) {
             <select
               value={pageSize}
               onChange={e => { setPageSize(Number(e.target.value)); setPage(1) }}
-              style={{ marginLeft: '8px', padding: '6px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: 'rgba(255,255,255,0.6)', fontSize: '12px' }}
+              style={{ marginLeft: '8px', padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text)', fontSize: '12px' }}
             >
               {PAGE_SIZES.map(s => <option key={s} value={s}>{s} por página</option>)}
             </select>
@@ -398,7 +398,7 @@ function AlertRow({ alert, date, time, isRead, isLast, onRead }: {
         padding:       '14px 20px',
         borderBottom:  isLast ? 'none' : '1px solid rgba(255,255,255,0.04)',
         cursor:        'pointer',
-        background:    hovered ? 'rgba(255,255,255,0.04)' : 'transparent',
+        background:    hovered ? 'var(--text-dim)' : 'transparent',
         alignItems:    'center',
         transition:    'background 0.12s',
       }}
@@ -409,13 +409,13 @@ function AlertRow({ alert, date, time, isRead, isLast, onRead }: {
         <div style={{ minWidth: 0 }}>
           <div style={{
             fontSize: '13px', fontWeight: isRead ? 500 : 600,
-            color: isRead ? 'rgba(255,255,255,0.65)' : '#fff',
+            color: isRead ? 'var(--text)' : '#fff',
             marginBottom: '2px', lineHeight: 1.3,
           }}>
             {alert.title}
           </div>
           <div style={{
-            fontSize: '11px', color: 'rgba(255,255,255,0.38)', lineHeight: 1.4,
+            fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4,
             overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
           }}>
             {alert.message}
@@ -428,24 +428,24 @@ function AlertRow({ alert, date, time, isRead, isLast, onRead }: {
 
       {/* Date */}
       <div>
-        <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.7)', fontWeight: 500 }}>{date}</div>
-        <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)' }}>{time}</div>
+        <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{date}</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{time}</div>
       </div>
 
       {/* Read status */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span style={{
           width: '7px', height: '7px', borderRadius: '50%', flexShrink: 0,
-          background: isRead ? 'rgba(255,255,255,0.2)' : '#f87171',
+          background: isRead ? 'var(--text-muted)' : '#f87171',
           display: 'inline-block',
         }} />
-        <span style={{ fontSize: '11px', color: isRead ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.75)', fontWeight: isRead ? 400 : 500, whiteSpace: 'nowrap' }}>
+        <span style={{ fontSize: '11px', color: isRead ? 'var(--text-muted)' : 'var(--text)', fontWeight: isRead ? 400 : 500, whiteSpace: 'nowrap' }}>
           {isRead ? 'Lido' : 'Não lido'}
         </span>
       </div>
 
       {/* Arrow */}
-      <div style={{ color: 'rgba(255,255,255,0.2)', fontSize: '16px', textAlign: 'right' }}>›</div>
+      <div style={{ color: 'var(--text-muted)', fontSize: '16px', textAlign: 'right' }}>›</div>
     </div>
   )
 }
@@ -464,7 +464,7 @@ function PageBtn({ children, onClick, disabled, active }: {
         background:   active ? '#f59e0b' : 'transparent',
         border:       active ? 'none' : '1px solid rgba(255,255,255,0.12)',
         borderRadius: '7px',
-        color:        active ? '#000' : disabled ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+        color:        active ? '#000' : disabled ? 'var(--text-muted)' : 'var(--text)',
         cursor:       disabled ? 'not-allowed' : 'pointer',
         fontSize:     '13px',
         fontWeight:   active ? 700 : 400,

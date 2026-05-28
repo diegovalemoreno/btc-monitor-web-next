@@ -57,7 +57,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface2)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '16px',
       padding:      '24px 28px',
@@ -76,21 +76,21 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Configuração do plano DCA</div>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Ajuste os parâmetros do seu plano de acumulação.</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Configuração do plano DCA</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-sec)' }}>Ajuste os parâmetros do seu plano de acumulação.</div>
         </div>
       </div>
 
       {/* Plano ativo */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 16px', background: 'rgba(255,255,255,0.03)',
+        padding: '14px 16px', background: 'var(--surface2)',
         border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px',
         marginBottom: '20px',
       }}>
         <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff' }}>Plano ativo</div>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', marginTop: '2px' }}>Gerar recomendações diárias de aporte</div>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>Plano ativo</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-sec)', marginTop: '2px' }}>Gerar recomendações diárias de aporte</div>
         </div>
         <Toggle value={enabled} onChange={setEnabled} />
       </div>
@@ -99,12 +99,12 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
 
         {/* Monthly amount */}
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '16px' }}>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
+        <div style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
             Valor mensal disponível
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', color: 'rgba(255,255,255,0.4)' }}>R$</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-sec)' }}>R$</span>
             <input
               type="number"
               value={monthlyAmount}
@@ -113,18 +113,18 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
               min="0" step="50"
               style={{
                 flex: 1, padding: '8px 12px',
-                background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-                borderRadius: '8px', color: '#fff', fontSize: '14px', fontWeight: 600,
+                background: 'var(--bg)', border: '1px solid var(--border)',
+                borderRadius: '8px', color: 'var(--text)', fontSize: '14px', fontWeight: 600,
               }}
             />
           </div>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>Disponível para BTC por mês</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Disponível para BTC por mês</div>
         </div>
 
         {/* Reserve */}
-        <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '16px' }}>
+        <div style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700 }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700 }}>
               Reserva estratégica
             </div>
             <span style={{ fontSize: '16px', fontWeight: 800, color: '#f59e0b' }}>{reservePct}%</span>
@@ -135,13 +135,13 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
             onChange={e => setReservePct(Number(e.target.value))}
             style={{ width: '100%', accentColor: '#f59e0b', marginBottom: '8px' }}
           />
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>Para oportunidades excepcionais (DCA Agressivo)</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Para oportunidades excepcionais (DCA Agressivo)</div>
         </div>
       </div>
 
       {/* Risk profile */}
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
+        <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
           Perfil de risco
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -152,7 +152,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
               onClick={() => setRiskProfile(value)}
               style={{
                 padding:      '12px 14px',
-                background:   riskProfile === value ? 'rgba(245,158,11,0.1)' : 'rgba(255,255,255,0.02)',
+                background:   riskProfile === value ? 'rgba(245,158,11,0.1)' : 'var(--text-dim)',
                 border:       riskProfile === value ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
                 borderRadius: '10px',
                 cursor:       'pointer',
@@ -160,10 +160,10 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
                 transition:   'all 0.15s',
               }}
             >
-              <div style={{ fontSize: '13px', fontWeight: 600, color: riskProfile === value ? '#f59e0b' : 'rgba(255,255,255,0.8)', marginBottom: '4px' }}>
+              <div style={{ fontSize: '13px', fontWeight: 600, color: riskProfile === value ? '#f59e0b' : 'var(--text)', marginBottom: '4px' }}>
                 {label}
               </div>
-              <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</div>
+              <div style={{ fontSize: '10px', color: 'var(--text-muted)', lineHeight: 1.4 }}>{desc}</div>
             </button>
           ))}
         </div>
@@ -172,8 +172,8 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
       {/* Default buy day */}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', marginBottom: '24px' }}>
         <div>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '8px' }}>
-            Dia padrão de compra <span style={{ color: 'rgba(255,255,255,0.2)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span>
+          <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '8px' }}>
+            Dia padrão de compra <span style={{ color: 'var(--text-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span>
           </div>
           <input
             type="number"
@@ -183,11 +183,11 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
             min="1" max="28"
             style={{
               width: '90px', padding: '8px 12px',
-              background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)',
-              borderRadius: '8px', color: '#fff', fontSize: '13px',
+              background: 'var(--bg)', border: '1px solid var(--border)',
+              borderRadius: '8px', color: 'var(--text)', fontSize: '13px',
             }}
           />
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.25)', marginTop: '6px' }}>Apenas informativo — não afeta o cálculo</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '6px' }}>Apenas informativo — não afeta o cálculo</div>
         </div>
       </div>
 
@@ -227,7 +227,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         height:       '22px',
         borderRadius: '11px',
         border:       'none',
-        background:   value ? '#f59e0b' : 'rgba(255,255,255,0.12)',
+        background:   value ? '#f59e0b' : 'var(--text-dim)',
         cursor:       'pointer',
         flexShrink:   0,
         transition:   'background 0.2s',

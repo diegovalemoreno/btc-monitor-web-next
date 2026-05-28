@@ -1,10 +1,15 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { ThemeProvider, THEME_INIT_SCRIPT } from '@/contexts/ThemeContext'
 
 export const metadata: Metadata = {
   title:       'BTC Monitor · Leitura de mercado Bitcoin',
   description: 'Indicadores consolidados de mercado Bitcoin para decisões racionais de acumulação.',
+}
+
+export const viewport: Viewport = {
+  width:        'device-width',
+  initialScale: 1,
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {

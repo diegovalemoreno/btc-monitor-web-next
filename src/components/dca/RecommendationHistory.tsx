@@ -43,7 +43,7 @@ function MiniBar({ score }: { score: number }) {
   const color = score >= 70 ? '#4ade80' : score >= 40 ? '#fbbf24' : '#f87171'
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
-      <div style={{ width: '50px', height: '4px', background: 'rgba(255,255,255,0.08)', borderRadius: '2px', overflow: 'hidden', flexShrink: 0 }}>
+      <div style={{ width: '50px', height: '4px', background: 'var(--surface2)', borderRadius: '2px', overflow: 'hidden', flexShrink: 0 }}>
         <div style={{ height: '100%', width: `${score}%`, background: color, borderRadius: '2px' }} />
       </div>
       <span style={{ fontSize: '11px', color, fontWeight: 700, flexShrink: 0 }}>{score}</span>
@@ -63,7 +63,7 @@ function PgBtn({ children, onClick, disabled, active }: {
         background:   active ? '#f59e0b' : 'transparent',
         border:       active ? 'none' : '1px solid rgba(255,255,255,0.12)',
         borderRadius: '7px',
-        color:        active ? '#000' : disabled ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.6)',
+        color:        active ? '#000' : disabled ? 'var(--text-muted)' : 'var(--text)',
         cursor:       disabled ? 'not-allowed' : 'pointer',
         fontSize:     '12px',
         fontWeight:   active ? 700 : 400,
@@ -113,8 +113,8 @@ export default function RecommendationHistory({ recs }: Props) {
   }
 
   if (recs.length === 0) return (
-    <div style={{ padding: '40px 24px', textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px' }}>
-      <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.35)' }}>
+    <div style={{ padding: '40px 24px', textAlign: 'center', background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px' }}>
+      <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-muted)' }}>
         Nenhuma recomendação ainda. Configure seu plano para receber análises diárias.
       </p>
     </div>
@@ -124,27 +124,27 @@ export default function RecommendationHistory({ recs }: Props) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
 
       {/* Section title */}
-      <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Histórico de recomendações</div>
+      <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Histórico de recomendações</div>
 
       {/* Filters */}
-      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px 18px' }}>
+      <div style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', padding: '14px 18px' }}>
         <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end', flexWrap: 'wrap' }}>
 
           <div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '6px' }}>Período</div>
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '6px' }}>Período</div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
               <input type="date" value={dateFrom} onChange={e => { setDateFrom(e.target.value); setPage(1) }}
-                style={{ padding: '6px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: '#fff', fontSize: '12px', colorScheme: 'dark' }} />
-              <span style={{ color: 'rgba(255,255,255,0.3)', fontSize: '12px' }}>→</span>
+                style={{ padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text)', fontSize: '12px' }} />
+              <span style={{ color: 'var(--text-muted)', fontSize: '12px' }}>→</span>
               <input type="date" value={dateTo} onChange={e => { setDateTo(e.target.value); setPage(1) }}
-                style={{ padding: '6px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: '#fff', fontSize: '12px', colorScheme: 'dark' }} />
+                style={{ padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text)', fontSize: '12px' }} />
             </div>
           </div>
 
           <div>
-            <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '6px' }}>Ação</div>
+            <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '6px' }}>Ação</div>
             <select value={actionFilter} onChange={e => { setActionFilter(e.target.value); setPage(1) }}
-              style={{ padding: '6px 10px', background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: '#fff', fontSize: '12px', minWidth: '150px' }}>
+              style={{ padding: '6px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text)', fontSize: '12px', minWidth: '150px' }}>
               <option value="TODOS">Todas</option>
               {(Object.keys(ACTION_LABEL) as DcaAction[]).map(a => (
                 <option key={a} value={a}>{ACTION_LABEL[a]}</option>
@@ -153,27 +153,27 @@ export default function RecommendationHistory({ recs }: Props) {
           </div>
 
           <button onClick={clearFilters}
-            style={{ padding: '6px 14px', background: 'transparent', border: '1px solid rgba(255,255,255,0.12)', borderRadius: '7px', color: 'rgba(255,255,255,0.5)', fontSize: '12px', cursor: 'pointer' }}>
+            style={{ padding: '6px 14px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '7px', color: 'var(--text-sec)', fontSize: '12px', cursor: 'pointer' }}>
             Limpar
           </button>
         </div>
       </div>
 
       {/* Table */}
-      <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', overflow: 'hidden' }}>
+      <div style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.07)', borderRadius: '12px', overflow: 'hidden' }}>
         {/* Header */}
         <div style={{
           display: 'grid', gridTemplateColumns: '110px 150px 1fr 120px 90px 80px',
           gap: '12px', padding: '10px 18px',
-          borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'rgba(255,255,255,0.02)',
+          borderBottom: '1px solid rgba(255,255,255,0.06)', background: 'var(--surface2)',
         }}>
           {['Data', 'Ação', 'Recomendação', 'Convicção', 'Aporte', 'Reserva'].map(h => (
-            <span key={h} style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{h}</span>
+            <span key={h} style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>{h}</span>
           ))}
         </div>
 
         {paginated.length === 0 ? (
-          <div style={{ padding: '32px 18px', textAlign: 'center', fontSize: '13px', color: 'rgba(255,255,255,0.3)' }}>
+          <div style={{ padding: '32px 18px', textAlign: 'center', fontSize: '13px', color: 'var(--text-muted)' }}>
             Nenhuma recomendação no período selecionado.
           </div>
         ) : paginated.map((rec, i) => {
@@ -189,7 +189,7 @@ export default function RecommendationHistory({ recs }: Props) {
               borderBottom: isLast ? 'none' : '1px solid rgba(255,255,255,0.04)',
               alignItems: 'center',
             }}>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.45)' }}>{fmtDate(rec.created_at)}</span>
+              <span style={{ fontSize: '11px', color: 'var(--text-sec)' }}>{fmtDate(rec.created_at)}</span>
               <div>
                 <span style={{
                   fontSize: '11px', fontWeight: 700, color,
@@ -199,12 +199,12 @@ export default function RecommendationHistory({ recs }: Props) {
                   {ACTION_LABEL[action] ?? action}
                 </span>
               </div>
-              <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
+              <span style={{ fontSize: '11px', color: 'var(--text-sec)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', display: 'block' }}>
                 {rationale}
               </span>
               <MiniBar score={conviction} />
-              <span style={{ fontSize: '12px', color: '#fff', fontWeight: 500 }}>{fmt0(rec.recommended_amount_brl)}</span>
-              <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>{fmt0(rec.reserve_amount_brl)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500 }}>{fmt0(rec.recommended_amount_brl)}</span>
+              <span style={{ fontSize: '12px', color: 'var(--text-sec)' }}>{fmt0(rec.reserve_amount_brl)}</span>
             </div>
           )
         })}
@@ -213,7 +213,7 @@ export default function RecommendationHistory({ recs }: Props) {
       {/* Pagination */}
       {filtered.length > PAGE_SIZE && (
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
-          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.35)' }}>
+          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
             {Math.min((safePage - 1) * PAGE_SIZE + 1, filtered.length)}–{Math.min(safePage * PAGE_SIZE, filtered.length)} de {filtered.length}
           </span>
           <div style={{ display: 'flex', gap: '5px' }}>

@@ -39,7 +39,7 @@ function fmtDateTime(iso?: string) {
 function ConvictionBar({ score, color }: { score: number; color: string }) {
   const pct = Math.min(100, Math.max(0, score))
   return (
-    <div style={{ height: '8px', background: 'rgba(255,255,255,0.07)', borderRadius: '4px', overflow: 'hidden' }}>
+    <div style={{ height: '8px', background: 'var(--surface3)', borderRadius: '4px', overflow: 'hidden' }}>
       <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '4px' }} />
     </div>
   )
@@ -49,11 +49,11 @@ function ContextBar({ label, value, color }: { label: string; value: number; col
   const pct = Math.min(100, Math.max(0, value))
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-      <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', width: '95px', flexShrink: 0 }}>{label}</span>
-      <div style={{ flex: 1, height: '5px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
+      <span style={{ fontSize: '11px', color: 'var(--text-sec)', width: '95px', flexShrink: 0 }}>{label}</span>
+      <div style={{ flex: 1, height: '5px', background: 'var(--surface2)', borderRadius: '3px', overflow: 'hidden' }}>
         <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '3px' }} />
       </div>
-      <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.6)', width: '28px', textAlign: 'right', flexShrink: 0, fontWeight: 600 }}>{value}</span>
+      <span style={{ fontSize: '12px', color: 'var(--text)', width: '28px', textAlign: 'right', flexShrink: 0, fontWeight: 600 }}>{value}</span>
     </div>
   )
 }
@@ -74,7 +74,7 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface2)',
       border:       `1px solid ${meta.color}28`,
       borderLeft:   `3px solid ${meta.color}`,
       borderRadius: '16px',
@@ -90,7 +90,7 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
       }}>
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{
-            fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase',
+            fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase',
             letterSpacing: '2px', fontWeight: 700, marginBottom: '8px',
           }}>
             Recomendação atual
@@ -98,13 +98,13 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
           <div style={{ fontSize: '28px', fontWeight: 800, color: meta.color, letterSpacing: '-0.5px', lineHeight: 1, marginBottom: '4px' }}>
             {meta.label}
           </div>
-          <div style={{ fontSize: '12px', color: 'rgba(255,255,255,0.45)' }}>{meta.desc}</div>
+          <div style={{ fontSize: '12px', color: 'var(--text-sec)' }}>{meta.desc}</div>
         </div>
 
         {/* Conviction badge */}
         <div style={{
           padding:      '5px 12px',
-          background:   'rgba(0,0,0,0.3)',
+          background:   'var(--surface3)',
           border:       `1px solid ${meta.color}30`,
           borderRadius: '8px',
           fontSize:     '11px',
@@ -120,8 +120,8 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
       {/* Conviction bar */}
       <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px' }}>Convicção</span>
-          <span style={{ fontSize: '18px', fontWeight: 800, color: meta.color }}>{convictionScore}<span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', fontWeight: 400 }}>/100</span></span>
+          <span style={{ fontSize: '11px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1px' }}>Convicção</span>
+          <span style={{ fontSize: '18px', fontWeight: 800, color: meta.color }}>{convictionScore}<span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 400 }}>/100</span></span>
         </div>
         <ConvictionBar score={convictionScore} color={meta.color} />
       </div>
@@ -129,18 +129,18 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
       {/* Amounts */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
         <div style={{ padding: '18px 24px', borderRight: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 700 }}>
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 700 }}>
             Aportar agora
           </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: '#fff', letterSpacing: '-0.5px' }}>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text)', letterSpacing: '-0.5px' }}>
             {fmt0(rec.recommended_amount_brl)}
           </div>
         </div>
         <div style={{ padding: '18px 24px' }}>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 700 }}>
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 700 }}>
             Manter em reserva
           </div>
-          <div style={{ fontSize: '22px', fontWeight: 800, color: 'rgba(255,255,255,0.5)', letterSpacing: '-0.5px' }}>
+          <div style={{ fontSize: '22px', fontWeight: 800, color: 'var(--text-sec)', letterSpacing: '-0.5px' }}>
             {fmt0(rec.reserve_amount_brl)}
           </div>
         </div>
@@ -148,16 +148,16 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
 
       {/* Rationale */}
       <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-        <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 700 }}>
+        <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '8px', fontWeight: 700 }}>
           Racional
         </div>
-        <p style={{ margin: 0, fontSize: '13px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.7 }}>{rec.rationale}</p>
+        <p style={{ margin: 0, fontSize: '13px', color: 'var(--text)', lineHeight: 1.7 }}>{rec.rationale}</p>
       </div>
 
       {/* Market context */}
       {hasCtx && (
         <div style={{ padding: '18px 24px', borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-          <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px', fontWeight: 700 }}>
+          <div style={{ fontSize: '9px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px', fontWeight: 700 }}>
             Contexto de mercado
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '9px' }}>
@@ -174,7 +174,7 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
             ].map(l => (
               <div key={l.label} style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
                 <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: l.color, display: 'inline-block', flexShrink: 0 }} />
-                <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.3)' }}>{l.label}</span>
+                <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{l.label}</span>
               </div>
             ))}
           </div>
@@ -184,7 +184,7 @@ export default function RecommendationCard({ rec }: { rec: RecommendationData })
       {/* Footer */}
       {rec.created_at && (
         <div style={{ padding: '12px 24px', display: 'flex', justifyContent: 'flex-end' }}>
-          <span style={{ fontSize: '10px', color: 'rgba(255,255,255,0.2)' }}>
+          <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>
             Última atualização: {fmtDateTime(rec.created_at)}
           </span>
         </div>

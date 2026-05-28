@@ -233,7 +233,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
                   <rect
                     x={cx - slotW * 0.48} y={pad.top}
                     width={slotW * 0.96} height={plotH + 1}
-                    fill="rgba(255,255,255,0.04)" rx="3"
+                    fill="var(--border-dim)" rx="3"
                   />
                 )}
 
@@ -325,7 +325,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
               top:           Math.max(8, mousePos.y - 90),
               left:          Math.min(mousePos.x + 14, 999),
               transform:     mousePos.x > 500 ? 'translateX(-110%)' : 'none',
-              background:    'rgba(8,8,8,0.92)',
+              background:    'var(--surface)',
               backdropFilter:'blur(10px)',
               border:        '1px solid var(--border-strong)',
               borderRadius:  '10px',

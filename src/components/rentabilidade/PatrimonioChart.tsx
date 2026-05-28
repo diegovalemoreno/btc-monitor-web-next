@@ -45,32 +45,32 @@ function CustomTooltip({ active, payload, label }: {
   const aporte     = payload.find(p => p.name === 'aporte' && p.value > 0)
   return (
     <div style={{
-      background: 'rgba(10,20,30,0.97)', border: '1px solid rgba(255,255,255,0.1)',
+      background: 'var(--surface)', border: '1px solid var(--border)',
       borderRadius: '8px', padding: '10px 14px', fontSize: '11px', lineHeight: 1.8,
-      boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+      boxShadow: '0 4px 20px rgba(0,0,0,0.25)',
     }}>
-      <div style={{ color: 'rgba(255,255,255,0.5)', marginBottom: '4px', fontSize: '10px' }}>
+      <div style={{ color: 'var(--text-sec)', marginBottom: '4px', fontSize: '10px' }}>
         {new Date(label).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })}
       </div>
       {patrimonio && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
-          <span style={{ color: 'rgba(255,255,255,0.6)' }}>Patrimônio</span>
+          <span style={{ color: 'var(--text)' }}>Patrimônio</span>
           <span style={{ fontWeight: 700, color: '#22c55e', marginLeft: 'auto' }}>{fmt0(patrimonio.value)}</span>
         </div>
       )}
       {btcPrice && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
           <span style={{ width: 8, height: 8, borderRadius: '50%', background: '#f59e0b', display: 'inline-block' }} />
-          <span style={{ color: 'rgba(255,255,255,0.6)' }}>Preço BTC</span>
+          <span style={{ color: 'var(--text)' }}>Preço BTC</span>
           <span style={{ fontWeight: 700, color: '#f59e0b', marginLeft: 'auto' }}>{fmt0(btcPrice.value)}</span>
         </div>
       )}
       {aporte && (
         <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
           <span style={{ width: 8, height: 8, borderRadius: '2px', background: 'rgba(148,163,184,0.6)', display: 'inline-block' }} />
-          <span style={{ color: 'rgba(255,255,255,0.6)' }}>Aporte</span>
-          <span style={{ fontWeight: 700, color: 'rgba(255,255,255,0.8)', marginLeft: 'auto' }}>{fmt0(aporte.value)}</span>
+          <span style={{ color: 'var(--text)' }}>Aporte</span>
+          <span style={{ fontWeight: 700, color: 'var(--text)', marginLeft: 'auto' }}>{fmt0(aporte.value)}</span>
         </div>
       )}
     </div>
@@ -90,17 +90,17 @@ export default function PatrimonioChart({ evolution }: Props) {
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.015)',
-      border:       '1px solid rgba(255,255,255,0.07)',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border)',
       borderRadius: '16px',
       padding:      '20px 22px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
         <div>
-          <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '4px' }}>
+          <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>
             Evolução do patrimônio
           </div>
-          <div style={{ display: 'flex', gap: '16px', fontSize: '10px', color: 'rgba(255,255,255,0.4)' }}>
+          <div style={{ display: 'flex', gap: '16px', fontSize: '10px', color: 'var(--text-sec)' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#22c55e', display: 'inline-block' }} />
               Patrimônio (R$)
@@ -127,9 +127,9 @@ export default function PatrimonioChart({ evolution }: Props) {
                 fontSize:     '11px',
                 fontWeight:   600,
                 cursor:       'pointer',
-                border:       period === p ? '1px solid rgba(255,255,255,0.2)' : '1px solid transparent',
-                background:   period === p ? 'rgba(255,255,255,0.1)' : 'transparent',
-                color:        period === p ? '#fff' : 'rgba(255,255,255,0.35)',
+                border:       period === p ? '1px solid var(--border-strong)' : '1px solid transparent',
+                background:   period === p ? 'var(--surface3)' : 'transparent',
+                color:        period === p ? 'var(--text)' : 'var(--text-muted)',
                 transition:   'all 0.15s',
               }}
             >
@@ -148,7 +148,7 @@ export default function PatrimonioChart({ evolution }: Props) {
             </linearGradient>
           </defs>
 
-          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" vertical={false} />
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--border-dim)" vertical={false} />
 
           <XAxis
             dataKey="ts"
@@ -157,28 +157,28 @@ export default function PatrimonioChart({ evolution }: Props) {
             domain={[minTs, maxTs]}
             tickFormatter={fmtDate}
             tickCount={7}
-            stroke="rgba(255,255,255,0.08)"
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }}
+            stroke="var(--border-dim)"
+            tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
           />
           <YAxis
             yAxisId="left"
             tickFormatter={fmtK}
-            stroke="rgba(255,255,255,0.08)"
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }}
+            stroke="var(--border-dim)"
+            tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
             width={52}
           />
           <YAxis
             yAxisId="right"
             orientation="right"
             tickFormatter={fmtK}
-            stroke="rgba(255,255,255,0.08)"
-            tick={{ fill: 'rgba(255,255,255,0.3)', fontSize: 10 }}
+            stroke="var(--border-dim)"
+            tick={{ fill: 'var(--text-muted)', fontSize: 10 }}
             width={58}
           />
 
           <Tooltip
             content={<CustomTooltip />}
-            cursor={{ stroke: 'rgba(255,255,255,0.1)', strokeWidth: 1 }}
+            cursor={{ stroke: 'var(--border)', strokeWidth: 1 }}
           />
 
           <Bar

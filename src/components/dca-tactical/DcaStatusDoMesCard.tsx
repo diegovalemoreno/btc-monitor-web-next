@@ -15,7 +15,7 @@ function getMonthStatus(used: number, pool: number): MonthStatus {
 }
 
 const STATUS_META: Record<MonthStatus, { label: string; color: string; bg: string; border: string }> = {
-  not_started: { label: 'Não iniciado', color: 'rgba(255,255,255,0.35)', bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.08)' },
+  not_started: { label: 'Não iniciado', color: 'var(--text-muted)', bg: 'var(--text-dim)', border: 'var(--text-dim)' },
   partial:     { label: 'Em andamento', color: '#f59e0b',                bg: 'rgba(245,158,11,0.08)',  border: 'rgba(245,158,11,0.2)'  },
   completed:   { label: 'Concluído',    color: '#4ade80',                bg: 'rgba(74,222,128,0.08)',  border: 'rgba(74,222,128,0.2)'  },
   exceeded:    { label: 'Excedido',     color: '#f87171',                bg: 'rgba(248,113,113,0.08)', border: 'rgba(248,113,113,0.25)' },
@@ -36,7 +36,7 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface3)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '12px',
       overflow:     'hidden',
@@ -49,7 +49,7 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
         alignItems:     'center',
         justifyContent: 'space-between',
       }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
           Status do Mês — Caixa Tático
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -69,10 +69,10 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
             style={{
               padding:        '5px 12px',
               background:     'transparent',
-              border:         '1px solid rgba(255,255,255,0.1)',
+              border: '1px solid var(--border)',
               borderRadius:   '7px',
               fontSize:       '12px',
-              color:          'rgba(255,255,255,0.4)',
+              color:          'var(--text-sec)',
               textDecoration: 'none',
               fontWeight:     500,
             }}
@@ -88,25 +88,25 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
         {/* Key numbers row */}
         <div style={{ display: 'flex', gap: '0', marginBottom: '16px' }}>
           <div style={{ flex: 1, paddingRight: '20px', borderRight: '1px solid rgba(255,255,255,0.06)' }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '6px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '6px' }}>
               Utilizado
             </div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: meta.color, letterSpacing: '-0.5px' }}>
               {fmt(usedThisMonth)}
             </div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
               de {fmt(tacticalPool)} planejados
             </div>
           </div>
 
           <div style={{ flex: 1, paddingLeft: '20px' }}>
-            <div style={{ fontSize: '9px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '6px' }}>
+            <div style={{ fontSize: '9px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '6px' }}>
               {excedido > 0 ? 'Excedente' : 'Disponível'}
             </div>
             <div style={{ fontSize: '24px', fontWeight: 800, color: excedido > 0 ? '#f87171' : '#4ade80', letterSpacing: '-0.5px' }}>
               {excedido > 0 ? fmt(excedido) : fmt(disponivel)}
             </div>
-            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)', marginTop: '2px' }}>
+            <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
               {excedido > 0 ? 'além do caixa tático' : 'restante para oportunidades'}
             </div>
           </div>
@@ -114,10 +114,10 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
 
         {/* Progress bar */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-          <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.3)' }}>Utilização do caixa</span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Utilização do caixa</span>
           <span style={{ fontSize: '12px', fontWeight: 700, color: meta.color }}>{pctUsed.toFixed(0)}%</span>
         </div>
-        <div style={{ height: '8px', background: 'rgba(255,255,255,0.05)', borderRadius: '4px', overflow: 'hidden' }}>
+        <div style={{ height: '8px', background: 'var(--surface3)', borderRadius: '4px', overflow: 'hidden' }}>
           <div style={{
             width:      `${Math.min(100, pctUsed).toFixed(1)}%`,
             height:     '8px',
@@ -133,12 +133,12 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
 
       {/* Contributions list — read-only */}
       <div style={{ padding: '16px 24px' }}>
-        <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.25)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>
           Aportes este mês
         </div>
 
         {contributions.length === 0 ? (
-          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.2)', fontStyle: 'italic', padding: '8px 0' }}>
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic', padding: '8px 0' }}>
             Nenhum aporte registrado neste mês.
           </div>
         ) : (
@@ -152,17 +152,17 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
                   alignItems:   'center',
                   gap:          '12px',
                   padding:      '10px 14px',
-                  background:   'rgba(255,255,255,0.02)',
+                  background:   'var(--surface3)',
                   border:       '1px solid rgba(255,255,255,0.05)',
                   borderRadius: '8px',
                 }}>
-                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.5)', width: '110px', flexShrink: 0 }}>
+                  <span style={{ fontSize: '12px', color: 'var(--text-sec)', width: '110px', flexShrink: 0 }}>
                     {dateLabel}
                   </span>
-                  <span style={{ flex: 1, fontSize: '12px', color: 'rgba(255,255,255,0.3)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                  <span style={{ flex: 1, fontSize: '12px', color: 'var(--text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {c.notes ?? '—'}
                   </span>
-                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', flexShrink: 0 }}>
                     {fmt(c.amount)}
                   </span>
                 </div>

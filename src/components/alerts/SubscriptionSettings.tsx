@@ -78,7 +78,7 @@ export default function SubscriptionSettings({ initial }: Props) {
 
   return (
     <div style={{
-      background:   'rgba(255,255,255,0.02)',
+      background:   'var(--surface2)',
       border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '16px',
       padding:      '24px 28px',
@@ -96,8 +96,8 @@ export default function SubscriptionSettings({ initial }: Props) {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Configuração de alertas</div>
-          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Escolha como e quando deseja receber notificações.</div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Configuração de alertas</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-sec)' }}>Escolha como e quando deseja receber notificações.</div>
         </div>
       </div>
 
@@ -106,7 +106,7 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Column 1: Channels */}
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
             Canais de notificação
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -133,7 +133,7 @@ export default function SubscriptionSettings({ initial }: Props) {
             />
             {telegramEnabled && (
               <div style={{ marginTop: '4px' }}>
-                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>Chat ID</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-sec)', marginBottom: '5px' }}>Chat ID</div>
                 <input
                   type="text"
                   value={telegramChatId}
@@ -142,10 +142,10 @@ export default function SubscriptionSettings({ initial }: Props) {
                   style={{
                     width:        '100%',
                     padding:      '7px 10px',
-                    background:   'rgba(255,255,255,0.05)',
-                    border:       '1px solid rgba(255,255,255,0.12)',
+                    background:   'var(--surface2)',
+                    border: '1px solid var(--border)',
                     borderRadius: '7px',
-                    color:        '#fff',
+                    color:        'var(--text)',
                     fontSize:     '12px',
                     boxSizing:    'border-box',
                   }}
@@ -157,7 +157,7 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Column 2: Profile */}
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
             Perfil de alerta
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -172,8 +172,8 @@ export default function SubscriptionSettings({ initial }: Props) {
                   />
                 </div>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: profile === value ? '#fff' : 'rgba(255,255,255,0.65)', marginBottom: '1px' }}>{label}</div>
-                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: profile === value ? '#fff' : 'var(--text)', marginBottom: '1px' }}>{label}</div>
+                  <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4 }}>{desc}</div>
                 </div>
               </label>
             ))}
@@ -182,7 +182,7 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Column 3: Priorities */}
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
             Prioridades
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -243,7 +243,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         height:       '22px',
         borderRadius: '11px',
         border:       'none',
-        background:   value ? '#f59e0b' : 'rgba(255,255,255,0.12)',
+        background:   value ? '#f59e0b' : 'var(--text-dim)',
         cursor:       'pointer',
         flexShrink:   0,
         transition:   'background 0.2s',
@@ -269,10 +269,10 @@ function ChannelToggle({ icon, label, desc, value, onChange }: {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
-        <span style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{icon}</span>
+        <span style={{ color: 'var(--text-sec)', flexShrink: 0 }}>{icon}</span>
         <div>
-          <div style={{ fontSize: '12px', fontWeight: 500, color: '#fff' }}>{label}</div>
-          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{desc}</div>
+          <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)' }}>{label}</div>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{desc}</div>
         </div>
       </div>
       <Toggle value={value} onChange={onChange} />
@@ -293,7 +293,7 @@ function PriorityCheck({ label, desc, color, checked, onChange }: {
       />
       <div>
         <div style={{ fontSize: '12px', fontWeight: 500, color, marginBottom: '1px' }}>{label}</div>
-        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</div>
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)', lineHeight: 1.4 }}>{desc}</div>
       </div>
     </label>
   )
