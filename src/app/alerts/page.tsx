@@ -1,10 +1,8 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { getRecentAlerts } from '@/repositories/alert-events'
-import { getSubscription } from '@/repositories/alert-subscriptions'
 import AppNav from '@/components/shared/AppNav'
 import AlertsView from '@/components/alerts/AlertsView'
-import SubscriptionSettings from '@/components/alerts/SubscriptionSettings'
 
 export const metadata = { title: 'Alertas — BTC Monitor' }
 
@@ -13,10 +11,7 @@ export default async function AlertsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const [alerts, subscription] = await Promise.all([
-    getRecentAlerts(supabase, user.id, 200),
-    getSubscription(supabase, user.id),
-  ])
+  const alerts = await getRecentAlerts(supabase, user.id, 200)
 
   const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
 
@@ -64,11 +59,7 @@ export default async function AlertsPage() {
             </div>
           </div>
 
-          {/* Alerts feed */}
           <AlertsView alerts={alerts} />
-
-          {/* Settings */}
-          <SubscriptionSettings initial={subscription} />
 
         </div>
       </main>

@@ -8,8 +8,9 @@ import { insertDcaRecommendation } from '@/repositories/dca-recommendations'
 import { getServiceClient } from '@/lib/supabase/service'
 import AppNav from '@/components/shared/AppNav'
 import AccumulationHero from '@/components/dca/AccumulationHero'
+import DcaTacticalPage from '@/components/dca-tactical/DcaTacticalPage'
 
-export const metadata = { title: 'DCA Estratégico — BTC Monitor' }
+export const metadata = { title: 'DCA Tático — BTC Monitor' }
 
 const ACTION_HERO: Record<string, { label: string; color: string }> = {
   AGGRESSIVE_DCA: { label: 'Excepcional', color: '#4ade80' },
@@ -22,12 +23,13 @@ const ACTION_HERO: Record<string, { label: string; color: string }> = {
 const CONF_LABEL: Record<string, string> = { HIGH: 'Alta', MEDIUM: 'Média', LOW: 'Baixa' }
 const CONF_COLOR: Record<string, string> = { HIGH: '#4ade80', MEDIUM: '#fbbf24', LOW: '#f87171' }
 
-export default async function DcaPage() {
+export default async function DcaTaticoPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
   const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
+
   const plan = await getDcaPlan(supabase, user.id)
 
   const latestRec = plan ? await getLatestRecommendation(supabase, user.id) : null
@@ -38,7 +40,7 @@ export default async function DcaPage() {
       const { signal, snapshot } = await getCurrentMarketData()
       const fresh = await getOrCreateDcaRecommendation(signal, plan, snapshot?.id ?? null)
       displayRec = await insertDcaRecommendation(getServiceClient(), fresh)
-    } catch { /* non-fatal — fall back to stale */ }
+    } catch { /* non-fatal */ }
   }
 
   let heroMeta        = ACTION_HERO.NORMAL_DCA
@@ -73,23 +75,17 @@ export default async function DcaPage() {
           <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Acumulação inteligente
           </div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>DCA Estratégico</h1>
+          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>DCA Tático</h1>
           <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Orientação de aporte baseada em contexto de mercado — não em previsão de preço.
+            Análise de oportunidades táticas — momentos excepcionais para acelerar aportes.
           </p>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-          {!plan && (
-            <div style={{ padding: '20px 24px', background: 'var(--orange-subtle)', border: '1px solid var(--border-strong)', borderRadius: '10px' }}>
-              <p style={{ margin: 0, fontSize: '13px', color: 'var(--text-sec)' }}>
-                Configure seu plano em <strong>Configurações</strong> para receber recomendações diárias de aporte.
-              </p>
-            </div>
-          )}
-
-          {displayRec ? (
+          {/* Plano de acumulação — contexto estratégico */}
+          {displayRec && (
             <AccumulationHero
+              label="Plano de acumulação"
               monthlyAmount={plan?.monthly_amount_brl ?? 0}
               suggestAmount={heroSuggest}
               reserveAmount={heroReserve}
@@ -116,11 +112,10 @@ export default async function DcaPage() {
                 )}
               </div>
             </AccumulationHero>
-          ) : plan ? (
-            <div style={{ padding: '24px', background: 'var(--surface2)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', color: 'var(--text-muted)' }}>
-              Gerando recomendação…
-            </div>
-          ) : null}
+          )}
+
+          {/* Análise tática */}
+          <DcaTacticalPage plan={plan} />
         </div>
 
       </div>
