@@ -2,40 +2,54 @@
 
 import { useState } from 'react'
 import type { AlertSubscriptionRow, RiskProfile, Severity } from '@/lib/db/types'
-import Tooltip from '@/components/shared/Tooltip'
 
 const PROFILES: { value: RiskProfile; label: string; desc: string }[] = [
-  { value: 'CONSERVATIVE', label: 'Conservador', desc: 'Apenas alertas críticos — euforia, risco extremo, capitulação' },
-  { value: 'MODERATE',     label: 'Moderado',    desc: 'Alertas importantes + oportunidades agressivas'             },
-  { value: 'AGGRESSIVE',   label: 'Agressivo',   desc: 'Todos os alertas, incluindo janelas táticas menores'        },
+  { value: 'CONSERVATIVE', label: 'Conservador', desc: 'Apenas alertas de alta relevância'          },
+  { value: 'MODERATE',     label: 'Moderado',    desc: 'Alertas balanceados de oportunidade e risco' },
+  { value: 'AGGRESSIVE',   label: 'Agressivo',   desc: 'Todos os alertas, incluindo oportunidades táticas' },
 ]
 
-const SEVERITIES: { value: Severity; label: string }[] = [
-  { value: 'LOW',      label: 'Baixa'    },
-  { value: 'MEDIUM',   label: 'Média'    },
-  { value: 'HIGH',     label: 'Alta'     },
-  { value: 'CRITICAL', label: 'Crítica'  },
-]
+// Severity to min_severity mapping: highest unchecked priority determines the floor
+const SEV_RANK: Record<Severity, number> = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 }
 
-interface Props {
-  initial: AlertSubscriptionRow | null
+function sevFromChecks(alta: boolean, media: boolean, baixa: boolean): Severity {
+  if (alta && media && baixa) return 'LOW'
+  if (alta && media)          return 'MEDIUM'
+  if (alta)                   return 'HIGH'
+  return 'CRITICAL'
 }
 
+function checksFromSev(sev: Severity): { alta: boolean; media: boolean; baixa: boolean } {
+  const rank = SEV_RANK[sev]
+  return { alta: rank <= 2, media: rank <= 1, baixa: rank === 0 }
+}
+
+interface Props { initial: AlertSubscriptionRow | null }
+
 export default function SubscriptionSettings({ initial }: Props) {
-  const [profile,         setProfile]         = useState<RiskProfile>(initial?.profile          ?? 'MODERATE')
-  const [enabled,         setEnabled]         = useState(initial?.enabled                       ?? true)
-  const [emailEnabled,    setEmailEnabled]    = useState(initial?.email_enabled                 ?? true)
-  const [telegramEnabled, setTelegramEnabled] = useState(initial?.telegram_enabled              ?? false)
-  const [telegramChatId,  setTelegramChatId]  = useState(initial?.telegram_chat_id              ?? '')
-  const [minSeverity,     setMinSeverity]     = useState<Severity>(initial?.min_severity        ?? 'MEDIUM')
+  const [profile,         setProfile]         = useState<RiskProfile>(initial?.profile       ?? 'MODERATE')
+  const [enabled,         setEnabled]         = useState(initial?.enabled                    ?? true)
+  const [emailEnabled,    setEmailEnabled]    = useState(initial?.email_enabled              ?? true)
+  const [telegramEnabled, setTelegramEnabled] = useState(initial?.telegram_enabled           ?? false)
+  const [telegramChatId,  setTelegramChatId]  = useState(initial?.telegram_chat_id           ?? '')
+  const [minSeverity,     setMinSeverity]     = useState<Severity>(initial?.min_severity     ?? 'MEDIUM')
   const [saving,          setSaving]          = useState(false)
   const [saved,           setSaved]           = useState(false)
   const [error,           setError]           = useState<string | null>(null)
 
+  const { alta, media, baixa } = checksFromSev(minSeverity)
+
+  function setPriorityCheck(level: 'alta' | 'media' | 'baixa', checked: boolean) {
+    const next = {
+      alta:  level === 'alta'  ? checked : alta,
+      media: level === 'media' ? checked : media,
+      baixa: level === 'baixa' ? checked : baixa,
+    }
+    setMinSeverity(sevFromChecks(next.alta, next.media, next.baixa))
+  }
+
   async function handleSave() {
-    setSaving(true)
-    setSaved(false)
-    setError(null)
+    setSaving(true); setSaved(false); setError(null)
     try {
       const res = await fetch('/api/alerts/subscription', {
         method:  'POST',
@@ -63,147 +77,160 @@ export default function SubscriptionSettings({ initial }: Props) {
   }
 
   return (
-    <section style={{ marginBottom: '40px' }}>
-      <h2 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 16px' }}>
-        Configuração de alertas
-      </h2>
+    <div style={{
+      background:   'rgba(255,255,255,0.02)',
+      border:       '1px solid rgba(255,255,255,0.07)',
+      borderRadius: '16px',
+      padding:      '24px 28px',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+        <div style={{
+          width: '32px', height: '32px', borderRadius: '9px',
+          background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+        }}>
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <circle cx="12" cy="12" r="3"/>
+            <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
+          </svg>
+        </div>
+        <div>
+          <div style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>Configuração de alertas</div>
+          <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>Escolha como e quando deseja receber notificações.</div>
+        </div>
+      </div>
 
-      <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
+      {/* 3-col grid */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginTop: '24px' }}>
 
-        {/* Enabled toggle */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Alertas ativos</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Receber notificações quando condições forem atingidas</div>
+        {/* Column 1: Channels */}
+        <div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+            Canais de notificação
           </div>
-          <Toggle value={enabled} onChange={setEnabled} />
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+            <ChannelToggle
+              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 01-3.46 0"/></svg>}
+              label="Notificações no app"
+              desc="Receba alertas dentro da plataforma"
+              value={enabled}
+              onChange={setEnabled}
+            />
+            <ChannelToggle
+              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>}
+              label="E-mail"
+              desc="Receba alertas por e-mail"
+              value={emailEnabled}
+              onChange={setEmailEnabled}
+            />
+            <ChannelToggle
+              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>}
+              label="Telegram"
+              desc="Receba alertas no Telegram"
+              value={telegramEnabled}
+              onChange={setTelegramEnabled}
+            />
+            {telegramEnabled && (
+              <div style={{ marginTop: '4px' }}>
+                <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.4)', marginBottom: '5px' }}>Chat ID</div>
+                <input
+                  type="text"
+                  value={telegramChatId}
+                  onChange={e => setTelegramChatId(e.target.value)}
+                  placeholder="Ex: 123456789"
+                  style={{
+                    width:        '100%',
+                    padding:      '7px 10px',
+                    background:   'rgba(255,255,255,0.05)',
+                    border:       '1px solid rgba(255,255,255,0.12)',
+                    borderRadius: '7px',
+                    color:        '#fff',
+                    fontSize:     '12px',
+                    boxSizing:    'border-box',
+                  }}
+                />
+              </div>
+            )}
+          </div>
         </div>
 
-        {/* Profile */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Perfil de alerta</span>
-            <Tooltip text={"Define quais tipos de alerta você quer receber.\n\nConservador = só o essencial: euforia, risco extremo, capitulação.\nModerado = alertas importantes e oportunidades agressivas.\nAgressivo = todas as movimentações relevantes, incluindo janelas táticas menores."} />
+        {/* Column 2: Profile */}
+        <div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+            Perfil de alerta
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {PROFILES.map(({ value, label, desc }) => (
-              <label key={value} style={{ display: 'flex', alignItems: 'flex-start', gap: '12px', cursor: 'pointer' }}>
-                <input
-                  type="radio"
-                  name="profile"
-                  value={value}
-                  checked={profile === value}
-                  onChange={() => setProfile(value)}
-                  style={{ marginTop: '3px', accentColor: 'var(--orange)' }}
-                />
+              <label key={value} style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer' }}>
+                <div style={{ position: 'relative', marginTop: '2px', flexShrink: 0 }}>
+                  <input
+                    type="radio" name="profile" value={value}
+                    checked={profile === value}
+                    onChange={() => setProfile(value)}
+                    style={{ width: '16px', height: '16px', accentColor: '#f59e0b', cursor: 'pointer' }}
+                  />
+                </div>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: 'var(--text)' }}>{label}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{desc}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: profile === value ? '#fff' : 'rgba(255,255,255,0.65)', marginBottom: '1px' }}>{label}</div>
+                  <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</div>
                 </div>
               </label>
             ))}
           </div>
         </div>
 
-        {/* Min severity */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '13px', fontWeight: 500, color: '#b0a090' }}>Severidade mínima</span>
-            <Tooltip text={"Filtro de importância dos alertas.\n\nBaixa = todos os alertas, inclusive informativos.\nMédia = alertas relevantes sem te sobrecarregar (recomendado).\nAlta = só situações sérias.\nCrítica = apenas emergências de mercado."} position="left" />
+        {/* Column 3: Priorities */}
+        <div>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+            Prioridades
           </div>
-          <select
-            value={minSeverity}
-            onChange={(e) => setMinSeverity(e.target.value as Severity)}
-            style={{
-              padding:         '6px 12px',
-              background:      'var(--surface2)',
-              border:          '1px solid var(--border-strong)',
-              borderRadius:    '6px',
-              color:           'var(--text)',
-              fontSize:        '13px',
-              cursor:          'pointer',
-            }}
-          >
-            {SEVERITIES.map(({ value, label }) => (
-              <option key={value} value={value}>{label}</option>
-            ))}
-          </select>
-        </div>
-
-        {/* Email */}
-        <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div>
-            <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Notificações por e-mail</div>
-            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Enviado para o e-mail da sua conta Google</div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            <PriorityCheck
+              label="Alta prioridade" desc="Alertas críticos que requerem atenção imediata"
+              color="#f87171" checked={alta}
+              onChange={v => setPriorityCheck('alta', v)}
+            />
+            <PriorityCheck
+              label="Média prioridade" desc="Oportunidades importantes a acompanhar"
+              color="#fbbf24" checked={media}
+              onChange={v => setPriorityCheck('media', v)}
+            />
+            <PriorityCheck
+              label="Baixa prioridade" desc="Informativos e atualizações gerais"
+              color="#4ade80" checked={baixa}
+              onChange={v => setPriorityCheck('baixa', v)}
+            />
           </div>
-          <Toggle value={emailEnabled} onChange={setEmailEnabled} />
         </div>
-
-        {/* Telegram */}
-        <div style={{ padding: '20px 24px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: telegramEnabled ? '16px' : 0 }}>
-            <div>
-              <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)' }}>Telegram</div>
-              <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '2px' }}>Alertas via bot no Telegram</div>
-            </div>
-            <Toggle value={telegramEnabled} onChange={setTelegramEnabled} />
-          </div>
-
-          {telegramEnabled && (
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '6px' }}>
-                <label style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Chat ID</label>
-                <Tooltip text={"Número que identifica você no Telegram. O bot precisa disso para te enviar mensagens diretamente.\n\nComo obter: abra o Telegram, inicie uma conversa com @userinfobot e ele te responde com seu Chat ID."} position="right" wide />
-              </div>
-              <input
-                type="text"
-                value={telegramChatId}
-                onChange={(e) => setTelegramChatId(e.target.value)}
-                placeholder="Ex: 123456789"
-                style={{
-                  width:        '100%',
-                  padding:      '8px 12px',
-                  background:   'var(--surface2)',
-                  border:       '1px solid var(--border-strong)',
-                  borderRadius: '6px',
-                  color:        'var(--text)',
-                  fontSize:     '13px',
-                  boxSizing:    'border-box',
-                }}
-              />
-              <p style={{ margin: '8px 0 0', fontSize: '11px', color: 'var(--text-muted)' }}>
-                Inicie uma conversa com <code style={{ color: 'var(--orange)' }}>@userinfobot</code> no Telegram para obter seu Chat ID.
-              </p>
-            </div>
-          )}
-        </div>
-
       </div>
 
       {/* Save */}
-      <div style={{ marginTop: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button
           onClick={handleSave}
           disabled={saving}
           style={{
-            padding:         '10px 24px',
-            background:      saving ? 'rgba(224,138,58,0.4)' : 'var(--orange)',
-            color:           '#0a0a0a',
-            border:          'none',
-            borderRadius:    '8px',
-            fontSize:        '13px',
-            fontWeight:      600,
-            cursor:          saving ? 'not-allowed' : 'pointer',
+            padding:      '10px 24px',
+            background:   saving ? 'rgba(245,158,11,0.4)' : '#f59e0b',
+            color:        '#0a0a0a',
+            border:       'none',
+            borderRadius: '9px',
+            fontSize:     '13px',
+            fontWeight:   700,
+            cursor:       saving ? 'not-allowed' : 'pointer',
           }}
         >
           {saving ? 'Salvando…' : 'Salvar configurações'}
         </button>
-        {saved && <span style={{ fontSize: '13px', color: '#00C853' }}>✓ Salvo</span>}
-        {error && <span style={{ fontSize: '13px', color: '#FF1744' }}>{error}</span>}
+        {saved && <span style={{ fontSize: '12px', color: '#4ade80', fontWeight: 500 }}>✓ Configurações salvas</span>}
+        {error && <span style={{ fontSize: '12px', color: '#f87171' }}>{error}</span>}
       </div>
-    </section>
+    </div>
   )
 }
+
+// ── sub-components ──────────────────────────────────────────────────────────
 
 function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   return (
@@ -211,27 +238,63 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
       type="button"
       onClick={() => onChange(!value)}
       style={{
-        position:        'relative',
-        width:           '44px',
-        height:          '24px',
-        borderRadius:    '12px',
-        border:          'none',
-        background:      value ? 'var(--orange)' : 'var(--surface3)',
-        cursor:          'pointer',
-        flexShrink:      0,
-        transition:      'background 0.2s',
+        position:     'relative',
+        width:        '40px',
+        height:       '22px',
+        borderRadius: '11px',
+        border:       'none',
+        background:   value ? '#f59e0b' : 'rgba(255,255,255,0.12)',
+        cursor:       'pointer',
+        flexShrink:   0,
+        transition:   'background 0.2s',
       }}
     >
       <span style={{
-        position:    'absolute',
-        top:         '3px',
-        left:        value ? '23px' : '3px',
-        width:       '18px',
-        height:      '18px',
+        position:     'absolute',
+        top:          '3px',
+        left:         value ? '21px' : '3px',
+        width:        '16px',
+        height:       '16px',
         borderRadius: '50%',
-        background:   'var(--text)',
-        transition:  'left 0.2s',
+        background:   '#fff',
+        transition:   'left 0.2s',
       }} />
     </button>
+  )
+}
+
+function ChannelToggle({ icon, label, desc, value, onChange }: {
+  icon: React.ReactNode; label: string; desc: string; value: boolean; onChange: (v: boolean) => void
+}) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
+        <span style={{ color: 'rgba(255,255,255,0.4)', flexShrink: 0 }}>{icon}</span>
+        <div>
+          <div style={{ fontSize: '12px', fontWeight: 500, color: '#fff' }}>{label}</div>
+          <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)' }}>{desc}</div>
+        </div>
+      </div>
+      <Toggle value={value} onChange={onChange} />
+    </div>
+  )
+}
+
+function PriorityCheck({ label, desc, color, checked, onChange }: {
+  label: string; desc: string; color: string; checked: boolean; onChange: (v: boolean) => void
+}) {
+  return (
+    <label style={{ display: 'flex', alignItems: 'flex-start', gap: '9px', cursor: 'pointer' }}>
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        style={{ width: '14px', height: '14px', marginTop: '2px', accentColor: color, cursor: 'pointer', flexShrink: 0 }}
+      />
+      <div>
+        <div style={{ fontSize: '12px', fontWeight: 500, color, marginBottom: '1px' }}>{label}</div>
+        <div style={{ fontSize: '10px', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</div>
+      </div>
+    </label>
   )
 }
