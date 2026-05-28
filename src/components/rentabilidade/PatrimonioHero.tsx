@@ -1,37 +1,66 @@
 'use client'
+import React from 'react'
 import type { PatrimonioData } from '@lib/rentabilidade/types'
 
 const fmt0 = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
 
-const fmtBtc = (n: number) =>
-  n.toFixed(8).replace(/\.?0+$/, '') + ' ₿'
-
-function Sparkline({ history }: { history: { date: string; price: number }[] }) {
-  const recent = history.slice(-30)
+function Sparkline({ history, color }: { history: { date: string; price: number }[]; color: string }) {
+  const recent = history.slice(-60)
   if (recent.length < 2) return null
   const min = Math.min(...recent.map(p => p.price))
   const max = Math.max(...recent.map(p => p.price))
   const range = max - min || 1
-  const w = 90
-  const h = 32
+  const w = 130
+  const h = 36
   const pts = recent.map((p, i) => {
     const x = (i / (recent.length - 1)) * w
-    const y = h - ((p.price - min) / range) * (h - 4) - 2
+    const y = h - ((p.price - min) / range) * (h - 6) - 3
     return `${x},${y}`
   }).join(' ')
+  const lastY = h - ((recent[recent.length - 1].price - min) / range) * (h - 6) - 3
   return (
-    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: w, height: h }}>
+    <svg viewBox={`0 0 ${w} ${h}`} style={{ width: w, height: h, display: 'block' }}>
       <defs>
-        <linearGradient id="spark-g" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#4ade80" stopOpacity={0.3} />
-          <stop offset="100%" stopColor="#4ade80" stopOpacity={0} />
+        <linearGradient id="spark-hero-g" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
         </linearGradient>
       </defs>
-      <polygon points={`0,${h} ${pts} ${w},${h}`} fill="url(#spark-g)" />
-      <polyline points={pts} fill="none" stroke="#4ade80" strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={w} cy={recent[recent.length - 1] ? h - ((recent[recent.length - 1].price - min) / range) * (h - 4) - 2 : h / 2} r={2.5} fill="#4ade80" />
+      <polygon points={`0,${h} ${pts} ${w},${h}`} fill="url(#spark-hero-g)" />
+      <polyline points={pts} fill="none" stroke={color} strokeWidth={1.5} strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={w} cy={lastY} r={3} fill={color} />
     </svg>
+  )
+}
+
+function KpiCol({
+  label, value, valueColor, icon, borderLeft,
+}: {
+  label: React.ReactNode; value: string; valueColor?: string; icon: string; borderLeft?: boolean
+}) {
+  return (
+    <div style={{
+      paddingLeft: borderLeft ? '20px' : 0,
+      borderLeft:  borderLeft ? '1px solid rgba(255,255,255,0.07)' : 'none',
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+        <div style={{
+          width: '22px', height: '22px', borderRadius: '50%',
+          background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.1)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: '9px', color: 'rgba(255,255,255,0.5)', flexShrink: 0,
+        }}>
+          {icon}
+        </div>
+        <div style={{ fontSize: '7.5px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1.2 }}>
+          {label}
+        </div>
+      </div>
+      <div style={{ fontSize: '15px', fontWeight: 800, color: valueColor ?? '#fff', paddingLeft: '30px' }}>
+        {value}
+      </div>
+    </div>
   )
 }
 
@@ -43,82 +72,73 @@ export default function PatrimonioHero({ patrimonio }: Props) {
     avgPrice, totalBtc, contributionCount, currentBtcPrice, priceHistory,
   } = patrimonio
 
-  const returnColor  = totalReturn >= 0 ? '#4ade80' : '#ef4444'
-  const returnPrefix = totalReturn >= 0 ? '▲' : '▼'
+  const isUp        = totalReturn >= 0
+  const returnColor = isUp ? '#4ade80' : '#f87171'
+  const arrow       = isUp ? '▲' : '▼'
 
   return (
     <div style={{
-      background:     'linear-gradient(135deg, #0c1a24 0%, #112233 50%, #0c1a24 100%)',
-      border:         '1px solid rgba(251,191,36,0.2)',
-      borderRadius:   '14px',
-      padding:        '24px 28px',
-      position:       'relative',
-      overflow:       'hidden',
+      background:   'linear-gradient(135deg, #0d1a27 0%, #0f2236 60%, #0b1820 100%)',
+      border:       '1px solid rgba(255,255,255,0.08)',
+      borderRadius: '16px',
+      padding:      '24px 28px 20px',
+      position:     'relative',
+      overflow:     'hidden',
     }}>
-      {/* glow */}
       <div style={{
-        position: 'absolute', top: '-40px', left: '50%', transform: 'translateX(-50%)',
-        width: '320px', height: '100px',
-        background: 'radial-gradient(ellipse, rgba(251,191,36,0.1), transparent 70%)',
-        pointerEvents: 'none',
+        position: 'absolute', top: 0, left: '30%',
+        width: '40%', height: '1px',
+        background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent)',
       }} />
 
-      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '28px', alignItems: 'center' }}>
+
+        {/* Left: value + return + sparkline */}
         <div>
           <div style={{
-            fontSize: '8px', color: '#fbbf24', textTransform: 'uppercase',
-            letterSpacing: '2.5px', marginBottom: '10px', fontWeight: 700,
+            fontSize: '8px', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase',
+            letterSpacing: '2px', marginBottom: '8px',
           }}>
-            Patrimônio Bitcoin
+            Patrimônio atual
           </div>
-          <div style={{ fontSize: '34px', fontWeight: 900, color: '#fff', letterSpacing: '-1.5px', lineHeight: 1, marginBottom: '10px' }}>
+          <div style={{
+            fontSize: '36px', fontWeight: 900, color: '#fff',
+            letterSpacing: '-1.5px', lineHeight: 1, marginBottom: '8px',
+          }}>
             {fmt0(currentValue)}
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-            <span style={{ fontSize: '14px', color: returnColor, fontWeight: 800 }}>
-              {returnPrefix} {Math.abs(totalReturn).toFixed(1).replace('.', ',')}%
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px' }}>
+            <span style={{
+              fontSize: '13px', fontWeight: 700, color: returnColor,
+              background: isUp ? 'rgba(74,222,128,0.1)' : 'rgba(248,113,113,0.1)',
+              border: `1px solid ${isUp ? 'rgba(74,222,128,0.2)' : 'rgba(248,113,113,0.2)'}`,
+              borderRadius: '5px', padding: '1px 7px',
+            }}>
+              {arrow} {Math.abs(totalReturn).toFixed(1).replace('.', ',')}%
             </span>
-            <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontSize: '11px', color: 'rgba(255,255,255,0.4)' }}>
               {totalReturn >= 0 ? '+' : ''}{fmt0(totalReturnBrl)} total
             </span>
           </div>
+          <Sparkline history={priceHistory} color={returnColor} />
         </div>
 
-        <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.35)', marginBottom: '6px' }}>BTC / 30 dias</div>
-          <div style={{
-            background: 'rgba(74,222,128,0.08)', borderRadius: '8px',
-            padding: '5px', border: '1px solid rgba(74,222,128,0.15)',
-          }}>
-            <Sparkline history={priceHistory} />
-          </div>
-          <div style={{ fontSize: '10px', color: '#4ade80', fontWeight: 700, marginTop: '5px' }}>
-            {fmt0(currentBtcPrice)}
-          </div>
+        {/* Right: KPI columns */}
+        <div style={{
+          display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+          paddingLeft: '28px',
+          borderLeft: '1px solid rgba(255,255,255,0.07)',
+        }}>
+          <KpiCol
+            icon="$"
+            label={<>Preço médio<br />(DCA)</>}
+            value={fmt0(avgPrice)}
+            valueColor="#f59e0b"
+          />
+          <KpiCol icon="₿" label="BTC acumulado"   value={totalBtc.toFixed(8) + ' BTC'} borderLeft />
+          <KpiCol icon="▤"  label="Total investido" value={fmt0(totalInvested)}           borderLeft />
+          <KpiCol icon="✦" label="Total de aportes" value={String(contributionCount)}     borderLeft />
         </div>
-      </div>
-
-      {/* KPI row */}
-      <div style={{
-        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '14px',
-        marginTop: '20px', paddingTop: '18px',
-        borderTop: '1px solid rgba(255,255,255,0.07)',
-      }}>
-        {[
-          { label: 'Preço médio DCA', value: fmt0(avgPrice),        color: '#fbbf24' },
-          { label: 'BTC acumulado',   value: fmtBtc(totalBtc),      color: '#fff'    },
-          { label: 'Total investido', value: fmt0(totalInvested),    color: '#fff'    },
-          { label: 'Aportes',         value: String(contributionCount), color: '#fff' },
-        ].map(kpi => (
-          <div key={kpi.label}>
-            <div style={{ fontSize: '7.5px', color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '5px' }}>
-              {kpi.label}
-            </div>
-            <div style={{ fontSize: '14px', fontWeight: 800, color: kpi.color }}>
-              {kpi.value}
-            </div>
-          </div>
-        ))}
       </div>
     </div>
   )

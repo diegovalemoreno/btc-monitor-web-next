@@ -1,0 +1,192 @@
+<h2>Gráfico de Evolução — Qual formato?</h2>
+<p class="subtitle">Como visualizar a evolução do seu patrimônio Bitcoin</p>
+
+<div style="display:flex;flex-direction:column;gap:20px;max-width:700px;margin:0 auto">
+
+  <!-- Option 1 -->
+  <div class="option" data-choice="1" onclick="toggleSelect(this)" style="display:block;padding:0;overflow:hidden">
+    <div style="display:flex;gap:0">
+      <div class="letter" style="display:flex;align-items:flex-start;padding:16px 12px">1</div>
+      <div style="flex:1;padding:16px 16px 16px 0">
+        <h3 style="margin:0 0 4px">Valor do Patrimônio em R$</h3>
+        <p style="margin:0 0 12px;font-size:13px;opacity:0.7">Linha mostra quanto seu patrimônio vale hoje vs no passado. Simples e direto.</p>
+        <div style="background:#0d1117;padding:14px;border-radius:8px;font-family:monospace">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:8px;color:rgba(255,255,255,0.4)">VALOR PATRIMONIAL (R$)</div>
+            <div style="font-size:8px;color:#4ade80">▲ R$ 347.820 hoje</div>
+          </div>
+          <!-- Y axis labels + chart -->
+          <div style="display:flex;gap:6px">
+            <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:6.5px;color:rgba(255,255,255,0.3);text-align:right;padding-bottom:2px">
+              <span>350k</span>
+              <span>250k</span>
+              <span>150k</span>
+              <span>50k</span>
+            </div>
+            <div style="flex:1;position:relative">
+              <svg viewBox="0 0 340 80" style="width:100%;height:80px">
+                <defs>
+                  <linearGradient id="ch1" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#4ade80" stop-opacity="0.35"/>
+                    <stop offset="100%" stop-color="#4ade80" stop-opacity="0.02"/>
+                  </linearGradient>
+                </defs>
+                <!-- Grid lines -->
+                <line x1="0" y1="0" x2="340" y2="0" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="27" x2="340" y2="27" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="54" x2="340" y2="54" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <!-- Area + line -->
+                <polygon points="0,78 40,74 80,68 120,60 160,48 200,35 240,22 280,12 340,4 340,80 0,80" fill="url(#ch1)"/>
+                <polyline points="0,78 40,74 80,68 120,60 160,48 200,35 240,22 280,12 340,4" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- End dot -->
+                <circle cx="340" cy="4" r="4" fill="#4ade80"/>
+              </svg>
+              <!-- X labels -->
+              <div style="display:flex;justify-content:space-between;font-size:6.5px;color:rgba(255,255,255,0.3);margin-top:3px;padding:0 2px">
+                <span>Jan 22</span><span>Jul 22</span><span>Jan 23</span><span>Jul 23</span><span>Jan 24</span><span>Jul 24</span><span>Hoje</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 2 -->
+  <div class="option" data-choice="2" onclick="toggleSelect(this)" style="display:block;padding:0;overflow:hidden">
+    <div style="display:flex;gap:0">
+      <div class="letter" style="display:flex;align-items:flex-start;padding:16px 12px">2</div>
+      <div style="flex:1;padding:16px 16px 16px 0">
+        <h3 style="margin:0 0 4px">Preço BTC + Seus Aportes Sobrepostos</h3>
+        <p style="margin:0 0 12px;font-size:13px;opacity:0.7">Curva dourada = histórico do BTC. Pontos = seus aportes. Verde = já em lucro na época. Vermelho = comprou no topo.</p>
+        <div style="background:#0d1117;padding:14px;border-radius:8px;font-family:monospace">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:8px;color:rgba(255,255,255,0.4)">PREÇO BTC (R$) + APORTES</div>
+            <div style="display:flex;gap:8px;font-size:7px">
+              <span style="color:#fbbf24">— BTC</span>
+              <span style="color:#4ade80">● gain</span>
+              <span style="color:#ef4444">● loss</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:6.5px;color:rgba(255,255,255,0.3);text-align:right;padding-bottom:2px">
+              <span>700k</span>
+              <span>500k</span>
+              <span>300k</span>
+              <span>100k</span>
+            </div>
+            <div style="flex:1">
+              <svg viewBox="0 0 340 80" style="width:100%;height:80px">
+                <defs>
+                  <linearGradient id="ch2" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.15"/>
+                    <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.02"/>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="0" x2="340" y2="0" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="27" x2="340" y2="27" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="54" x2="340" y2="54" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <!-- BTC price curve — volatile with dip in 2022 then recovery -->
+                <polygon points="0,55 30,65 60,72 90,60 120,45 150,35 180,28 210,18 240,12 280,8 340,4 340,80 0,80" fill="url(#ch2)"/>
+                <polyline points="0,55 30,65 60,72 90,60 120,45 150,35 180,28 210,18 240,12 280,8 340,4" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Aporte dots: red = bought near top (early), green = bought in dip/recovery -->
+                <!-- 2022 aportes - bought high, red -->
+                <circle cx="15" cy="54" r="4.5" fill="#ef4444" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <circle cx="45" cy="64" r="4.5" fill="#ef4444" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <!-- 2022 bottom, green -->
+                <circle cx="75" cy="71" r="4.5" fill="#4ade80" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <circle cx="105" cy="58" r="4.5" fill="#4ade80" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <!-- 2023 recovery, bright green -->
+                <circle cx="140" cy="38" r="4.5" fill="#4ade80" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <circle cx="170" cy="30" r="4.5" fill="#22c55e" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <circle cx="200" cy="20" r="4.5" fill="#22c55e" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <!-- 2024 strong green -->
+                <circle cx="235" cy="13" r="4.5" fill="#16a34a" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <circle cx="265" cy="9" r="4.5" fill="#16a34a" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <circle cx="300" cy="6" r="4.5" fill="#15803d" opacity="0.9" stroke="rgba(0,0,0,0.3)" stroke-width="0.5"/>
+                <!-- Tooltip hint on one dot -->
+                <rect x="88" y="45" width="48" height="16" rx="3" fill="rgba(0,0,0,0.75)"/>
+                <text x="112" y="53" text-anchor="middle" font-size="5.5" fill="#4ade80" font-weight="700">+89% · R$180k</text>
+                <text x="112" y="59" text-anchor="middle" font-size="4.5" fill="rgba(255,255,255,0.5)">Jun 2023</text>
+                <line x1="105" y1="58" x2="108" y2="61" stroke="rgba(0,0,0,0.5)" stroke-width="1"/>
+              </svg>
+              <div style="display:flex;justify-content:space-between;font-size:6.5px;color:rgba(255,255,255,0.3);margin-top:3px;padding:0 2px">
+                <span>Jan 22</span><span>Jul 22</span><span>Jan 23</span><span>Jul 23</span><span>Jan 24</span><span>Jul 24</span><span>Hoje</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Option 3 -->
+  <div class="option" data-choice="3" onclick="toggleSelect(this)" style="display:block;padding:0;overflow:hidden">
+    <div style="display:flex;gap:0">
+      <div class="letter" style="display:flex;align-items:flex-start;padding:16px 12px">3</div>
+      <div style="flex:1;padding:16px 16px 16px 0">
+        <h3 style="margin:0 0 4px">Patrimônio R$ + Aportes Sobrepostos</h3>
+        <p style="margin:0 0 12px;font-size:13px;opacity:0.7">Linha verde = valor do seu patrimônio crescendo. Pontos = cada aporte que você fez, posicionado na curva no momento da compra.</p>
+        <div style="background:#0d1117;padding:14px;border-radius:8px;font-family:monospace">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div style="font-size:8px;color:rgba(255,255,255,0.4)">PATRIMÔNIO (R$) + APORTES</div>
+            <div style="display:flex;gap:8px;font-size:7px">
+              <span style="color:#4ade80">— Patrimônio</span>
+              <span style="color:#fff;opacity:0.6">● Aporte</span>
+            </div>
+          </div>
+          <div style="display:flex;gap:6px">
+            <div style="display:flex;flex-direction:column;justify-content:space-between;font-size:6.5px;color:rgba(255,255,255,0.3);text-align:right;padding-bottom:2px">
+              <span>350k</span>
+              <span>250k</span>
+              <span>150k</span>
+              <span>50k</span>
+            </div>
+            <div style="flex:1">
+              <svg viewBox="0 0 340 80" style="width:100%;height:80px">
+                <defs>
+                  <linearGradient id="ch3" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#4ade80" stop-opacity="0.3"/>
+                    <stop offset="100%" stop-color="#4ade80" stop-opacity="0.02"/>
+                  </linearGradient>
+                </defs>
+                <line x1="0" y1="0" x2="340" y2="0" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="27" x2="340" y2="27" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="54" x2="340" y2="54" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <line x1="0" y1="80" x2="340" y2="80" stroke="rgba(255,255,255,0.05)" stroke-width="1"/>
+                <!-- Patrimônio linha — gradual growth with BTC -->
+                <polygon points="0,78 40,75 80,70 120,62 160,50 200,37 240,23 280,13 340,4 340,80 0,80" fill="url(#ch3)"/>
+                <polyline points="0,78 40,75 80,70 120,62 160,50 200,37 240,23 280,13 340,4" fill="none" stroke="#4ade80" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                <!-- Aportes como círculos brancos na curva — anel com cor indicando retorno atual -->
+                <circle cx="15" cy="77" r="4" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.9"/>
+                <circle cx="15" cy="77" r="1.5" fill="#ef4444" opacity="0.8"/>
+                <circle cx="45" cy="74" r="4" fill="none" stroke="#ef4444" stroke-width="2" opacity="0.9"/>
+                <circle cx="45" cy="74" r="1.5" fill="#ef4444" opacity="0.8"/>
+                <circle cx="80" cy="70" r="4" fill="none" stroke="#4ade80" stroke-width="2" opacity="0.9"/>
+                <circle cx="80" cy="70" r="1.5" fill="#4ade80" opacity="0.8"/>
+                <circle cx="115" cy="63" r="4" fill="none" stroke="#4ade80" stroke-width="2" opacity="0.9"/>
+                <circle cx="115" cy="63" r="1.5" fill="#4ade80" opacity="0.8"/>
+                <circle cx="155" cy="51" r="4" fill="none" stroke="#4ade80" stroke-width="2" opacity="0.9"/>
+                <circle cx="155" cy="51" r="1.5" fill="#4ade80" opacity="0.8"/>
+                <circle cx="195" cy="38" r="4" fill="none" stroke="#22c55e" stroke-width="2" opacity="0.9"/>
+                <circle cx="195" cy="38" r="1.5" fill="#22c55e" opacity="0.8"/>
+                <circle cx="235" cy="24" r="4" fill="none" stroke="#16a34a" stroke-width="2" opacity="0.9"/>
+                <circle cx="235" cy="24" r="1.5" fill="#16a34a" opacity="0.8"/>
+                <circle cx="275" cy="14" r="4" fill="none" stroke="#15803d" stroke-width="2" opacity="0.9"/>
+                <circle cx="275" cy="14" r="1.5" fill="#15803d" opacity="0.8"/>
+                <!-- End dot -->
+                <circle cx="340" cy="4" r="4" fill="#4ade80"/>
+              </svg>
+              <div style="display:flex;justify-content:space-between;font-size:6.5px;color:rgba(255,255,255,0.3);margin-top:3px;padding:0 2px">
+                <span>Jan 22</span><span>Jul 22</span><span>Jan 23</span><span>Jul 23</span><span>Jan 24</span><span>Jul 24</span><span>Hoje</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>

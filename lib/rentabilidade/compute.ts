@@ -1,6 +1,7 @@
 import type { DcaContributionRow } from '@/lib/db/types'
 import type {
-  PatrimonioData, PricePoint, ContributionPoint, HeatmapCell, InsightData,
+  PatrimonioData, PricePoint, ContributionPoint, EvolutionPoint,
+  HeatmapCell, BestWorstEntry, InsightData,
 } from './types'
 
 export function colorForReturn(returnPct: number): string {
@@ -50,6 +51,57 @@ export function buildHeatmapCells(
   })
 }
 
+export function buildEvolution(
+  contributions: DcaContributionRow[],
+  priceHistory: PricePoint[],
+): EvolutionPoint[] {
+  const purchases = contributions.filter(isPurchase).sort((a, b) =>
+    a.contribution_date.localeCompare(b.contribution_date)
+  )
+  if (purchases.length === 0) return []
+
+  const firstDate = purchases[0].contribution_date
+
+  const aportesByDate = new Map<string, number>()
+  for (const c of purchases) {
+    aportesByDate.set(c.contribution_date, (aportesByDate.get(c.contribution_date) ?? 0) + c.amount)
+  }
+
+  let cumulativeBtc = 0
+  let idx = 0
+
+  return priceHistory
+    .filter(p => p.date >= firstDate)
+    .map(p => {
+      while (idx < purchases.length && purchases[idx].contribution_date <= p.date) {
+        cumulativeBtc += (purchases[idx].sats_purchased ?? 0) / 1e8
+        idx++
+      }
+      return {
+        date:       p.date,
+        ts:         new Date(p.date + 'T00:00:00').getTime(),
+        patrimonio: Math.round(cumulativeBtc * p.price),
+        btcPrice:   p.price,
+        aporte:     aportesByDate.get(p.date) ?? null,
+      }
+    })
+}
+
+export function buildBestWorst(
+  contributions: DcaContributionRow[],
+  currentBtcPrice: number,
+  n = 3,
+): { best: BestWorstEntry[]; worst: BestWorstEntry[] } {
+  const points = buildContributionPoints(contributions, currentBtcPrice)
+  if (points.length === 0) return { best: [], worst: [] }
+
+  const sorted = [...points].sort((a, b) => b.returnPct - a.returnPct)
+  return {
+    best:  sorted.slice(0, n).map(p => ({ label: formatMonthLabel(p.date), returnPct: p.returnPct })),
+    worst: sorted.slice(-n).reverse().map(p => ({ label: formatMonthLabel(p.date), returnPct: p.returnPct })),
+  }
+}
+
 export function computeInsights(
   contributions: DcaContributionRow[],
   currentBtcPrice: number,
@@ -62,9 +114,9 @@ export function computeInsights(
   }
   if (points.length === 0) return empty
 
-  const sorted       = [...points].sort((a, b) => b.returnPct - a.returnPct)
-  const best         = sorted[0]
-  const worst        = sorted[sorted.length - 1]
+  const sorted          = [...points].sort((a, b) => b.returnPct - a.returnPct)
+  const best            = sorted[0]
+  const worst           = sorted[sorted.length - 1]
   const profitableCount = points.filter(p => p.returnPct > 0).length
 
   const totalInvested = points.reduce((s, p) => s + p.amountBrl, 0)
@@ -75,9 +127,9 @@ export function computeInsights(
 
   let dcaVsLumpSumPct: number | null = null
   if (dcaAvgPrice && oldestPrice && points.length > 1) {
-    const dcaReturn   = (currentBtcPrice - dcaAvgPrice) / dcaAvgPrice * 100
-    const lumpReturn  = (currentBtcPrice - oldestPrice) / oldestPrice * 100
-    dcaVsLumpSumPct   = parseFloat((dcaReturn - lumpReturn).toFixed(1))
+    const dcaReturn  = (currentBtcPrice - dcaAvgPrice) / dcaAvgPrice * 100
+    const lumpReturn = (currentBtcPrice - oldestPrice) / oldestPrice * 100
+    dcaVsLumpSumPct  = parseFloat((dcaReturn - lumpReturn).toFixed(1))
   }
 
   return {
@@ -94,14 +146,15 @@ export function computePatrimonio(
   priceHistory: PricePoint[],
   currentBtcPrice: number,
 ): PatrimonioData {
-  const purchases     = contributions.filter(isPurchase)
-  const totalInvested = purchases.reduce((s, c) => s + c.amount, 0)
-  const totalSats     = purchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
-  const totalBtc      = totalSats / 1e8
-  const currentValue  = totalBtc * currentBtcPrice
-  const avgPrice      = totalBtc > 0 ? totalInvested / totalBtc : 0
-  const totalReturn   = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0
+  const purchases      = contributions.filter(isPurchase)
+  const totalInvested  = purchases.reduce((s, c) => s + c.amount, 0)
+  const totalSats      = purchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
+  const totalBtc       = totalSats / 1e8
+  const currentValue   = totalBtc * currentBtcPrice
+  const avgPrice       = totalBtc > 0 ? totalInvested / totalBtc : 0
+  const totalReturn    = totalInvested > 0 ? ((currentValue - totalInvested) / totalInvested) * 100 : 0
   const totalReturnBrl = currentValue - totalInvested
+  const { best: bestPeriods, worst: worstPeriods } = buildBestWorst(purchases, currentBtcPrice)
 
   return {
     currentValue,
@@ -112,9 +165,10 @@ export function computePatrimonio(
     totalBtc,
     contributionCount: purchases.length,
     priceHistory,
-    contributions: buildContributionPoints(purchases, currentBtcPrice),
-    heatmap:       buildHeatmapCells(purchases, currentBtcPrice),
-    insights:      computeInsights(purchases, currentBtcPrice),
+    evolution:   buildEvolution(purchases, priceHistory),
+    insights:    computeInsights(purchases, currentBtcPrice),
+    bestPeriods,
+    worstPeriods,
     currentBtcPrice,
   }
 }

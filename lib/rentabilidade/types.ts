@@ -11,12 +11,25 @@ export interface ContributionPoint {
   btcAmount:   number
 }
 
+export interface EvolutionPoint {
+  date:       string
+  ts:         number
+  patrimonio: number
+  btcPrice:   number
+  aporte:     number | null
+}
+
 export interface HeatmapCell {
   year:      number
   month:     number  // 1–12
   returnPct: number
   date:      string
   amountBrl: number
+}
+
+export interface BestWorstEntry {
+  label:     string
+  returnPct: number
 }
 
 export interface InsightData {
@@ -36,8 +49,9 @@ export interface PatrimonioData {
   totalBtc:          number
   contributionCount: number
   priceHistory:      PricePoint[]
-  contributions:     ContributionPoint[]
-  heatmap:           HeatmapCell[]
+  evolution:         EvolutionPoint[]
   insights:          InsightData
+  bestPeriods:       BestWorstEntry[]
+  worstPeriods:      BestWorstEntry[]
   currentBtcPrice:   number
 }

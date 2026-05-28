@@ -1,0 +1,598 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Redesign — Full Mockup</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #0a0a0a;
+    color: #e8e0d5;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    padding: 0;
+  }
+
+  /* NAV */
+  nav {
+    background: #0a0a0a;
+    border-bottom: 1px solid rgba(224,138,58,0.07);
+    padding: 0 24px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .nav-logo { font-size: 13px; font-weight: 800; color: #e08a3a; letter-spacing: 0.05em; }
+  .nav-links { display: flex; gap: 2px; }
+  .nav-link { font-size: 11px; color: #5a5040; padding: 4px 10px; border-radius: 5px; cursor: pointer; }
+  .nav-link.active { background: rgba(224,138,58,0.1); color: #e08a3a; font-weight: 600; }
+
+  /* MAIN */
+  main { max-width: 1280px; margin: 0 auto; padding: 32px 24px; }
+
+  /* ── HERO ── */
+  .hero {
+    position: relative;
+    background: #111;
+    border: 1px solid rgba(224,138,58,0.07);
+    border-radius: 16px;
+    padding: 40px 48px;
+    margin-bottom: 24px;
+    overflow: hidden;
+    text-align: center;
+  }
+  .hero-glow {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 70% 120% at 50% -10%, rgba(0,200,83,0.13) 0%, transparent 60%);
+    pointer-events: none;
+  }
+  .hero-glow-ring {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    width: 320px; height: 320px;
+    background: radial-gradient(circle, rgba(0,200,83,0.06) 0%, transparent 65%);
+    pointer-events: none;
+  }
+  .hero-label {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    color: #e08a3a;
+    text-transform: uppercase;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .hero-score {
+    font-size: 88px;
+    font-weight: 900;
+    color: #00C853;
+    line-height: 1;
+    letter-spacing: -4px;
+    position: relative;
+    text-shadow: 0 0 80px rgba(0,200,83,0.3);
+  }
+  .hero-score-label {
+    font-size: 11px;
+    color: #3a5040;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-top: 4px;
+    position: relative;
+  }
+  .hero-regime {
+    font-size: 18px;
+    font-weight: 800;
+    color: #e8e0d5;
+    margin-top: 20px;
+    position: relative;
+  }
+  .hero-price {
+    font-size: 13px;
+    color: #7a6a58;
+    margin-top: 6px;
+    position: relative;
+  }
+  .hero-reading {
+    font-size: 12px;
+    color: #5a5040;
+    line-height: 1.7;
+    max-width: 480px;
+    margin: 12px auto 0;
+    position: relative;
+  }
+  .hero-pills {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    margin-top: 20px;
+    position: relative;
+  }
+  .hero-pill {
+    font-size: 10px;
+    font-weight: 600;
+    border-radius: 5px;
+    padding: 4px 14px;
+  }
+  .hero-pill.risk {
+    background: rgba(0,200,83,0.1);
+    border: 1px solid rgba(0,200,83,0.2);
+    color: #00C853;
+  }
+  .hero-pill.bias {
+    background: #161616;
+    border: 1px solid #222;
+    color: #7a6a58;
+  }
+  .hero-pill.time {
+    background: transparent;
+    border: 1px solid #1a1a1a;
+    color: #3a3a3a;
+  }
+
+  /* ── SECTION LABEL ── */
+  .section-label {
+    font-size: 10px;
+    font-weight: 700;
+    color: #3a3a3a;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 12px;
+  }
+
+  /* ── DIMENSION GRID ── */
+  .dimension-grid {
+    display: grid;
+    grid-template-columns: 2fr 1fr 1fr;
+    grid-template-rows: auto auto;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  /* SPOTLIGHT CARD */
+  .card-spotlight {
+    grid-row: 1 / 2;
+    background: #111;
+    border: 1px solid rgba(0,188,212,0.15);
+    border-left: 3px solid #00BCD4;
+    border-radius: 12px;
+    padding: 20px 22px;
+    position: relative;
+    overflow: hidden;
+  }
+  .card-spotlight::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 80px;
+    background: linear-gradient(180deg, rgba(0,188,212,0.07) 0%, transparent 100%);
+  }
+  .card-spotlight-tag {
+    font-size: 9px;
+    font-weight: 700;
+    color: #3a3a3a;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-bottom: 10px;
+    position: relative;
+  }
+  .card-spotlight-insight {
+    font-size: 16px;
+    font-weight: 800;
+    color: #00BCD4;
+    line-height: 1.25;
+    margin-bottom: 6px;
+    position: relative;
+  }
+  .card-spotlight-quote {
+    font-size: 11px;
+    color: #5a7080;
+    line-height: 1.6;
+    border-left: 2px solid rgba(0,188,212,0.25);
+    padding-left: 10px;
+    margin-bottom: 16px;
+    position: relative;
+  }
+  .card-spotlight-bottom {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    position: relative;
+  }
+  .card-spotlight-score {
+    font-size: 28px;
+    font-weight: 900;
+    color: #e8e0d5;
+  }
+  .card-spotlight-bar-wrap {
+    flex: 1;
+    height: 3px;
+    background: #1e1e1e;
+    border-radius: 2px;
+  }
+  .card-spotlight-bar {
+    height: 3px;
+    width: 70%;
+    background: #00BCD4;
+    border-radius: 2px;
+    box-shadow: 0 0 8px rgba(0,188,212,0.4);
+  }
+
+  /* MEDIUM CARD */
+  .card-medium {
+    background: #111;
+    border: 1px solid rgba(255,255,255,0.04);
+    border-radius: 12px;
+    padding: 16px;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .card-medium:hover { border-color: rgba(255,255,255,0.1); }
+  .card-medium-tag {
+    font-size: 8px;
+    font-weight: 700;
+    color: #3a3a3a;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    margin-bottom: 10px;
+  }
+  .card-medium-inner {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .card-medium-insight {
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.3;
+    flex: 1;
+  }
+  .card-medium-quote {
+    font-size: 9px;
+    color: #4a4a4a;
+    line-height: 1.5;
+    border-left: 2px solid rgba(255,255,255,0.06);
+    padding-left: 8px;
+    margin-bottom: 10px;
+  }
+  .card-medium-footer {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-top: 1px solid #161616;
+    padding-top: 8px;
+    margin-top: 4px;
+  }
+  .card-medium-score {
+    font-size: 16px;
+    font-weight: 900;
+  }
+  .card-medium-expand {
+    font-size: 8px;
+    color: #2a2a2a;
+    margin-left: auto;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* COMPACT CARDS ROW */
+  .compact-row {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+  }
+  .card-compact {
+    background: #0d0d0d;
+    border: 1px solid #161616;
+    border-radius: 10px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .card-compact:hover { background: #111; border-color: #222; }
+  .card-compact-left { flex: 1; min-width: 0; }
+  .card-compact-tag { font-size: 8px; color: #3a3a3a; font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 2px; }
+  .card-compact-insight { font-size: 10px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .card-compact-score { font-size: 15px; font-weight: 900; flex-shrink: 0; }
+
+  /* ── CONSENSUS SECTION ── */
+  .consensus-section {
+    background: #111;
+    border: 1px solid rgba(224,138,58,0.07);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    display: flex;
+    gap: 24px;
+    align-items: center;
+  }
+  .consensus-donut { flex-shrink: 0; }
+  .consensus-legend { flex: 1; }
+  .consensus-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+  .consensus-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .consensus-name { font-size: 11px; color: #7a6a58; flex: 1; }
+  .consensus-count { font-size: 16px; font-weight: 900; }
+  .consensus-divider { width: 1px; background: #1a1a1a; align-self: stretch; }
+  .consensus-reading { flex: 1; }
+  .consensus-reading-title { font-size: 11px; font-weight: 700; color: #e8e0d5; margin-bottom: 4px; }
+  .consensus-reading-sub { font-size: 10px; color: #5a5040; line-height: 1.6; }
+
+  /* ── INSIGHTS FEED ── */
+  .insights-section {
+    background: #111;
+    border: 1px solid rgba(224,138,58,0.07);
+    border-radius: 12px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+  }
+  .insight-item {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+    padding: 10px 0;
+    border-bottom: 1px solid #161616;
+  }
+  .insight-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .insight-icon {
+    width: 22px; height: 22px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 10px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .insight-icon.bull { background: rgba(0,200,83,0.12); color: #00C853; }
+  .insight-icon.warn { background: rgba(224,138,58,0.12); color: #e08a3a; }
+  .insight-text { font-size: 12px; color: #b0a090; line-height: 1.6; }
+  .insight-text strong { color: #e8e0d5; font-weight: 600; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">₿ Monitor</div>
+  <div class="nav-links">
+    <div class="nav-link active">Dashboard</div>
+    <div class="nav-link">DCA</div>
+    <div class="nav-link">Alertas</div>
+    <div class="nav-link">Resumo</div>
+  </div>
+  <div style="width:28px;height:28px;border-radius:50%;background:#1a1a1a;border:1px solid #222;"></div>
+</nav>
+
+<main>
+
+  <!-- ── HERO ── -->
+  <div class="hero">
+    <div class="hero-glow"></div>
+    <div class="hero-glow-ring"></div>
+
+    <div class="hero-label">Oportunidade de Entrada</div>
+
+    <div class="hero-score">79</div>
+    <div class="hero-score-label">/ 100</div>
+
+    <div class="hero-regime">Compra Tática Moderada</div>
+    <div class="hero-price">$103,200 · 26/05/2026 às 08:30</div>
+
+    <div class="hero-reading">
+      Mercado sem euforia. Valuation saudável, estrutura de alta preservada. Momento favorável para acumulação gradual com gestão de risco.
+    </div>
+
+    <div class="hero-pills">
+      <div class="hero-pill risk">Risco: Médio</div>
+      <div class="hero-pill bias">DCA Normal</div>
+    </div>
+  </div>
+
+  <!-- ── DIMENSION GRID ── -->
+  <div class="section-label">Dimensões do Mercado</div>
+  <div class="dimension-grid">
+
+    <!-- Spotlight: Tendência -->
+    <div class="card-spotlight">
+      <div class="card-spotlight-tag">📈 Tendência · Spotlight</div>
+      <div class="card-spotlight-insight">Alta confirmada nas 3 médias</div>
+      <div class="card-spotlight-quote">
+        Preço acima das MMs de 50d, 200d e 50 semanas. Mayer Multiple em 1.18 — longe da zona de topo. Bollinger sem sobrecompra.
+      </div>
+      <div class="card-spotlight-bottom">
+        <div class="card-spotlight-score">+4.5</div>
+        <div class="card-spotlight-bar-wrap">
+          <div class="card-spotlight-bar"></div>
+        </div>
+        <svg width="44" height="44" viewBox="0 0 44 44" style="flex-shrink:0">
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#1e1e1e" stroke-width="4"/>
+          <circle cx="22" cy="22" r="17" fill="none" stroke="#00BCD4" stroke-width="4"
+            stroke-dasharray="75 107" stroke-linecap="round" transform="rotate(-90 22 22)"/>
+          <text x="22" y="26" text-anchor="middle" fill="#00BCD4" font-size="10" font-weight="800" font-family="Inter,sans-serif">70</text>
+        </svg>
+      </div>
+      <div style="border-top:1px solid #1a1a1a;margin-top:12px;padding-top:8px;display:flex;justify-content:space-between;align-items:center;">
+        <span style="font-size:8px;color:#2a2a2a;text-transform:uppercase;letter-spacing:0.1em;">5 indicadores</span>
+        <span style="font-size:9px;color:#2a2a2a;">▾ expandir</span>
+      </div>
+    </div>
+
+    <!-- Medium: On-chain -->
+    <div class="card-medium">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(0,200,83,0.07) 0%,transparent 70%);"></div>
+      <div class="card-medium-tag">⛓ On-chain</div>
+      <div class="card-medium-inner">
+        <svg width="40" height="40" viewBox="0 0 40 40" style="flex-shrink:0;margin-top:2px">
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#1e1e1e" stroke-width="4"/>
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#00C853" stroke-width="4"
+            stroke-dasharray="60 94" stroke-linecap="round" transform="rotate(-90 20 20)"/>
+          <text x="20" y="24" text-anchor="middle" fill="#00C853" font-size="9" font-weight="800" font-family="Inter,sans-serif">64</text>
+        </svg>
+        <div>
+          <div class="card-medium-insight" style="color:#00C853;">Valuation ainda saudável</div>
+          <div style="font-size:9px;color:#3a5040;margin-top:2px;">+3.8 · sem euforia</div>
+        </div>
+      </div>
+      <div class="card-medium-quote">MVRV neutro indica ausência de euforia — sem pressão de venda de holders de longo prazo.</div>
+      <div class="card-medium-footer">
+        <svg width="36" height="3" style="flex-shrink:0">
+          <rect width="36" height="3" rx="1.5" fill="#1e1e1e"/>
+          <rect width="23" height="3" rx="1.5" fill="#00C853"/>
+        </svg>
+        <span class="card-medium-expand">▾ ver 5 indicadores</span>
+      </div>
+    </div>
+
+    <!-- Medium: Sentimento -->
+    <div class="card-medium">
+      <div style="position:absolute;top:0;right:0;width:80px;height:80px;background:radial-gradient(circle,rgba(224,138,58,0.07) 0%,transparent 70%);"></div>
+      <div class="card-medium-tag">🧠 Sentimento</div>
+      <div class="card-medium-inner">
+        <svg width="40" height="40" viewBox="0 0 40 40" style="flex-shrink:0;margin-top:2px">
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#1e1e1e" stroke-width="4"/>
+          <circle cx="20" cy="20" r="15" fill="none" stroke="#e08a3a" stroke-width="4"
+            stroke-dasharray="47 94" stroke-linecap="round" transform="rotate(-90 20 20)"/>
+          <text x="20" y="24" text-anchor="middle" fill="#e08a3a" font-size="9" font-weight="800" font-family="Inter,sans-serif">50</text>
+        </svg>
+        <div>
+          <div class="card-medium-insight" style="color:#e08a3a;">Medo moderado presente</div>
+          <div style="font-size:9px;color:#5a4030;margin-top:2px;">+2.1 · contrário positivo</div>
+        </div>
+      </div>
+      <div class="card-medium-quote">Fear &amp; Greed em 38. Shorts dominantes. Historicamente favorável para acumulação.</div>
+      <div class="card-medium-footer">
+        <svg width="36" height="3" style="flex-shrink:0">
+          <rect width="36" height="3" rx="1.5" fill="#1e1e1e"/>
+          <rect width="18" height="3" rx="1.5" fill="#e08a3a"/>
+        </svg>
+        <span class="card-medium-expand">▾ ver 3 indicadores</span>
+      </div>
+    </div>
+
+    <!-- Compact row -->
+    <div class="compact-row">
+
+      <div class="card-compact">
+        <div style="width:6px;height:6px;border-radius:50%;background:#FF6D00;flex-shrink:0;"></div>
+        <div class="card-compact-left">
+          <div class="card-compact-tag">📊 Derivativos</div>
+          <div class="card-compact-insight" style="color:#FF6D00;">Funding neutro, OI estável</div>
+        </div>
+        <div class="card-compact-score" style="color:#FF6D00;">+1.5</div>
+      </div>
+
+      <div class="card-compact">
+        <div style="width:6px;height:6px;border-radius:50%;background:#8B8FA8;flex-shrink:0;"></div>
+        <div class="card-compact-left">
+          <div class="card-compact-tag">🌐 Macro</div>
+          <div class="card-compact-insight" style="color:#8B8FA8;">DXY pressionando levemente</div>
+        </div>
+        <div class="card-compact-score" style="color:#8B8FA8;">-0.5</div>
+      </div>
+
+      <div class="card-compact">
+        <div style="width:6px;height:6px;border-radius:50%;background:#FFD600;flex-shrink:0;"></div>
+        <div class="card-compact-left">
+          <div class="card-compact-tag">✨ Síntese</div>
+          <div class="card-compact-insight" style="color:#FFD600;">Confluência moderada</div>
+        </div>
+        <div class="card-compact-score" style="color:#FFD600;">+2.8</div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ── CONSENSUS SECTION ── -->
+  <div class="section-label">Consenso do Mercado</div>
+  <div class="consensus-section">
+
+    <div class="consensus-donut">
+      <svg width="100" height="100" viewBox="0 0 100 100">
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#1a1a1a" stroke-width="12"/>
+        <!-- bullish: 6/9 ~= 160deg arc of 239 circumference -->
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#00C853" stroke-width="12"
+          stroke-dasharray="159 239" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <!-- neutro: 2/9 ~= 53deg -->
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#2a2a2a" stroke-width="12"
+          stroke-dasharray="53 239" stroke-dashoffset="-164" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <!-- alerta: 1/9 ~= 27deg -->
+        <circle cx="50" cy="50" r="38" fill="none" stroke="#e08a3a" stroke-width="12"
+          stroke-dasharray="27 239" stroke-dashoffset="-221" stroke-linecap="round" transform="rotate(-90 50 50)"/>
+        <text x="50" y="46" text-anchor="middle" fill="#e8e0d5" font-size="20" font-weight="900" font-family="Inter,sans-serif">67%</text>
+        <text x="50" y="60" text-anchor="middle" fill="#3a3a3a" font-size="9" font-family="Inter,sans-serif">bullish</text>
+      </svg>
+    </div>
+
+    <div class="consensus-legend">
+      <div class="consensus-legend-item">
+        <div class="consensus-dot" style="background:#00C853;"></div>
+        <span class="consensus-name">Bullish</span>
+        <span class="consensus-count" style="color:#00C853;">6</span>
+      </div>
+      <div class="consensus-legend-item">
+        <div class="consensus-dot" style="background:#2a2a2a;border:1px solid #3a3a3a;"></div>
+        <span class="consensus-name">Neutro</span>
+        <span class="consensus-count" style="color:#5a5040;">2</span>
+      </div>
+      <div class="consensus-legend-item" style="margin-bottom:0;">
+        <div class="consensus-dot" style="background:#e08a3a;"></div>
+        <span class="consensus-name">Alerta</span>
+        <span class="consensus-count" style="color:#e08a3a;">1</span>
+      </div>
+    </div>
+
+    <div class="consensus-divider"></div>
+
+    <div class="consensus-reading">
+      <div class="consensus-reading-title">Maioria dos indicadores favorável</div>
+      <div class="consensus-reading-sub">6 de 9 dimensões apontam para cenário bullish. Nenhum indicador em zona de risco extremo. Momento propício para acumulação gradual.</div>
+    </div>
+
+  </div>
+
+  <!-- ── INSIGHTS FEED ── -->
+  <div class="section-label">Observações Institucionais</div>
+  <div class="insights-section">
+    <div class="insight-item">
+      <div class="insight-icon bull">✓</div>
+      <div class="insight-text"><strong>Ausência de euforia nos derivativos.</strong> Funding rate próximo de zero, open interest estável — sem alavancagem excessiva acumulada.</div>
+    </div>
+    <div class="insight-item">
+      <div class="insight-icon bull">✓</div>
+      <div class="insight-text"><strong>ETFs institucionais continuam absorvendo liquidez.</strong> IBIT e FBTC registraram fluxo positivo nos últimos 5 dias.</div>
+    </div>
+    <div class="insight-item">
+      <div class="insight-icon bull">✓</div>
+      <div class="insight-text"><strong>Hash Ribbon em recuperação.</strong> Mineradores superaram a fase de capitulação — sinal historicamente confiável de fundo.</div>
+    </div>
+    <div class="insight-item">
+      <div class="insight-icon warn">⚠</div>
+      <div class="insight-text"><strong>Momentum semanal enfraquecendo.</strong> Variação de 7 dias abaixo da média histórica — ritmo de alta pode estar desacelerando.</div>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  // No selection needed — this is a full mockup preview, not a choice screen
+</script>
+
+</body>
+</html>

@@ -1,0 +1,111 @@
+<h2>Hero Section — qual estrutura visual?</h2>
+<p class="subtitle">O score precisa ser integrado ao hero. Qual composição faz mais sentido?</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:20px;font-family:Inter,sans-serif;min-height:200px;position:relative;overflow:hidden;">
+        <!-- Glow background -->
+        <div style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:300px;height:300px;background:radial-gradient(circle,rgba(0,200,83,0.12) 0%,transparent 70%);pointer-events:none;"></div>
+        <!-- Top label -->
+        <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;color:#e08a3a;text-transform:uppercase;margin-bottom:12px;">Análise Tática</div>
+        <!-- Score centered + big -->
+        <div style="display:flex;align-items:center;gap:20px;">
+          <div style="position:relative;flex-shrink:0;">
+            <svg width="110" height="110" viewBox="0 0 110 110">
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#1e1e1e" stroke-width="8"/>
+              <circle cx="55" cy="55" r="46" fill="none" stroke="#00C853" stroke-width="8" stroke-dasharray="230 289" stroke-linecap="round" transform="rotate(-90 55 55)"/>
+              <text x="55" y="52" text-anchor="middle" fill="#00C853" font-size="22" font-weight="800" font-family="Inter,sans-serif">79</text>
+              <text x="55" y="65" text-anchor="middle" fill="#5a5040" font-size="9" font-family="Inter,sans-serif">SCORE</text>
+            </svg>
+          </div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:11px;font-weight:700;color:#00C853;margin-bottom:4px;">Compra Tática Moderada</div>
+            <div style="font-size:22px;font-weight:800;color:#e8e0d5;line-height:1;">$103,200</div>
+            <div style="font-size:11px;color:#5a5040;margin-top:4px;">Risco: Médio · DCA Normal</div>
+          </div>
+        </div>
+        <!-- Consensus bar -->
+        <div style="margin-top:14px;display:flex;gap:3px;align-items:center;">
+          <div style="height:3px;flex:6;background:#00C853;border-radius:2px;"></div>
+          <div style="height:3px;flex:2;background:#5a5040;border-radius:2px;"></div>
+          <div style="height:3px;flex:1;background:#e08a3a;border-radius:2px;"></div>
+          <span style="font-size:9px;color:#5a5040;margin-left:6px;">6 bull · 2 neu · 1 alerta</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Score + Texto Lado a Lado</h3>
+      <p>Gauge grande à esquerda, regime e preço ao lado. Consenso em barra horizontal abaixo. Compacto e escaneável.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:20px;font-family:Inter,sans-serif;min-height:200px;position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-20px;right:-20px;width:220px;height:220px;background:radial-gradient(circle,rgba(0,200,83,0.15) 0%,transparent 65%);pointer-events:none;"></div>
+        <!-- Top row: label + updated -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;color:#e08a3a;text-transform:uppercase;">Análise Tática</div>
+          <div style="font-size:9px;color:#5a5040;">26/05 · 08:30</div>
+        </div>
+        <!-- Main: huge price left, score ring right -->
+        <div style="display:flex;justify-content:space-between;align-items:flex-end;">
+          <div>
+            <div style="font-size:28px;font-weight:900;color:#e8e0d5;line-height:1;letter-spacing:-1px;">$103,200</div>
+            <div style="font-size:14px;font-weight:700;color:#00C853;margin-top:6px;">Compra Tática Moderada</div>
+            <div style="font-size:11px;color:#b0a090;margin-top:4px;max-width:200px;line-height:1.5;">Mercado sem euforia, valuation saudável, momento favorável para acumulação gradual.</div>
+          </div>
+          <div style="text-align:center;flex-shrink:0;">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <circle cx="45" cy="45" r="37" fill="none" stroke="#1e1e1e" stroke-width="7"/>
+              <circle cx="45" cy="45" r="37" fill="none" stroke="#00C853" stroke-width="7" stroke-dasharray="184 232" stroke-linecap="round" transform="rotate(-90 45 45)"/>
+              <text x="45" y="42" text-anchor="middle" fill="#00C853" font-size="18" font-weight="800" font-family="Inter,sans-serif">79</text>
+              <text x="45" y="55" text-anchor="middle" fill="#5a5040" font-size="8" font-family="Inter,sans-serif">oportunidade</text>
+            </svg>
+            <div style="display:flex;flex-direction:column;gap:4px;align-items:center;margin-top:6px;">
+              <div style="font-size:9px;font-weight:700;background:rgba(0,200,83,0.1);border:1px solid rgba(0,200,83,0.25);border-radius:4px;padding:2px 8px;color:#00C853;">Risco: Médio</div>
+              <div style="font-size:9px;font-weight:700;background:#1e1e1e;border:1px solid #2a2a2a;border-radius:4px;padding:2px 8px;color:#b0a090;">DCA Normal</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Preço Dominante + Score à Direita</h3>
+      <p>Preço enorme no centro-esquerda com leitura narrativa. Score discreto canto direito. Mais editorial e cinematográfico.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:20px;font-family:Inter,sans-serif;min-height:200px;position:relative;overflow:hidden;">
+        <!-- Full-bleed glow background -->
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 120% at 50% 0%,rgba(0,200,83,0.1) 0%,transparent 60%);pointer-events:none;"></div>
+        <!-- Score as centerpiece -->
+        <div style="text-align:center;position:relative;">
+          <div style="font-size:9px;font-weight:700;letter-spacing:0.2em;color:#e08a3a;text-transform:uppercase;margin-bottom:8px;">Oportunidade de Entrada</div>
+          <div style="font-size:56px;font-weight:900;color:#00C853;line-height:1;letter-spacing:-2px;">79</div>
+          <div style="font-size:10px;color:#5a5040;letter-spacing:0.1em;text-transform:uppercase;margin-bottom:12px;">/100</div>
+          <div style="font-size:14px;font-weight:700;color:#e8e0d5;">Compra Tática Moderada</div>
+          <div style="font-size:11px;color:#5a5040;margin-top:2px;">$103,200 · Risco Médio</div>
+        </div>
+        <!-- Bottom consensus -->
+        <div style="margin-top:14px;display:flex;justify-content:center;gap:12px;">
+          <span style="font-size:10px;color:#00C853;font-weight:700;">● 6 bullish</span>
+          <span style="font-size:10px;color:#5a5040;font-weight:700;">● 2 neutro</span>
+          <span style="font-size:10px;color:#e08a3a;font-weight:700;">● 1 alerta</span>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Score como Protagonista</h3>
+      <p>Número gigante no centro. Regime e preço secundários. Leitura em 1 segundo. Muito impactante, mais radical.</p>
+    </div>
+  </div>
+
+</div>

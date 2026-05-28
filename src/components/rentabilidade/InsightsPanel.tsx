@@ -1,83 +1,80 @@
-import type { InsightData } from '@lib/rentabilidade/types'
+import type { PatrimonioData } from '@lib/rentabilidade/types'
 
-function InsightCard({
-  label, value, valueColor, sub, last,
-}: {
-  label: string; value: string; valueColor: string; sub: string; last?: boolean
-}) {
+type InsightType = 'good' | 'warn' | 'info'
+
+function InsightIcon({ type }: { type: InsightType }) {
+  const bg    = type === 'good' ? '#166534' : type === 'warn' ? '#92400e' : '#1e3a5f'
+  const border = type === 'good' ? '#22c55e' : type === 'warn' ? '#f59e0b' : '#3b82f6'
+  const symbol = type === 'good' ? '✓' : type === 'warn' ? '!' : 'i'
+  const color  = type === 'good' ? '#4ade80' : type === 'warn' ? '#fbbf24' : '#60a5fa'
   return (
     <div style={{
-      paddingBottom: last ? 0 : '12px',
-      marginBottom:  last ? 0 : '12px',
-      borderBottom:  last ? 'none' : '1px solid rgba(255,255,255,0.05)',
+      width: '20px', height: '20px', borderRadius: '50%',
+      background: bg, border: `1.5px solid ${border}`,
+      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      fontSize: '9px', fontWeight: 800, color, flexShrink: 0,
     }}>
-      <div style={{ fontSize: '8px', color: 'rgba(255,255,255,0.4)', marginBottom: '4px', textTransform: 'uppercase', letterSpacing: '0.8px' }}>
-        {label}
-      </div>
-      <div style={{ fontSize: '13px', fontWeight: 800, color: valueColor, marginBottom: '2px' }}>
-        {value}
-      </div>
-      <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.4)', lineHeight: 1.4 }}>
-        {sub}
-      </div>
+      {symbol}
     </div>
   )
 }
 
-interface Props { insights: InsightData }
+function buildInsights(patrimonio: PatrimonioData): Array<{ text: string; type: InsightType }> {
+  const { insights, totalReturn, avgPrice, currentBtcPrice, contributionCount } = patrimonio
+  const belowAvgPct = ((currentBtcPrice - avgPrice) / avgPrice) * 100
 
-export default function InsightsPanel({ insights }: Props) {
-  const { bestContribution, profitableCount, totalCount, dcaVsLumpSumPct } = insights
+  return [
+    {
+      text: insights.bestContribution.returnPct > 200
+        ? 'Seus melhores aportes ocorreram durante períodos de medo extremo do mercado.'
+        : `Seu melhor aporte (${insights.bestContribution.label}) rendeu +${insights.bestContribution.returnPct.toFixed(0)}%.`,
+      type: 'good',
+    },
+    {
+      text: 'O DCA reduziu significativamente o impacto da volatilidade do Bitcoin.',
+      type: 'good',
+    },
+    {
+      text: belowAvgPct < 0
+        ? `Você está ${Math.abs(belowAvgPct).toFixed(1)}% abaixo do seu preço médio. Continuação do plano pode melhorar seu custo.`
+        : `Você está ${belowAvgPct.toFixed(1)}% acima do seu preço médio. DCA está funcionando.`,
+      type: belowAvgPct < 0 ? 'warn' : 'good',
+    },
+    {
+      text: contributionCount > 12
+        ? 'Estratégia de longo prazo mantém-se sólida e alinhada ao ciclo do Bitcoin.'
+        : 'Continue acumulando regularmente para maximizar o efeito do DCA.',
+      type: 'good',
+    },
+  ]
+}
 
-  const accuracy = totalCount > 0 ? Math.round((profitableCount / totalCount) * 100) : 0
+interface Props { patrimonio: PatrimonioData }
 
-  const dcaInsight = dcaVsLumpSumPct !== null
-    ? dcaVsLumpSumPct >= 0
-      ? {
-          value:      `DCA gerou +${dcaVsLumpSumPct.toFixed(1)}% extra`,
-          valueColor: '#fbbf24',
-          sub:        'vs compra única no primeiro aporte',
-        }
-      : {
-          value:      `Compra única superou DCA em ${Math.abs(dcaVsLumpSumPct).toFixed(1)}%`,
-          valueColor: 'rgba(255,255,255,0.5)',
-          sub:        'DCA protegeu contra concentração de risco',
-        }
-    : { value: 'Dados insuficientes', valueColor: 'rgba(255,255,255,0.4)', sub: 'Precisa de ao menos 2 aportes' }
+export default function InsightsPanel({ patrimonio }: Props) {
+  const items = buildInsights(patrimonio)
 
   return (
     <div style={{
-      background:   'rgba(251,191,36,0.04)',
-      border:       '1px solid rgba(251,191,36,0.12)',
-      borderRadius: '14px',
-      padding:      '16px 18px',
+      background:   'rgba(255,255,255,0.015)',
+      border:       '1px solid rgba(255,255,255,0.07)',
+      borderRadius: '16px',
+      padding:      '20px 22px',
     }}>
-      <div style={{
-        fontSize: '8px', color: '#fbbf24', textTransform: 'uppercase',
-        letterSpacing: '1.5px', marginBottom: '14px', fontWeight: 700,
-      }}>
-        ✦ Insights
+      <div style={{ fontSize: '13px', fontWeight: 600, color: '#fff', marginBottom: '18px' }}>
+        Insights
       </div>
 
-      <InsightCard
-        label="Melhor aporte"
-        value={`${bestContribution.label} · ${bestContribution.returnPct >= 0 ? '+' : ''}${bestContribution.returnPct.toFixed(0)}%`}
-        valueColor="#4ade80"
-        sub="Maior retorno individual da sua carteira"
-      />
-      <InsightCard
-        label="DCA eficiente"
-        value={`${profitableCount} de ${totalCount} aportes em lucro`}
-        valueColor="#fff"
-        sub={`${accuracy}% de taxa de acerto`}
-      />
-      <InsightCard
-        label="DCA vs compra única"
-        value={dcaInsight.value}
-        valueColor={dcaInsight.valueColor}
-        sub={dcaInsight.sub}
-        last
-      />
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        {items.map((item, i) => (
+          <div key={i} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
+            <InsightIcon type={item.type} />
+            <div style={{ fontSize: '11px', color: 'rgba(255,255,255,0.65)', lineHeight: 1.6, paddingTop: '2px' }}>
+              {item.text}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }

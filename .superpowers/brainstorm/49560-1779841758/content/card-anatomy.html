@@ -1,0 +1,116 @@
+<h2>Anatomia do Card — o que aparece sem expandir?</h2>
+<p class="subtitle">Mostrando o card On-chain (médio) como exemplo. O que o usuário vê por padrão?</p>
+
+<div class="cards">
+
+  <!-- Option A: Insight + Score bar + 1 linha interpretação -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:Inter,sans-serif;">
+        <div style="background:#111;border:1px solid #222;border-top:3px solid #00C853;border-radius:8px;overflow:hidden;">
+          <!-- Header -->
+          <div style="padding:14px 16px 0;">
+            <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+              <div>
+                <div style="font-size:8px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:3px;">⛓ On-chain</div>
+                <!-- INSIGHT: destaque máximo -->
+                <div style="font-size:14px;font-weight:800;color:#00C853;line-height:1.2;">Valuation ainda saudável</div>
+              </div>
+              <div style="font-size:18px;font-weight:900;color:#e8e0d5;flex-shrink:0;margin-left:12px;">+3.8</div>
+            </div>
+            <!-- Score bar -->
+            <div style="height:3px;background:#1e1e1e;border-radius:2px;margin-bottom:10px;">
+              <div style="height:3px;width:65%;background:#00C853;border-radius:2px;"></div>
+            </div>
+            <!-- 1 linha interpretação -->
+            <div style="font-size:11px;color:#b0a090;line-height:1.5;margin-bottom:12px;">MVRV neutro indica ausência de euforia — sem pressão de venda de holders.</div>
+          </div>
+          <!-- Expand hint -->
+          <div style="border-top:1px solid #1a1a1a;padding:8px 16px;display:flex;justify-content:space-between;align-items:center;">
+            <span style="font-size:9px;color:#3a3a3a;text-transform:uppercase;letter-spacing:0.1em;">5 indicadores</span>
+            <span style="font-size:9px;color:#3a3a3a;">▾ expandir</span>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#5a5040;text-align:center;margin-top:8px;font-style:italic;">← card médio padrão</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Insight + Score + Interpretação</h3>
+      <p>Insight em destaque, score numérico, barra de progresso, 1 frase interpretativa. Expande para ver indicadores. Informação suficiente sem clicar.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Insight + mini sparkline indicators -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:Inter,sans-serif;">
+        <div style="background:#111;border:1px solid #222;border-top:3px solid #00C853;border-radius:8px;overflow:hidden;">
+          <div style="padding:14px 16px;">
+            <!-- Header -->
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+              <div style="font-size:8px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:0.12em;">⛓ On-chain</div>
+              <div style="font-size:18px;font-weight:900;color:#e8e0d5;">+3.8</div>
+            </div>
+            <!-- Insight grande -->
+            <div style="font-size:13px;font-weight:800;color:#00C853;margin-bottom:8px;line-height:1.2;">Valuation ainda saudável</div>
+            <!-- Mini indicator pills -->
+            <div style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;">
+              <span style="font-size:8px;background:rgba(0,200,83,0.12);border:1px solid rgba(0,200,83,0.2);border-radius:3px;padding:2px 6px;color:#00C853;">MVRV ✓</span>
+              <span style="font-size:8px;background:rgba(0,200,83,0.12);border:1px solid rgba(0,200,83,0.2);border-radius:3px;padding:2px 6px;color:#00C853;">Hash Ribbon ✓</span>
+              <span style="font-size:8px;background:rgba(0,200,83,0.12);border:1px solid rgba(0,200,83,0.2);border-radius:3px;padding:2px 6px;color:#00C853;">ETF ✓</span>
+              <span style="font-size:8px;background:rgba(224,138,58,0.12);border:1px solid rgba(224,138,58,0.2);border-radius:3px;padding:2px 6px;color:#e08a3a;">P. Realizado ~</span>
+              <span style="font-size:8px;background:#1a1a1a;border:1px solid #222;border-radius:3px;padding:2px 6px;color:#5a5040;">P. Venda –</span>
+            </div>
+            <!-- Score bar -->
+            <div style="height:2px;background:#1e1e1e;border-radius:2px;">
+              <div style="height:2px;width:65%;background:#00C853;border-radius:2px;"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Insight + Pills de Indicadores</h3>
+      <p>Insight em destaque, depois pills coloridos de cada indicador (bullish/neutro/alerta). Mais informação visual sem precisar expandir. Mais denso.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Minimal — insight + estado + score grande -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:Inter,sans-serif;">
+        <div style="background:#111;border:1px solid rgba(0,200,83,0.15);border-radius:8px;overflow:hidden;position:relative;">
+          <!-- Glow sutil -->
+          <div style="position:absolute;top:0;right:0;width:100px;height:100px;background:radial-gradient(circle,rgba(0,200,83,0.08) 0%,transparent 70%);pointer-events:none;"></div>
+          <div style="padding:16px;">
+            <div style="font-size:8px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:10px;">⛓ On-chain</div>
+            <!-- Score e insight lado a lado -->
+            <div style="display:flex;align-items:center;gap:12px;margin-bottom:8px;">
+              <!-- Mini radial score -->
+              <svg width="44" height="44" viewBox="0 0 44 44" style="flex-shrink:0">
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#1e1e1e" stroke-width="4"/>
+                <circle cx="22" cy="22" r="17" fill="none" stroke="#00C853" stroke-width="4" stroke-dasharray="69 106" stroke-linecap="round" transform="rotate(-90 22 22)"/>
+                <text x="22" y="26" text-anchor="middle" fill="#00C853" font-size="10" font-weight="800" font-family="Inter,sans-serif">65</text>
+              </svg>
+              <div>
+                <div style="font-size:13px;font-weight:800;color:#00C853;line-height:1.2;">Valuation saudável</div>
+                <div style="font-size:9px;color:#5a5040;margin-top:2px;">Sem euforia · +3.8</div>
+              </div>
+            </div>
+            <!-- 1 frase interpretação -->
+            <div style="font-size:10px;color:#7a6a58;line-height:1.5;border-left:2px solid rgba(0,200,83,0.3);padding-left:8px;">MVRV neutro, mineradores saudáveis, ETFs comprando.</div>
+          </div>
+          <!-- Expand -->
+          <div style="border-top:1px solid #1a1a1a;padding:6px 16px;text-align:right;">
+            <span style="font-size:9px;color:#3a3a3a;">ver indicadores ▾</span>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Mini Gauge + Insight + Citação</h3>
+      <p>Gauge circular individual por card, insight, frase sintética em destaque lateral. Mais premium e sofisticado. Mais espaço, menos items por fold.</p>
+    </div>
+  </div>
+
+</div>

@@ -1,0 +1,144 @@
+<h2>Estilo dos mockups do app</h2>
+<p class="subtitle">Como apresentar as telas do app por dentro na Landing Page?</p>
+
+<div class="cards">
+
+  <!-- Opção A: Browser frame com dashboard real -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;padding:14px;font-family:monospace;border-bottom:1px solid #222">
+      <!-- Browser chrome -->
+      <div style="background:#161616;border:1px solid #2a2420;border-radius:8px;overflow:hidden">
+        <div style="background:#1e1e1e;padding:7px 12px;display:flex;align-items:center;gap:6px;border-bottom:1px solid #2a2420">
+          <div style="width:7px;height:7px;border-radius:50%;background:#FF1744;opacity:0.6"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#FFD600;opacity:0.6"></div>
+          <div style="width:7px;height:7px;border-radius:50%;background:#69F0AE;opacity:0.6"></div>
+          <div style="flex:1;background:#111;border-radius:3px;padding:3px 8px;font-size:7px;color:#5a5040;margin-left:6px">market-context-redesign.vercel.app/dashboard</div>
+        </div>
+        <!-- App nav inside browser -->
+        <div style="background:#0a0a0a;border-bottom:1px solid #1a1a1a;padding:8px 14px;display:flex;justify-content:space-between;align-items:center">
+          <span style="color:#e08a3a;font-size:9px;font-weight:700;letter-spacing:0.12em">BTC MONITOR</span>
+          <div style="display:flex;gap:10px">
+            <span style="color:#e08a3a;font-size:8px;border-bottom:1px solid #e08a3a;padding-bottom:2px">Dashboard</span>
+            <span style="color:#5a5040;font-size:8px">Alertas</span>
+            <span style="color:#5a5040;font-size:8px">DCA</span>
+          </div>
+        </div>
+        <!-- App content -->
+        <div style="padding:12px 14px;background:#0a0a0a">
+          <div style="background:rgba(105,240,174,0.06);border:1px solid rgba(105,240,174,0.15);border-radius:6px;padding:10px 12px;margin-bottom:8px">
+            <div style="color:#5a5040;font-size:6px;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:3px">Regime de mercado</div>
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <span style="color:#69F0AE;font-size:13px;font-weight:700">NEUTRO</span>
+              <span style="color:#5a5040;font-size:7px">Score total: +2</span>
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:5px">
+            <div style="background:#111;border:1px solid #1e1e1e;border-radius:4px;padding:7px">
+              <div style="color:#5a5040;font-size:6px">Sentimento</div>
+              <div style="color:#FFD600;font-size:10px;font-weight:700">+1</div>
+            </div>
+            <div style="background:#111;border:1px solid #1e1e1e;border-radius:4px;padding:7px">
+              <div style="color:#5a5040;font-size:6px">Derivativos</div>
+              <div style="color:#69F0AE;font-size:10px;font-weight:700">+2</div>
+            </div>
+            <div style="background:#111;border:1px solid #1e1e1e;border-radius:4px;padding:7px">
+              <div style="color:#5a5040;font-size:6px">On-chain</div>
+              <div style="color:#FFD600;font-size:10px;font-weight:700">0</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Browser frame realista</h3>
+      <p>Mockup dentro de um frame de navegador. Parece screenshot real do app. Alta credibilidade. Mostra URL real.</p>
+    </div>
+  </div>
+
+  <!-- Opção B: Cards flutuantes sem frame -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;padding:14px;font-family:monospace;border-bottom:1px solid #222;position:relative">
+      <!-- Cards flutuando sem container -->
+      <div style="display:flex;flex-direction:column;gap:6px">
+        <div style="color:#5a5040;font-size:7px;text-transform:uppercase;letter-spacing:0.12em;margin-bottom:4px">Dashboard · ao vivo</div>
+        <!-- Regime card grande -->
+        <div style="background:rgba(105,240,174,0.06);border:1px solid rgba(105,240,174,0.2);border-radius:8px;padding:12px 14px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="color:#5a5040;font-size:6px;text-transform:uppercase;letter-spacing:0.1em">Regime de mercado</div>
+            <div style="color:#69F0AE;font-size:14px;font-weight:700;margin-top:2px">NEUTRO</div>
+          </div>
+          <div style="text-align:right">
+            <div style="color:#5a5040;font-size:6px">Score</div>
+            <div style="color:#69F0AE;font-size:18px;font-weight:700">+2</div>
+          </div>
+        </div>
+        <!-- Grid de dimensões -->
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px">
+          <div style="background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:8px 10px">
+            <div style="color:#5a5040;font-size:6px;margin-bottom:3px">Fear & Greed</div>
+            <div style="color:#FFD600;font-size:11px;font-weight:700">47</div>
+            <div style="color:#5a5040;font-size:6px">Neutro</div>
+          </div>
+          <div style="background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:8px 10px">
+            <div style="color:#5a5040;font-size:6px;margin-bottom:3px">Funding Rate</div>
+            <div style="color:#69F0AE;font-size:11px;font-weight:700">+0.01%</div>
+            <div style="color:#5a5040;font-size:6px">Neutro</div>
+          </div>
+          <div style="background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:8px 10px">
+            <div style="color:#5a5040;font-size:6px;margin-bottom:3px">MVRV Z</div>
+            <div style="color:#FFD600;font-size:11px;font-weight:700">1.8</div>
+            <div style="color:#5a5040;font-size:6px">Normal</div>
+          </div>
+        </div>
+        <!-- Alert card pequeno -->
+        <div style="background:#111;border:1px solid #1e1e1e;border-radius:6px;padding:8px 12px;display:flex;gap:8px;align-items:center">
+          <div style="width:6px;height:6px;border-radius:50%;background:#FFD600;flex-shrink:0"></div>
+          <div style="flex:1">
+            <div style="color:#e8e0d5;font-size:8px;font-weight:600">Fear & Greed abaixo de 30</div>
+            <div style="color:#5a5040;font-size:7px">Alerta configurado · há 2h</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Cards flutuantes sem frame</h3>
+      <p>Componentes do app expostos diretamente, sem container de browser. Visual mais moderno e focado no conteúdo. Flexível para mostrar várias telas.</p>
+    </div>
+  </div>
+
+  <!-- Opção C: Tabs/abas simulando navegação interna -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0a0a0a;padding:14px;font-family:monospace;border-bottom:1px solid #222">
+      <div style="background:#111;border:1px solid #1e1e1e;border-radius:8px;overflow:hidden">
+        <!-- Tab bar simulando navegação do app -->
+        <div style="border-bottom:1px solid #1e1e1e;padding:0 14px;display:flex;gap:0;background:#0a0a0a">
+          <div style="padding:8px 12px;border-bottom:2px solid #e08a3a;color:#e8e0d5;font-size:8px;font-weight:600">Dashboard</div>
+          <div style="padding:8px 12px;border-bottom:2px solid transparent;color:#5a5040;font-size:8px">Alertas</div>
+          <div style="padding:8px 12px;border-bottom:2px solid transparent;color:#5a5040;font-size:8px">DCA</div>
+        </div>
+        <!-- Tab content: dashboard -->
+        <div style="padding:12px 14px">
+          <div style="background:rgba(105,240,174,0.06);border:1px solid rgba(105,240,174,0.15);border-radius:6px;padding:10px 12px;margin-bottom:8px;display:flex;justify-content:space-between;align-items:center">
+            <div>
+              <div style="color:#5a5040;font-size:6px;text-transform:uppercase;letter-spacing:0.1em">Regime</div>
+              <div style="color:#69F0AE;font-size:12px;font-weight:700">NEUTRO · +2</div>
+            </div>
+            <div style="color:#5a5040;font-size:6px;text-align:right">Atualizado<br/>há 5min</div>
+          </div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:4px">
+            <div style="background:#161616;border-radius:4px;padding:6px"><div style="color:#5a5040;font-size:5px">Sent.</div><div style="color:#FFD600;font-size:9px;font-weight:700">+1</div></div>
+            <div style="background:#161616;border-radius:4px;padding:6px"><div style="color:#5a5040;font-size:5px">Deriv.</div><div style="color:#69F0AE;font-size:9px;font-weight:700">+2</div></div>
+            <div style="background:#161616;border-radius:4px;padding:6px"><div style="color:#5a5040;font-size:5px">Chain</div><div style="color:#FFD600;font-size:9px;font-weight:700">0</div></div>
+            <div style="background:#161616;border-radius:4px;padding:6px"><div style="color:#5a5040;font-size:5px">Trend.</div><div style="color:#69F0AE;font-size:9px;font-weight:700">+1</div></div>
+          </div>
+        </div>
+      </div>
+      <div style="font-size:7px;color:#5a5040;text-align:center;margin-top:6px">← clique nas abas para ver as outras telas →</div>
+    </div>
+    <div class="card-body">
+      <h3>C — Abas interativas simulando o app</h3>
+      <p>Seção com tabs que simulam navegação entre Dashboard, Alertas e DCA. Visitante "experimenta" o app antes de entrar. Mais interativo.</p>
+    </div>
+  </div>
+
+</div>

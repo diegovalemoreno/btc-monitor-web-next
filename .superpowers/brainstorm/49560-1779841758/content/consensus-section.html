@@ -1,0 +1,140 @@
+<h2>Consenso do Mercado — como visualizar?</h2>
+<p class="subtitle">9 indicadores totais. Exemplo: 6 bullish · 2 neutro · 1 alerta</p>
+
+<div class="cards">
+
+  <!-- Option A: Stacked bar + dots -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:Inter,sans-serif;">
+        <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;">
+          <div style="font-size:8px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:12px;">Consenso do Mercado</div>
+          <!-- Stacked bar -->
+          <div style="display:flex;height:8px;border-radius:4px;overflow:hidden;margin-bottom:12px;gap:2px;">
+            <div style="flex:6;background:#00C853;border-radius:3px;"></div>
+            <div style="flex:2;background:#3a3a3a;border-radius:3px;"></div>
+            <div style="flex:1;background:#e08a3a;border-radius:3px;"></div>
+          </div>
+          <!-- Labels -->
+          <div style="display:flex;justify-content:space-between;margin-bottom:14px;">
+            <div style="text-align:center;">
+              <div style="font-size:20px;font-weight:900;color:#00C853;">6</div>
+              <div style="font-size:8px;color:#5a5040;text-transform:uppercase;letter-spacing:0.1em;">Bullish</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:20px;font-weight:900;color:#5a5040;">2</div>
+              <div style="font-size:8px;color:#5a5040;text-transform:uppercase;letter-spacing:0.1em;">Neutro</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:20px;font-weight:900;color:#e08a3a;">1</div>
+              <div style="font-size:8px;color:#5a5040;text-transform:uppercase;letter-spacing:0.1em;">Alerta</div>
+            </div>
+          </div>
+          <!-- Individual dots -->
+          <div style="display:flex;gap:5px;flex-wrap:wrap;">
+            <div style="width:8px;height:8px;border-radius:50%;background:#00C853;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#00C853;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#00C853;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#00C853;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#00C853;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#00C853;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#3a3a3a;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#3a3a3a;"></div>
+            <div style="width:8px;height:8px;border-radius:50%;background:#e08a3a;"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A — Barra Empilhada + Contadores + Dots</h3>
+      <p>Barra proporcional colorida, 3 contadores grandes, dots individuais (1 por indicador). Quantitativo e visual ao mesmo tempo.</p>
+    </div>
+  </div>
+
+  <!-- Option B: Radial/donut -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:Inter,sans-serif;">
+        <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;display:flex;gap:16px;align-items:center;">
+          <!-- Donut SVG -->
+          <div style="flex-shrink:0;">
+            <svg width="90" height="90" viewBox="0 0 90 90">
+              <!-- bg track -->
+              <circle cx="45" cy="45" r="35" fill="none" stroke="#1e1e1e" stroke-width="10"/>
+              <!-- neutro: 2/9 = 80deg from end of bullish -->
+              <circle cx="45" cy="45" r="35" fill="none" stroke="#3a3a3a" stroke-width="10" stroke-dasharray="24 220" stroke-dashoffset="-196" stroke-linecap="round"/>
+              <!-- alerta: 1/9 = 40deg -->
+              <circle cx="45" cy="45" r="35" fill="none" stroke="#e08a3a" stroke-width="10" stroke-dasharray="12 220" stroke-dashoffset="-218" stroke-linecap="round"/>
+              <!-- bullish: 6/9 = 240deg -->
+              <circle cx="45" cy="45" r="35" fill="none" stroke="#00C853" stroke-width="10" stroke-dasharray="147 220" stroke-dashoffset="-73" stroke-linecap="round"/>
+              <!-- center text -->
+              <text x="45" y="41" text-anchor="middle" fill="#e8e0d5" font-size="18" font-weight="900" font-family="Inter,sans-serif">67%</text>
+              <text x="45" y="54" text-anchor="middle" fill="#5a5040" font-size="8" font-family="Inter,sans-serif">bullish</text>
+            </svg>
+          </div>
+          <!-- Legend -->
+          <div style="flex:1;">
+            <div style="font-size:8px;font-weight:700;color:#5a5040;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:10px;">Consenso</div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:#00C853;flex-shrink:0;"></div>
+                <span style="font-size:11px;color:#b0a090;flex:1;">Bullish</span>
+                <span style="font-size:14px;font-weight:800;color:#00C853;">6</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:#3a3a3a;flex-shrink:0;"></div>
+                <span style="font-size:11px;color:#b0a090;flex:1;">Neutro</span>
+                <span style="font-size:14px;font-weight:800;color:#5a5040;">2</span>
+              </div>
+              <div style="display:flex;align-items:center;gap:8px;">
+                <div style="width:8px;height:8px;border-radius:50%;background:#e08a3a;flex-shrink:0;"></div>
+                <span style="font-size:11px;color:#b0a090;flex:1;">Alerta</span>
+                <span style="font-size:14px;font-weight:800;color:#e08a3a;">1</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B — Donut + Legenda</h3>
+      <p>Gráfico circular proporcional + legenda numérica ao lado. Mais sofisticado visualmente. Transmite proporção instantânea.</p>
+    </div>
+  </div>
+
+  <!-- Option C: Inline no hero / sem seção separada -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div style="background:#0a0a0a;border-radius:8px;padding:16px;font-family:Inter,sans-serif;">
+        <!-- Hero com consenso integrado embaixo -->
+        <div style="background:#111;border:1px solid #222;border-radius:8px;padding:16px;position:relative;overflow:hidden;">
+          <div style="position:absolute;inset:0;background:radial-gradient(ellipse 80% 100% at 50% 0%,rgba(0,200,83,0.08) 0%,transparent 60%);pointer-events:none;"></div>
+          <div style="text-align:center;position:relative;margin-bottom:14px;">
+            <div style="font-size:8px;color:#5a5040;text-transform:uppercase;letter-spacing:0.15em;margin-bottom:4px;">Oportunidade</div>
+            <div style="font-size:42px;font-weight:900;color:#00C853;line-height:1;">79</div>
+            <div style="font-size:11px;font-weight:700;color:#e8e0d5;margin-top:4px;">Compra Tática Moderada</div>
+          </div>
+          <!-- Consenso como footer do hero -->
+          <div style="border-top:1px solid #1a1a1a;padding-top:10px;">
+            <div style="display:flex;gap:4px;height:4px;border-radius:2px;overflow:hidden;margin-bottom:6px;">
+              <div style="flex:6;background:#00C853;"></div>
+              <div style="flex:2;background:#2a2a2a;"></div>
+              <div style="flex:1;background:#e08a3a;"></div>
+            </div>
+            <div style="display:flex;justify-content:center;gap:14px;">
+              <span style="font-size:9px;color:#00C853;font-weight:700;">6 bullish</span>
+              <span style="font-size:9px;color:#5a5040;font-weight:600;">2 neutro</span>
+              <span style="font-size:9px;color:#e08a3a;font-weight:600;">1 alerta</span>
+            </div>
+          </div>
+        </div>
+        <div style="font-size:9px;color:#5a5040;text-align:center;margin-top:6px;font-style:italic;">consenso integrado ao hero — sem seção separada</div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C — Consenso Integrado ao Hero</h3>
+      <p>Sem seção separada. Barra de consenso fica como rodapé do hero score. Mais limpo, menos scroll. Perde destaque mas ganha concisão.</p>
+    </div>
+  </div>
+
+</div>

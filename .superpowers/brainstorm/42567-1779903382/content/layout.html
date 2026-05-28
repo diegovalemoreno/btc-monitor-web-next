@@ -1,0 +1,240 @@
+<h2>Tela de Rentabilidade — Direção de Layout</h2>
+<p class="subtitle">Qual estrutura visual melhor representa seu patrimônio Bitcoin?</p>
+
+<div class="cards">
+
+  <!-- Option A -->
+  <div class="card" data-choice="a" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px;border-radius:8px;font-family:monospace">
+
+      <!-- Hero full width -->
+      <div style="background:linear-gradient(135deg,#0f2027,#203a43,#2c5364);border-radius:8px;padding:14px;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;border:1px solid rgba(251,191,36,0.3)">
+        <div>
+          <div style="font-size:9px;color:#fbbf24;text-transform:uppercase;letter-spacing:2px;margin-bottom:4px">Patrimônio Bitcoin</div>
+          <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-1px">R$ 347.820</div>
+          <div style="font-size:10px;color:#4ade80;margin-top:3px">▲ +218% · +R$ 237.820 total</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:9px;color:rgba(255,255,255,0.5);margin-bottom:6px">0.00521 BTC</div>
+          <div style="height:28px;width:80px;background:rgba(74,222,128,0.15);border-radius:4px;position:relative;overflow:hidden">
+            <svg viewBox="0 0 80 28" style="width:100%;height:100%">
+              <polyline points="0,22 16,18 32,20 48,10 64,8 80,4" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+              <polyline points="0,22 16,18 32,20 48,10 64,8 80,4 80,28 0,28" fill="rgba(74,222,128,0.1)" stroke="none"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- KPI row -->
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px">
+        <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:2px">Preço médio</div>
+          <div style="font-size:11px;font-weight:700;color:#fbbf24">R$ 214.040</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:2px">BTC acumulado</div>
+          <div style="font-size:11px;font-weight:700;color:#fff">0.00521</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05);border-radius:6px;padding:8px;text-align:center">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:2px">DCA aportes</div>
+          <div style="font-size:11px;font-weight:700;color:#fff">24</div>
+        </div>
+      </div>
+
+      <!-- Chart full width -->
+      <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:10px;margin-bottom:10px;border:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:6px">EVOLUÇÃO DO PATRIMÔNIO</div>
+        <div style="height:50px;position:relative">
+          <svg viewBox="0 0 240 50" style="width:100%;height:100%">
+            <defs>
+              <linearGradient id="ga1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#4ade80" stop-opacity="0.3"/>
+                <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <polyline points="0,45 30,42 60,38 90,35 120,28 150,22 180,14 210,10 240,5" fill="none" stroke="#4ade80" stroke-width="2"/>
+            <polygon points="0,45 30,42 60,38 90,35 120,28 150,22 180,14 210,10 240,5 240,50 0,50" fill="url(#ga1)"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Insights + Heatmap row -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <div style="background:rgba(251,191,36,0.05);border-radius:6px;padding:8px;border:1px solid rgba(251,191,36,0.15)">
+          <div style="font-size:8px;color:#fbbf24;margin-bottom:4px">✦ INSIGHT</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.7);line-height:1.4">Sua DCA 2023 capturou o fundo. Retorno médio: +218%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:4px">RETORNO POR ANO</div>
+          <div style="display:flex;gap:3px;align-items:flex-end;height:24px">
+            <div style="flex:1;background:#ef4444;border-radius:2px 2px 0 0;height:60%"></div>
+            <div style="flex:1;background:#4ade80;border-radius:2px 2px 0 0;height:100%"></div>
+            <div style="flex:1;background:#4ade80;border-radius:2px 2px 0 0;height:80%"></div>
+            <div style="flex:1;background:#4ade80;border-radius:2px 2px 0 0;height:90%"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <h3>A — Hero Central + Chart Protagonista</h3>
+      <p>Hero wide ocupa topo inteiro. Gráfico de evolução logo abaixo, cheio. Insights e heatmap em row no rodapé. Visual vertical, narrativo.</p>
+    </div>
+  </div>
+
+  <!-- Option B -->
+  <div class="card" data-choice="b" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px;border-radius:8px;font-family:monospace">
+
+      <!-- Split: hero left, chart right -->
+      <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:8px;margin-bottom:10px">
+        <!-- Hero col -->
+        <div style="background:linear-gradient(160deg,#0f2027,#1a3040);border-radius:8px;padding:12px;border:1px solid rgba(251,191,36,0.25)">
+          <div style="font-size:8px;color:#fbbf24;text-transform:uppercase;letter-spacing:1.5px;margin-bottom:6px">Patrimônio</div>
+          <div style="font-size:18px;font-weight:900;color:#fff;margin-bottom:4px">R$ 347.820</div>
+          <div style="font-size:9px;color:#4ade80;margin-bottom:12px">▲ +218%</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <div style="display:flex;justify-content:space-between;font-size:8px">
+              <span style="color:rgba(255,255,255,0.4)">Preço médio</span>
+              <span style="color:#fbbf24;font-weight:600">R$214.040</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:8px">
+              <span style="color:rgba(255,255,255,0.4)">BTC</span>
+              <span style="color:#fff;font-weight:600">0.00521</span>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:8px">
+              <span style="color:rgba(255,255,255,0.4)">Aportes</span>
+              <span style="color:#fff;font-weight:600">24</span>
+            </div>
+          </div>
+        </div>
+        <!-- Chart col -->
+        <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:8px">EVOLUÇÃO DO PATRIMÔNIO</div>
+          <div style="height:70px;position:relative">
+            <svg viewBox="0 0 150 70" style="width:100%;height:100%">
+              <defs>
+                <linearGradient id="gb1" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#4ade80" stop-opacity="0.25"/>
+                  <stop offset="100%" stop-color="#4ade80" stop-opacity="0"/>
+                </linearGradient>
+              </defs>
+              <polyline points="0,65 18,60 36,55 54,50 72,40 90,30 108,20 126,12 150,6" fill="none" stroke="#4ade80" stroke-width="1.5"/>
+              <polygon points="0,65 18,60 36,55 54,50 72,40 90,30 108,20 126,12 150,6 150,70 0,70" fill="url(#gb1)"/>
+            </svg>
+          </div>
+        </div>
+      </div>
+
+      <!-- Insight full width -->
+      <div style="background:rgba(251,191,36,0.06);border-radius:6px;padding:10px;border:1px solid rgba(251,191,36,0.18);margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="font-size:12px">✦</span>
+          <div>
+            <div style="font-size:8px;color:#fbbf24;font-weight:700;margin-bottom:2px">Análise Patrimonial</div>
+            <div style="font-size:8px;color:rgba(255,255,255,0.7);line-height:1.4">Seus melhores aportes foram em 2022–2023, capturando o fundo do ciclo. A DCA consistente gerou +218% de retorno médio.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Heatmap row -->
+      <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:10px;border:1px solid rgba(255,255,255,0.06)">
+        <div style="font-size:8px;color:rgba(255,255,255,0.4);margin-bottom:6px">RETORNO POR APORTE</div>
+        <div style="display:flex;gap:3px;flex-wrap:wrap">
+          {['#ef4444','#ef4444','#4ade80','#4ade80','#86efac','#4ade80','#4ade80','#22c55e','#22c55e','#16a34a'].map((c,i) => `<div style="width:18px;height:18px;border-radius:3px;background:${c};opacity:0.85;display:flex;align-items:center;justify-content:center"><span style="font-size:6px;color:rgba(0,0,0,0.7);font-weight:700">${['-12','-8','+45','+67','+23','+89','+112','+145','+178','+218'][i]}%</span></div>`).join('')}
+          <div style="width:18px;height:18px;border-radius:3px;background:#ef4444;opacity:0.85;display:flex;align-items:center;justify-content:center"><span style="font-size:6px;color:rgba(0,0,0,0.7);font-weight:700">-3%</span></div>
+          <div style="width:18px;height:18px;border-radius:3px;background:#4ade80;opacity:0.85;display:flex;align-items:center;justify-content:center"><span style="font-size:6px;color:rgba(0,0,0,0.7);font-weight:700">+34%</span></div>
+        </div>
+      </div>
+
+    </div>
+    <div class="card-body">
+      <h3>B — Split Hero / Chart + Narrative Insight</h3>
+      <p>Hero e gráfico lado a lado no topo. Insight narrativo em faixa full-width. Heatmap de aportes abaixo. Equilibrado, denso mas estruturado.</p>
+    </div>
+  </div>
+
+  <!-- Option C -->
+  <div class="card" data-choice="c" onclick="toggleSelect(this)">
+    <div class="card-image" style="background:#0d1117;padding:16px;border-radius:8px;font-family:monospace">
+
+      <!-- Minimal hero -->
+      <div style="text-align:center;padding:14px;margin-bottom:10px;position:relative">
+        <div style="position:absolute;inset:0;background:radial-gradient(ellipse at 50% 0%,rgba(251,191,36,0.12),transparent 70%);border-radius:8px;pointer-events:none"></div>
+        <div style="font-size:8px;color:#fbbf24;text-transform:uppercase;letter-spacing:2px;margin-bottom:6px">Patrimônio BTC</div>
+        <div style="font-size:28px;font-weight:900;color:#fff;letter-spacing:-1.5px;margin-bottom:4px">R$ 347.820</div>
+        <div style="display:inline-flex;gap:12px;font-size:9px">
+          <span style="color:#4ade80">▲ +218%</span>
+          <span style="color:rgba(255,255,255,0.3)">·</span>
+          <span style="color:rgba(255,255,255,0.5)">0.00521 BTC</span>
+          <span style="color:rgba(255,255,255,0.3)">·</span>
+          <span style="color:rgba(255,255,255,0.5)">24 aportes</span>
+        </div>
+      </div>
+
+      <!-- Chart — protagonist -->
+      <div style="background:rgba(255,255,255,0.03);border-radius:8px;padding:12px;border:1px solid rgba(255,255,255,0.06);margin-bottom:10px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:8px;color:rgba(255,255,255,0.4)">EVOLUÇÃO PATRIMONIAL</div>
+          <div style="font-size:8px;color:rgba(255,255,255,0.3)">Desde 2022</div>
+        </div>
+        <div style="height:60px">
+          <svg viewBox="0 0 240 60" style="width:100%;height:100%">
+            <defs>
+              <linearGradient id="gc1" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#fbbf24" stop-opacity="0"/>
+              </linearGradient>
+            </defs>
+            <!-- BTC price line -->
+            <polyline points="0,55 40,52 80,48 120,42 160,30 200,20 240,8" fill="none" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="0"/>
+            <polygon points="0,55 40,52 80,48 120,42 160,30 200,20 240,8 240,60 0,60" fill="url(#gc1)"/>
+            <!-- Portfolio value dots (aportes) -->
+            <circle cx="20" cy="54" r="3" fill="#ef4444" opacity="0.9"/>
+            <circle cx="60" cy="50" r="3" fill="#ef4444" opacity="0.9"/>
+            <circle cx="100" cy="44" r="3" fill="#4ade80" opacity="0.9"/>
+            <circle cx="140" cy="35" r="3" fill="#4ade80" opacity="0.9"/>
+            <circle cx="180" cy="24" r="3" fill="#22c55e" opacity="0.9"/>
+            <circle cx="220" cy="12" r="3" fill="#16a34a" opacity="0.9"/>
+          </svg>
+        </div>
+        <div style="display:flex;gap:10px;font-size:7px;margin-top:4px">
+          <span style="color:#fbbf24">— Preço BTC</span>
+          <span style="color:#4ade80">● Seus aportes</span>
+        </div>
+      </div>
+
+      <!-- 3 col bottom -->
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px">
+        <div style="background:rgba(251,191,36,0.07);border-radius:6px;padding:8px;border:1px solid rgba(251,191,36,0.15)">
+          <div style="font-size:7px;color:#fbbf24;margin-bottom:3px">✦ INSIGHT</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.65);line-height:1.4">DCA 2023 capturou o fundo. Maior retorno: +218%</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:7px;color:rgba(255,255,255,0.4);margin-bottom:3px">PREÇO MÉDIO</div>
+          <div style="font-size:11px;font-weight:700;color:#fbbf24">R$214.040</div>
+          <div style="font-size:7px;color:rgba(255,255,255,0.3);margin-top:2px">vs atual R$667k</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.03);border-radius:6px;padding:8px;border:1px solid rgba(255,255,255,0.06)">
+          <div style="font-size:7px;color:rgba(255,255,255,0.4);margin-bottom:4px">HEATMAP</div>
+          <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:2px">
+            <div style="height:10px;border-radius:2px;background:#ef4444;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#4ade80;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#22c55e;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#16a34a;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#4ade80;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#22c55e;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#ef4444;opacity:0.8"></div>
+            <div style="height:10px;border-radius:2px;background:#16a34a;opacity:0.8"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div class="card-body">
+      <h3>C — Hero Minimalista + Chart com Aportes Sobrepostos</h3>
+      <p>Hero centralizado clean com glow dourado. Gráfico mostra curva do BTC + pontos dos seus aportes sobrepostos (vermelho/verde = perda/ganho). Visual narrativo único.</p>
+    </div>
+  </div>
+
+</div>
