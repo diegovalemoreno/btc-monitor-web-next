@@ -631,7 +631,7 @@ function PageBtn({ onClick, disabled, label, active }: { onClick: () => void; di
 
 // ─── Edit modal ───────────────────────────────────────────────────────────────
 
-function EditContributionModal({ contribution, onClose, onSave }: {
+export function EditContributionModal({ contribution, onClose, onSave }: {
   contribution: DcaContributionRow; onClose: () => void; onSave: (u: DcaContributionRow) => void
 }) {
   const fee       = extractFee(contribution.notes)
