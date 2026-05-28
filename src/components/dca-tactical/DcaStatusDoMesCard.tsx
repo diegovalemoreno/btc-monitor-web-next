@@ -1,178 +1,63 @@
 'use client'
 
-import { useState } from 'react'
-import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
-import type { DcaMarketState } from '@/lib/dca-tactical/types'
-import Tooltip from '@/components/shared/Tooltip'
+import type { DcaContributionRow } from '@/lib/db/types'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
-const fmtBTC = (sats: number) =>
-  (sats / 1e8).toFixed(8).replace(/0+$/, '').replace(/\.$/, '') + ' BTC'
-
-function applyBRLMask(raw: string): string {
-  const digits = raw.replace(/\D/g, '')
-  if (!digits) return ''
-  const num = parseInt(digits, 10) / 100
-  return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(num)
-}
-
-function parseBRLMask(masked: string): number | null {
-  // "R$ 386.380,00" → 386380.00
-  const digits = masked.replace(/\D/g, '')
-  if (!digits) return null
-  const num = parseInt(digits, 10) / 100
-  return num > 0 ? num : null
-}
-
 type MonthStatus = 'not_started' | 'partial' | 'completed' | 'exceeded'
 
-function getMonthStatus(usedTotal: number, tacticalPool: number): MonthStatus {
-  if (usedTotal <= 0)             return 'not_started'
-  if (usedTotal > tacticalPool)   return 'exceeded'
-  if (usedTotal >= tacticalPool)  return 'completed'
+function getMonthStatus(used: number, pool: number): MonthStatus {
+  if (used <= 0)          return 'not_started'
+  if (used > pool)        return 'exceeded'
+  if (used >= pool * 0.99) return 'completed'
   return 'partial'
 }
 
-const STATUS_META: Record<MonthStatus, { label: string; color: string; bg: string }> = {
-  not_started: { label: 'Não iniciado', color: 'var(--text-muted)',   bg: 'var(--surface3)' },
-  partial:     { label: 'Em andamento', color: '#F59E0B',             bg: 'rgba(245,158,11,0.12)' },
-  completed:   { label: 'Concluído',    color: '#22C55E',             bg: 'rgba(34,197,94,0.12)' },
-  exceeded:    { label: 'Excedido',     color: '#EF4444',             bg: 'rgba(239,68,68,0.12)' },
-}
-
-const TYPE_META: Record<ContributionType, { label: string; color: string }> = {
-  TACTICAL:       { label: 'Tático',       color: '#00BCD4' },
-  STRUCTURAL_DCA: { label: 'DCA Estrutural', color: 'var(--orange)' },
-  MANUAL:         { label: 'Manual',       color: 'var(--text-muted)' },
+const STATUS_META: Record<MonthStatus, { label: string; color: string; bg: string; border: string }> = {
+  not_started: { label: 'Não iniciado', color: 'rgba(255,255,255,0.35)', bg: 'rgba(255,255,255,0.04)', border: 'rgba(255,255,255,0.1)' },
+  partial:     { label: 'Em andamento', color: '#F59E0B',                bg: 'rgba(245,158,11,0.1)',  border: 'rgba(245,158,11,0.25)' },
+  completed:   { label: 'Concluído',    color: '#22C55E',                bg: 'rgba(34,197,94,0.1)',   border: 'rgba(34,197,94,0.25)' },
+  exceeded:    { label: 'Excedido',     color: '#EF4444',                bg: 'rgba(239,68,68,0.1)',   border: 'rgba(239,68,68,0.3)' },
 }
 
 interface Props {
-  monthlyContribution: number
-  structuralDcaAmount: number
-  tacticalPool:        number
-  contributions:       DcaContributionRow[]
-  usedThisMonth:       number
-  score:               number
-  marketState:         DcaMarketState
-  onRegister:          (data: { amount: number; contribution_date: string; contribution_type: ContributionType; notes: string | null; sats_purchased: number | null; btc_price_brl: number | null; effective_price_brl: number | null }) => Promise<void>
-  onDelete:            (id: string) => Promise<void>
+  tacticalPool:  number
+  contributions: DcaContributionRow[]
+  usedThisMonth: number
 }
 
-export default function DcaStatusDoMesCard({
-  monthlyContribution,
-  structuralDcaAmount,
-  tacticalPool,
-  contributions,
-  usedThisMonth,
-  score,
-  marketState,
-  onRegister,
-  onDelete,
-}: Props) {
-  const [showForm, setShowForm] = useState(false)
-  const [submitting, setSubmitting] = useState(false)
-  const [formError, setFormError] = useState<string | null>(null)
-  const [deletingId, setDeletingId] = useState<string | null>(null)
-
-  const today = new Date().toISOString().slice(0, 10)
-  const [amountMask,    setAmountMask]   = useState('')
-  const [date,          setDate]         = useState(today)
-  const [type,          setType]         = useState<ContributionType>('TACTICAL')
-  const [notes,         setNotes]        = useState('')
-  const [btcAmount,     setBtcAmount]    = useState('')
-  const [btcPriceMask,  setBtcPriceMask] = useState('')   // cotação do mercado
-  const [outrosCustos,  setOutrosCustos] = useState('')   // outros custos / taxas
-
-  const status = getMonthStatus(usedThisMonth, tacticalPool)
-  const meta   = STATUS_META[status]
-  const pctUsed   = tacticalPool > 0 ? Math.min(100, (usedThisMonth / tacticalPool) * 100) : 0
-
-  const btcFloat   = btcAmount.trim() ? parseFloat(btcAmount.replace(',', '.')) : null
-  const parsedSats = btcFloat && btcFloat > 0 ? Math.round(btcFloat * 1e8) : null
-  const parsedAmount      = parseBRLMask(amountMask) ?? 0
-  const parsedOutrosCustos = parseBRLMask(outrosCustos) ?? 0
-  const calculatedEffectivePrice = parsedSats && parsedSats > 0 && parsedAmount > 0
-    ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8)
-    : null
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    const parsed = parseBRLMask(amountMask)
-    if (!parsed || parsed <= 0) { setFormError('Valor inválido'); return }
-    if (!parsedSats || parsedSats <= 0) { setFormError('Informe a quantidade de BTC comprado'); return }
-    if (!parseBRLMask(btcPriceMask)) { setFormError('Informe a cotação do mercado'); return }
-    setSubmitting(true)
-    setFormError(null)
-    try {
-      const parsedMarketPrice = parseBRLMask(btcPriceMask)
-      // Embed outros custos in notes using existing "taxa" convention
-      let finalNotes = notes.trim() || null
-      if (parsedOutrosCustos > 0) {
-        const taxaStr = `taxa R$${parsedOutrosCustos.toFixed(2)}`
-        finalNotes = finalNotes ? `${finalNotes} · ${taxaStr}` : taxaStr
-      }
-      await onRegister({
-        amount:              parsed,
-        contribution_date:   date,
-        contribution_type:   type,
-        notes:               finalNotes,
-        sats_purchased:      parsedSats,
-        btc_price_brl:       parsedMarketPrice,
-        effective_price_brl: calculatedEffectivePrice,
-      })
-      setAmountMask('')
-      setDate(today)
-      setType('TACTICAL')
-      setNotes('')
-      setBtcAmount('')
-      setBtcPriceMask('')
-      setOutrosCustos('')
-      setShowForm(false)
-    } catch (err) {
-      setFormError(err instanceof Error ? err.message : 'Erro ao registrar')
-    } finally {
-      setSubmitting(false)
-    }
-  }
-
-  async function handleDelete(id: string) {
-    setDeletingId(id)
-    try { await onDelete(id) } finally { setDeletingId(null) }
-  }
+export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedThisMonth }: Props) {
+  const status   = getMonthStatus(usedThisMonth, tacticalPool)
+  const meta     = STATUS_META[status]
+  const pctUsed  = tacticalPool > 0 ? Math.min(100, (usedThisMonth / tacticalPool) * 100) : 0
+  const excedido = usedThisMonth > tacticalPool ? usedThisMonth - tacticalPool : 0
+  const disponivel = Math.max(0, tacticalPool - usedThisMonth)
 
   return (
     <div style={{
-      background:   'var(--surface)',
-      border:       '1px solid var(--border)',
+      background:   'rgba(255,255,255,0.02)',
+      border:       '1px solid rgba(255,255,255,0.07)',
       borderRadius: '12px',
       overflow:     'hidden',
-      marginBottom: '24px',
+      marginBottom: '16px',
     }}>
       {/* Header */}
       <div style={{
-        padding:        '16px 24px',
-        borderBottom:   '1px solid var(--border-dim)',
+        padding:        '14px 24px',
+        borderBottom:   '1px solid rgba(255,255,255,0.06)',
         display:        'flex',
         alignItems:     'center',
         justifyContent: 'space-between',
-        flexWrap:       'wrap',
-        gap:            '10px',
       }}>
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
-            Status do Mês — Caixa Tático
-          </div>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.35)', textTransform: 'uppercase', letterSpacing: '1.5px' }}>
+          Status do Mês — Caixa Tático
         </div>
-        <div style={{
-          display:      'flex',
-          alignItems:   'center',
-          gap:          '8px',
-        }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
           <span style={{
-            padding:      '4px 10px',
+            padding:      '3px 10px',
             background:   meta.bg,
+            border:       `1px solid ${meta.border}`,
             borderRadius: '20px',
             fontSize:     '11px',
             fontWeight:   600,
@@ -180,332 +65,121 @@ export default function DcaStatusDoMesCard({
           }}>
             {meta.label}
           </span>
-          <button
-            onClick={() => { setShowForm(s => !s); setFormError(null) }}
+          <a
+            href="/lancamento"
             style={{
-              padding:      '6px 14px',
-              background:   showForm ? 'var(--surface3)' : 'var(--orange)',
-              color:        showForm ? 'var(--text-muted)' : 'var(--bg)',
-              border:       'none',
-              borderRadius: '8px',
-              fontSize:     '12px',
-              fontWeight:   600,
-              cursor:       'pointer',
+              padding:        '5px 12px',
+              background:     'transparent',
+              border:         '1px solid rgba(255,255,255,0.12)',
+              borderRadius:   '7px',
+              fontSize:       '12px',
+              color:          'rgba(255,255,255,0.45)',
+              textDecoration: 'none',
+              fontWeight:     500,
             }}
           >
-            {showForm ? 'Cancelar' : '+ Registrar aporte'}
-          </button>
+            Ver lançamentos
+          </a>
         </div>
       </div>
 
       {/* Progress */}
-      <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border-dim)' }}>
+      <div style={{ padding: '20px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '10px' }}>
-          <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
-            <span style={{ fontWeight: 600, color: meta.color }}>{fmt(usedThisMonth)}</span> aportados de {fmt(tacticalPool)} no caixa tático
+          <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.4)' }}>
+            <span style={{ fontWeight: 700, color: meta.color }}>{fmt(usedThisMonth)}</span>
+            {' '}aportados de {fmt(tacticalPool)} na caixa tática
           </span>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: meta.color }}>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: meta.color }}>
             {pctUsed.toFixed(0)}%
           </span>
         </div>
-        <div style={{ height: '8px', background: 'var(--surface3)', borderRadius: '4px', overflow: 'hidden' }}>
+        <div style={{ height: '6px', background: 'rgba(255,255,255,0.06)', borderRadius: '3px', overflow: 'hidden' }}>
           <div style={{
-            width:      `${pctUsed.toFixed(1)}%`,
-            height:     '8px',
-            background: meta.color,
-            borderRadius: '4px',
-            transition: 'width 0.5s ease',
+            width:        `${pctUsed.toFixed(1)}%`,
+            height:       '6px',
+            background:   meta.color,
+            borderRadius: '3px',
           }} />
         </div>
+
+        {/* Exceeded breakdown */}
+        {excedido > 0 && (
+          <div style={{ display: 'flex', gap: '24px', marginTop: '16px', flexWrap: 'wrap' }}>
+            {[
+              { label: 'Caixa planejado', value: fmt(tacticalPool),  color: 'rgba(255,255,255,0.5)' },
+              { label: 'Já aportado',     value: fmt(usedThisMonth), color: '#EF4444' },
+              { label: 'Excedente',       value: fmt(excedido),      color: '#EF4444' },
+              { label: 'Disponível',      value: fmt(0),              color: 'rgba(255,255,255,0.25)' },
+            ].map(({ label, value, color }) => (
+              <div key={label}>
+                <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '4px' }}>{label}</div>
+                <div style={{ fontSize: '13px', fontWeight: 700, color }}>{value}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Available (non-exceeded) */}
+        {excedido === 0 && usedThisMonth > 0 && (
+          <div style={{ display: 'flex', gap: '24px', marginTop: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontSize: '9px', color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '4px' }}>Disponível</div>
+              <div style={{ fontSize: '13px', fontWeight: 700, color: '#22C55E' }}>{fmt(disponivel)}</div>
+            </div>
+          </div>
+        )}
       </div>
 
-      {/* Register form */}
-      {showForm && (
-        <form onSubmit={handleSubmit} style={{
-          padding:    '20px 24px',
-          borderBottom: '1px solid var(--border-dim)',
-          background: 'var(--surface2)',
-        }}>
-          <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', marginBottom: '16px' }}>
-            Registrar aporte
+      {/* Contributions list - read only */}
+      <div style={{ padding: '16px 24px' }}>
+        <div style={{ fontSize: '11px', fontWeight: 700, color: 'rgba(255,255,255,0.3)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '12px' }}>
+          Aportes este mês
+        </div>
+
+        {contributions.length === 0 ? (
+          <div style={{ fontSize: '13px', color: 'rgba(255,255,255,0.2)', fontStyle: 'italic' }}>
+            Nenhum aporte registrado neste mês.
           </div>
-
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
-            {/* Amount */}
-            <div>
-              <div style={labelStyle}>Valor (R$)</div>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={amountMask}
-                onChange={e => setAmountMask(applyBRLMask(e.target.value))}
-                placeholder="R$ 0,00"
-                style={inputStyle}
-              />
-            </div>
-
-            {/* Date */}
-            <div>
-              <div style={labelStyle}>Data</div>
-              <input
-                type="date"
-                value={date}
-                onChange={e => setDate(e.target.value)}
-                required
-                style={inputStyle}
-              />
-            </div>
-
-            {/* Type */}
-            <div>
-              <div style={labelStyle}>Tipo</div>
-              <select
-                value={type}
-                onChange={e => setType(e.target.value as ContributionType)}
-                style={{ ...inputStyle, paddingRight: '8px' }}
-              >
-                <option value="TACTICAL">Tático</option>
-                <option value="STRUCTURAL_DCA">DCA Estrutural</option>
-                <option value="MANUAL">Manual</option>
-              </select>
-            </div>
-          </div>
-
-          {/* BTC + prices */}
-          <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '14px' }}>
-            <div>
-              <div style={labelStyle}>BTC comprado *</div>
-              <input
-                type="text"
-                inputMode="decimal"
-                value={btcAmount}
-                onChange={e => setBtcAmount(e.target.value)}
-                placeholder="0.00244283"
-                style={inputStyle}
-              />
-              {btcFloat && btcFloat > 0 && (
-                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>
-                  = {Math.round(btcFloat * 1e8).toLocaleString('pt-BR')} sats
-                </div>
-              )}
-            </div>
-            <div>
-              <div style={labelStyle}>Cotação do mercado *</div>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={btcPriceMask}
-                onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))}
-                placeholder="R$ 386.380,00"
-                style={inputStyle}
-              />
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Preço de referência da corretora</div>
-            </div>
-            <div>
-              <div style={labelStyle}>Outros custos (opcional)</div>
-              <input
-                type="text"
-                inputMode="numeric"
-                value={outrosCustos}
-                onChange={e => setOutrosCustos(applyBRLMask(e.target.value))}
-                placeholder="R$ 0,00"
-                style={inputStyle}
-              />
-              <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>Taxas, spread e outros gastos</div>
-            </div>
-          </div>
-
-          {/* Calculated effective price preview */}
-          {calculatedEffectivePrice !== null && (
-            <div style={{
-              display: 'flex', gap: '20px', flexWrap: 'wrap',
-              padding: '10px 14px', marginBottom: '14px',
-              background: 'var(--surface)', border: '1px solid var(--border-dim)',
-              borderRadius: '8px', fontSize: '11px',
-            }}>
-              <div>
-                <span style={{ color: 'var(--text-muted)' }}>Preço efetivo calculado: </span>
-                <span style={{ fontWeight: 700, color: '#F59E0B', fontFamily: "'Courier New', monospace" }}>
-                  {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(calculatedEffectivePrice)}/BTC
-                </span>
-              </div>
-              {parseBRLMask(btcPriceMask) && (
-                <div>
-                  <span style={{ color: 'var(--text-muted)' }}>Diferença vs cotação: </span>
-                  <span style={{ fontWeight: 700, color: '#F97316', fontFamily: "'Courier New', monospace" }}>
-                    +{(((calculatedEffectivePrice - parseBRLMask(btcPriceMask)!) / parseBRLMask(btcPriceMask)!) * 100).toFixed(2).replace('.', ',')}%
-                  </span>
-                </div>
-              )}
-              {parsedOutrosCustos > 0 && (
-                <div>
-                  <span style={{ color: 'var(--text-muted)' }}>Custo total: </span>
-                  <span style={{ fontWeight: 700, color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>
-                    {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(parsedAmount + parsedOutrosCustos)}
-                  </span>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Notes */}
-          <div style={{ marginBottom: '16px' }}>
-            <div style={labelStyle}>Notas (opcional)</div>
-            <input
-              type="text"
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              placeholder="ex: aproveitei a queda de 8%"
-              style={{ ...inputStyle, width: '100%', maxWidth: '400px' }}
-            />
-          </div>
-
-          {/* Snapshot info */}
-          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginBottom: '14px' }}>
-            Score atual: <strong style={{ color: 'var(--text-sec)' }}>{score}</strong> · Estado: <strong style={{ color: 'var(--text-sec)' }}>{marketState}</strong> — será registrado como contexto do aporte.
-          </div>
-
-          {formError && (
-            <div style={{ fontSize: '12px', color: '#EF4444', marginBottom: '10px' }}>{formError}</div>
-          )}
-
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <button
-              type="submit"
-              disabled={submitting}
-              style={{
-                padding:      '8px 20px',
-                background:   submitting ? 'var(--surface3)' : 'var(--orange)',
-                color:        submitting ? 'var(--text-muted)' : 'var(--bg)',
-                border:       'none',
-                borderRadius: '8px',
-                fontSize:     '13px',
-                fontWeight:   600,
-                cursor:       submitting ? 'not-allowed' : 'pointer',
-              }}
-            >
-              {submitting ? 'Salvando…' : 'Salvar aporte'}
-            </button>
-            <button
-              type="button"
-              onClick={() => { setShowForm(false); setFormError(null) }}
-              style={{
-                padding:      '8px 16px',
-                background:   'transparent',
-                color:        'var(--text-muted)',
-                border:       '1px solid var(--border)',
-                borderRadius: '8px',
-                fontSize:     '13px',
-                cursor:       'pointer',
-              }}
-            >
-              Cancelar
-            </button>
-          </div>
-        </form>
-      )}
-
-      {/* Recent entries */}
-      {contributions.length > 0 && (
-        <div style={{ padding: '16px 24px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '12px' }}>
-            Aportes este mês
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {contributions.map(c => {
-              const typeMeta = TYPE_META[c.contribution_type]
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            {contributions.slice(0, 5).map(c => {
               const dateLabel = new Date(c.contribution_date + 'T00:00:00')
                 .toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })
               return (
                 <div key={c.id} style={{
                   display:     'flex',
-                  alignItems:  'flex-start',
+                  alignItems:  'center',
                   gap:         '12px',
                   padding:     '10px 14px',
-                  background:  'var(--surface2)',
+                  background:  'rgba(255,255,255,0.02)',
+                  border:      '1px solid rgba(255,255,255,0.05)',
                   borderRadius: '8px',
-                  border:      '1px solid var(--border-dim)',
                 }}>
-                  {/* Date + type stacked */}
-                  <div style={{ minWidth: '90px', flexShrink: 0 }}>
-                    <div style={{ fontSize: '12px', color: 'var(--text)', fontWeight: 500, marginBottom: '4px' }}>
-                      {dateLabel}
-                    </div>
-                    <span style={{
-                      padding:    '1px 7px',
-                      background: `${typeMeta.color}20`,
-                      color:      typeMeta.color,
-                      borderRadius: '10px',
-                      fontSize:   '10px',
-                      fontWeight: 600,
-                    }}>
-                      {typeMeta.label}
-                    </span>
-                  </div>
-
-                  {/* Notes — grows */}
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {c.notes
-                      ? <span style={{ fontSize: '12px', color: 'var(--text-muted)', wordBreak: 'break-word' }}>{c.notes}</span>
-                      : <span style={{ fontSize: '12px', color: 'var(--text-muted)', opacity: 0.4 }}>—</span>
-                    }
-                  </div>
-
-                  {/* Amount */}
-                  <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)', fontFamily: "'Courier New', monospace", flexShrink: 0 }}>
+                  <span style={{ fontSize: '12px', color: 'rgba(255,255,255,0.55)', width: '110px', flexShrink: 0 }}>
+                    {dateLabel}
+                  </span>
+                  <span style={{ flex: 1, fontSize: '12px', color: 'rgba(255,255,255,0.35)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    {c.notes ?? '—'}
+                  </span>
+                  <span style={{ fontSize: '13px', fontWeight: 700, color: '#fff', flexShrink: 0 }}>
                     {fmt(c.amount)}
                   </span>
-
-                  {/* Delete */}
-                  <button
-                    onClick={() => handleDelete(c.id)}
-                    disabled={deletingId === c.id}
-                    title="Remover aporte"
-                    style={{
-                      background:  'none',
-                      border:      'none',
-                      color:       deletingId === c.id ? 'var(--text-muted)' : 'rgba(239,68,68,0.6)',
-                      cursor:      deletingId === c.id ? 'not-allowed' : 'pointer',
-                      fontSize:    '13px',
-                      padding:     '2px 4px',
-                      borderRadius: '4px',
-                      flexShrink:  0,
-                    }}
-                  >
-                    {deletingId === c.id ? '…' : '×'}
-                  </button>
                 </div>
               )
             })}
           </div>
-        </div>
-      )}
+        )}
 
-      {contributions.length === 0 && !showForm && (
-        <div style={{ padding: '20px 24px', fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
-          Nenhum aporte registrado neste mês. Clique em "Registrar aporte" para começar.
+        <div style={{ marginTop: '14px', textAlign: 'right' }}>
+          <a
+            href="/lancamento"
+            style={{ fontSize: '12px', color: '#f59e0b', textDecoration: 'none', fontWeight: 500 }}
+          >
+            Ver histórico completo →
+          </a>
         </div>
-      )}
+      </div>
     </div>
   )
-}
-
-
-const labelStyle: React.CSSProperties = {
-  fontSize:    '11px',
-  fontWeight:  500,
-  color:       'var(--text-muted)',
-  marginBottom: '5px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.06em',
-}
-
-const inputStyle: React.CSSProperties = {
-  padding:      '8px 12px',
-  background:   'var(--surface)',
-  border:       '1px solid var(--border-strong)',
-  borderRadius: '6px',
-  color:        'var(--text)',
-  fontSize:     '13px',
-  width:        '140px',
 }

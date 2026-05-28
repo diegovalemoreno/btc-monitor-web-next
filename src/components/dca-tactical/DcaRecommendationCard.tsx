@@ -138,31 +138,44 @@ export default function DcaRecommendationCard({ allocation, summary }: Props) {
         </div>
       </div>
 
-      {/* Total bar */}
+      {/* Footer: total + CTA */}
       <div style={{
-        padding:    '12px 24px',
+        padding:    '14px 24px',
         borderTop:  '1px solid var(--border-dim)',
         background: 'var(--surface2)',
         display:    'flex',
         alignItems: 'center',
-        gap:        '8px',
+        gap:        '12px',
+        flexWrap:   'wrap',
       }}>
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Total sugerido agora:</span>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Aporte sugerido agora:</span>
         <span style={{
-          fontSize:   '13px',
+          fontSize:   '14px',
           fontWeight: 700,
           color:      'var(--text)',
           fontFamily: "'Courier New', monospace",
         }}>
-          {fmt(structuralDcaAmount + tacticalContributionAmount)}
+          {fmt(tacticalContributionAmount)}
         </span>
-        <Tooltip
-          text="Soma do DCA estrutural (sempre) + aporte tático sugerido (baseado no score). É o valor total que o sistema orienta aportar neste momento."
-          position="top"
-        />
-        <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginLeft: 'auto' }}>
+        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
           de {fmt(monthlyContribution)} planejados
         </span>
+        <a
+          href="/lancamento"
+          style={{
+            marginLeft:     'auto',
+            padding:        '8px 18px',
+            background:     color,
+            color:          '#000',
+            borderRadius:   '8px',
+            fontSize:       '12px',
+            fontWeight:     700,
+            textDecoration: 'none',
+            flexShrink:     0,
+          }}
+        >
+          Ir para lançamentos →
+        </a>
       </div>
     </div>
   )
