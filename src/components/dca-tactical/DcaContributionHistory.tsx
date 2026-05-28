@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
+import Tooltip from '@/components/shared/Tooltip'
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
 
@@ -281,21 +282,25 @@ export default function DcaContributionHistory({ initialContributions, chartComp
           icon="₿" iconColor="#22C55E"
           label="Total aportado" value={fmt(totalBRL)}
           sub={totalSats > 0 ? `${totalSats.toLocaleString('pt-BR')} sats acumulados` : undefined}
+          tooltip={'Soma de todos os valores aportados em reais ao longo de todo o histórico.\n\nInclui todos os tipos de aporte (Tático, DCA Estrutural e Manual). Vendas são excluídas.'}
         />
         <SummaryStat
           icon="₿" iconColor="#F7931A"
           label="Sats comprados" value={`${totalSats.toLocaleString('pt-BR')} sats`}
           sub={totalSats > 0 ? `≈ ${(totalSats / 1e8).toFixed(8).replace(/\.?0+$/, '')} BTC` : undefined}
+          tooltip={'Total de satoshis acumulados em compras de Bitcoin.\n\n1 BTC = 100.000.000 satoshis.\n\nAportes sem BTC registrado não são contabilizados aqui.'}
         />
         <SummaryStat
           icon="◈" iconColor="var(--orange)"
           label="Preço médio" value={avgPrice > 0 ? fmtBRL0(avgPrice) + '/BTC' : '—'}
           sub="preço efetivo acumulado"
+          tooltip={'Preço médio ponderado de aquisição do Bitcoin.\n\nCálculo: Total investido em R$ ÷ Total de BTC comprado.\n\nQuanto menor esse valor em relação ao preço atual, maior o lucro não realizado.'}
         />
         <SummaryStat
           icon="%" iconColor="#818CF8"
           label="Taxas pagas" value={totalFees > 0 ? fmt(totalFees) : '—'}
           sub={totalFees > 0 ? `${feesPct.toFixed(2).replace('.', ',')}% do total` : 'sem registros'}
+          tooltip={'Soma das taxas explícitas registradas nos lançamentos.\n\nFormato esperado nas observações: "taxa R$X"\n\nTaxas não registradas nos aportes não são contabilizadas.'}
         />
       </div>
 
@@ -585,8 +590,8 @@ export default function DcaContributionHistory({ initialContributions, chartComp
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
-function SummaryStat({ icon, iconColor, label, value, sub }: {
-  icon: string; iconColor: string; label: string; value: string; sub?: string
+function SummaryStat({ icon, iconColor, label, value, sub, tooltip }: {
+  icon: string; iconColor: string; label: string; value: string; sub?: string; tooltip?: string
 }) {
   return (
     <div style={{ padding: '20px 22px', background: 'var(--surface)', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
@@ -594,7 +599,10 @@ function SummaryStat({ icon, iconColor, label, value, sub }: {
         {icon}
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '4px' }}>{label}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '4px' }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500 }}>{label}</span>
+          {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+        </div>
         <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', fontFamily: "'Courier New', monospace", lineHeight: 1.2 }}>{value}</div>
         {sub && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>{sub}</div>}
       </div>

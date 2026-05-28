@@ -1,6 +1,7 @@
 'use client'
 import React from 'react'
 import type { PatrimonioData } from '@lib/rentabilidade/types'
+import Tooltip from '@/components/shared/Tooltip'
 
 const fmt0 = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
@@ -35,9 +36,9 @@ function Sparkline({ history, color }: { history: { date: string; price: number 
 }
 
 function KpiCol({
-  label, value, valueColor, icon, borderLeft,
+  label, value, valueColor, icon, borderLeft, tooltip,
 }: {
-  label: React.ReactNode; value: string; valueColor?: string; icon: string; borderLeft?: boolean
+  label: React.ReactNode; value: string; valueColor?: string; icon: string; borderLeft?: boolean; tooltip?: string
 }) {
   return (
     <div style={{
@@ -56,8 +57,9 @@ function KpiCol({
         <div style={{ fontSize: '7.5px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1.2 }}>
           {label}
         </div>
+        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
       </div>
-      <div style={{ fontSize: '15px', fontWeight: 800, color: valueColor ?? '#fff', paddingLeft: '30px' }}>
+      <div style={{ fontSize: '15px', fontWeight: 800, color: valueColor ?? 'var(--text)', paddingLeft: '30px' }}>
         {value}
       </div>
     </div>
@@ -134,10 +136,17 @@ export default function PatrimonioHero({ patrimonio }: Props) {
             label={<>Preço médio<br />(DCA)</>}
             value={fmt0(avgPrice)}
             valueColor="#f59e0b"
+            tooltip={'Preço médio ponderado de aquisição do Bitcoin.\n\nCálculo: Total investido ÷ Total de BTC comprado.\n\nQuanto menor em relação ao preço atual, maior o lucro não realizado.'}
           />
-          <KpiCol icon="₿" label="BTC acumulado"   value={totalBtc.toFixed(8) + ' BTC'} borderLeft />
-          <KpiCol icon="▤"  label="Total investido" value={fmt0(totalInvested)}           borderLeft />
-          <KpiCol icon="✦" label="Total de aportes" value={String(contributionCount)}     borderLeft />
+          <KpiCol icon="₿" label="BTC acumulado"   value={totalBtc.toFixed(8) + ' BTC'} borderLeft
+            tooltip={'Total de Bitcoin acumulado em todos os aportes.\n\n1 BTC = 100.000.000 satoshis.\n\nAportes sem BTC registrado não são incluídos.'}
+          />
+          <KpiCol icon="▤"  label="Total investido" value={fmt0(totalInvested)}           borderLeft
+            tooltip={'Soma de todos os valores aportados em reais.\n\nInclui apenas aportes com BTC registrado. Vendas são excluídas.'}
+          />
+          <KpiCol icon="✦" label="Total de aportes" value={String(contributionCount)}     borderLeft
+            tooltip={'Número total de lançamentos registrados.\n\nInclui todos os tipos: Tático, DCA Estrutural e Manual.'}
+          />
         </div>
       </div>
     </div>
