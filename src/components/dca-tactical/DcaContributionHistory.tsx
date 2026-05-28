@@ -10,13 +10,17 @@ import DcaPatrimonyChart from './DcaPatrimonyChart'
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
 
-const fmtBTC = (sats: number) => {
-  const btc = sats / 1e8
-  return btc.toFixed(8).replace(/\.?0+$/, '') + ' BTC'
-}
+const fmtBTC = (sats: number) =>
+  (sats / 1e8).toFixed(8).replace(/\.?0+$/, '') + ' BTC'
 
 const fmtBRL0 = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
+
+const fmtK = (n: number) => {
+  if (n >= 1_000_000) return 'R$ ' + (n / 1_000_000).toFixed(2).replace('.', ',') + 'M'
+  if (n >= 1_000)     return 'R$ ' + Math.round(n / 1_000) + 'k'
+  return fmtBRL0(n)
+}
 
 function applyBRLMask(raw: string): string {
   const digits = raw.replace(/\D/g, '')
@@ -34,8 +38,8 @@ function parseBRLMask(masked: string): number | null {
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const TYPE_META: Record<ContributionType, { label: string; color: string; bg: string }> = {
-  TACTICAL:       { label: 'Tático',        color: '#00BCD4', bg: 'rgba(0,188,212,0.15)' },
-  STRUCTURAL_DCA: { label: 'DCA Estrutural', color: '#F7931A', bg: 'rgba(247,147,26,0.15)' },
+  TACTICAL:       { label: 'Tático',        color: '#00BCD4', bg: 'rgba(0,188,212,0.14)' },
+  STRUCTURAL_DCA: { label: 'DCA Estrutural', color: '#F7931A', bg: 'rgba(247,147,26,0.14)' },
   MANUAL:         { label: 'Manual',         color: '#94A3B8', bg: 'rgba(148,163,184,0.12)' },
 }
 
@@ -81,17 +85,9 @@ function extractFee(notes: string | null): number | null {
   return parseFloat(m[1].replace(',', '.'))
 }
 
-function efficiencyLabel(diffPct: number): { label: string; color: string } {
-  if (diffPct < 2)  return { label: 'Excelente', color: '#22C55E' }
-  if (diffPct < 4)  return { label: 'Boa',       color: '#86EFAC' }
-  if (diffPct < 6)  return { label: 'Moderada',  color: '#F59E0B' }
-  if (diffPct < 10) return { label: 'Alta',       color: '#F97316' }
-  return              { label: 'Muito alta',     color: '#EF4444' }
-}
-
 function exportToCsv(rows: DcaContributionRow[], filename: string) {
   const headers = ['Data','Tipo','Valor (R$)','BTC','Sats','Cotação (R$/BTC)','Preço efetivo (R$/BTC)','Taxa (R$)','Observações']
-  const lines = [headers.join(';')]
+  const lines   = [headers.join(';')]
   for (const c of rows) {
     const fee   = extractFee(c.notes)
     const notes = c.notes?.split(' · taxa')[0] ?? ''
@@ -115,32 +111,29 @@ function exportToCsv(rows: DcaContributionRow[], filename: string) {
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
-const PAGE_SIZE_OPTIONS = [10, 25, 50, 100] as const
-type PageSize = typeof PAGE_SIZE_OPTIONS[number]
+const PAGE_SIZE = 25
 
 interface Props { initialContributions: DcaContributionRow[]; initialTab?: string; chartCompact?: boolean }
 
-// ─── Main component ───────────────────────────────────────────────────────────
+// ─── Component ────────────────────────────────────────────────────────────────
 
 export default function DcaContributionHistory({ initialContributions, chartCompact }: Props) {
-  const [contributions, setContributions]           = useState<DcaContributionRow[]>(initialContributions)
-  const [deletingId, setDeletingId]                 = useState<string | null>(null)
-  const [filterType, setFilterType]                 = useState<ContributionType | 'ALL'>('ALL')
-  const [expandedId, setExpandedId]                 = useState<string | null>(null)
+  const [contributions, setContributions]            = useState<DcaContributionRow[]>(initialContributions)
+  const [deletingId, setDeletingId]                  = useState<string | null>(null)
+  const [filterType, setFilterType]                  = useState<ContributionType | 'ALL'>('ALL')
+  const [expandedId, setExpandedId]                  = useState<string | null>(null)
   const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
-  const [showRegisterModal, setShowRegisterModal]   = useState(false)
-  const [viewMonth, setViewMonth]                   = useState(() => new Date())
-  const [selectedPreset, setSelectedPreset]         = useState<PeriodPreset>('thisMonth')
-  const [customFrom, setCustomFrom]                 = useState('')
-  const [customTo, setCustomTo]                     = useState('')
-  const [showDropdown, setShowDropdown]             = useState(false)
-  const [pendingFrom, setPendingFrom]               = useState('')
-  const [pendingTo, setPendingTo]                   = useState('')
-  const [searchText, setSearchText]                 = useState('')
+  const [showRegisterModal, setShowRegisterModal]    = useState(false)
+  const [viewMonth, setViewMonth]                    = useState(() => new Date())
+  const [selectedPreset, setSelectedPreset]          = useState<PeriodPreset>('thisMonth')
+  const [customFrom, setCustomFrom]                  = useState('')
+  const [customTo, setCustomTo]                      = useState('')
+  const [showDropdown, setShowDropdown]              = useState(false)
+  const [pendingFrom, setPendingFrom]                = useState('')
+  const [pendingTo, setPendingTo]                    = useState('')
+  const [searchText, setSearchText]                  = useState('')
   const [currentPage, setCurrentPage]               = useState(1)
-  const [pageSize, setPageSize]                     = useState<PageSize>(25)
-  const [goToPageInput, setGoToPageInput]           = useState('')
-  const dropdownRef                                 = useRef<HTMLDivElement>(null)
+  const dropdownRef                                  = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     if (!showDropdown) return
@@ -183,10 +176,10 @@ export default function DcaContributionHistory({ initialContributions, chartComp
   useEffect(() => { setCurrentPage(1) }, [filteredKey])
 
   const totalItems = searchFiltered.length
-  const totalPages = Math.max(1, Math.ceil(totalItems / pageSize))
+  const totalPages = Math.max(1, Math.ceil(totalItems / PAGE_SIZE))
   const safePage   = Math.min(currentPage, totalPages)
-  const startIdx   = (safePage - 1) * pageSize
-  const endIdx     = Math.min(startIdx + pageSize, totalItems)
+  const startIdx   = (safePage - 1) * PAGE_SIZE
+  const endIdx     = Math.min(startIdx + PAGE_SIZE, totalItems)
   const pageItems  = searchFiltered.slice(startIdx, endIdx)
 
   const groups = pageItems.reduce<Record<string, DcaContributionRow[]>>((acc, c) => {
@@ -196,7 +189,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
   }, {})
   const monthKeys = Object.keys(groups)
 
-  // Summary stats (all-time from all contributions, not just period)
+  // All-time summary stats
   const allPurchases = contributions.filter(c => !c.notes?.includes('Venda') && (c.sats_purchased ?? 0) > 0)
   const totalBRL     = allPurchases.reduce((s, c) => s + c.amount, 0)
   const totalSats    = allPurchases.reduce((s, c) => s + (c.sats_purchased ?? 0), 0)
@@ -224,12 +217,6 @@ export default function DcaContributionHistory({ initialContributions, chartComp
     setShowRegisterModal(false)
   }
 
-  function handleGoToPage(e: React.FormEvent) {
-    e.preventDefault()
-    const n = parseInt(goToPageInput, 10)
-    if (!isNaN(n) && n >= 1 && n <= totalPages) { setCurrentPage(n); setGoToPageInput('') }
-  }
-
   function getCsvFilename() {
     if (selectedPreset === 'thisMonth') return `aportes-${viewMonth.getFullYear()}-${String(viewMonth.getMonth() + 1).padStart(2, '0')}.csv`
     if (selectedPreset === 'last30')       return 'aportes-ultimos-30-dias.csv'
@@ -238,8 +225,24 @@ export default function DcaContributionHistory({ initialContributions, chartComp
     return 'aportes-historico-completo.csv'
   }
 
+  // Page numbers for pagination
+  function getPageNumbers(): (number | '...')[] {
+    if (totalPages <= 7) return Array.from({ length: totalPages }, (_, i) => i + 1)
+    const pages: (number | '...')[] = [1]
+    if (safePage > 3) pages.push('...')
+    for (let i = Math.max(2, safePage - 1); i <= Math.min(totalPages - 1, safePage + 1); i++) pages.push(i)
+    if (safePage < totalPages - 2) pages.push('...')
+    pages.push(totalPages)
+    return pages
+  }
+
   return (
     <div>
+      <style>{`
+        .entry-row .row-actions { opacity: 0; transition: opacity 0.15s; }
+        .entry-row:hover .row-actions { opacity: 1; }
+        .entry-row:hover { background: var(--surface2) !important; }
+      `}</style>
 
       {editingContribution && typeof document !== 'undefined' && (
         <EditContributionModal contribution={editingContribution} onClose={() => setEditingContribution(null)} onSave={handleSaveEdit} />
@@ -248,7 +251,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
         <RegisterContributionModal onClose={() => setShowRegisterModal(false)} onCreate={handleCreate} />
       )}
 
-      {/* ── Header ─────────────────────────────────────────────────────────── */}
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '28px', gap: '16px' }}>
         <div>
           <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
@@ -261,35 +264,46 @@ export default function DcaContributionHistory({ initialContributions, chartComp
         </div>
         <button
           onClick={() => setShowRegisterModal(true)}
-          style={{
-            flexShrink: 0, padding: '10px 20px',
-            background: 'var(--orange)', color: '#000',
-            border: 'none', borderRadius: '10px',
-            fontSize: '13px', fontWeight: 700, cursor: 'pointer',
-          }}
+          style={{ flexShrink: 0, padding: '10px 20px', background: 'var(--orange)', color: '#000', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
         >
           + Registrar aporte
         </button>
       </div>
 
-      {/* ── Summary bar ────────────────────────────────────────────────────── */}
+      {/* ── Summary bar — 4 stats ──────────────────────────────────────── */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
         background: 'var(--border)', gap: '1px',
         border: '1px solid var(--border)', borderRadius: '14px',
         overflow: 'hidden', marginBottom: '24px',
       }}>
-        <SummaryStat icon="₿" iconColor="#22C55E"      label="Total aportado"  value={fmt(totalBRL)}          sub={totalSats > 0 ? `${totalSats.toLocaleString('pt-BR')} sats acumulados` : undefined} />
-        <SummaryStat icon="₿" iconColor="#F7931A"      label="Sats comprados"  value={`${totalSats.toLocaleString('pt-BR')} sats`} sub={totalSats > 0 ? `≈ ${(totalSats / 1e8).toFixed(8).replace(/\.?0+$/, '')} BTC` : undefined} />
-        <SummaryStat icon="◈" iconColor="var(--orange)" label="Preço médio"    value={avgPrice > 0 ? fmtBRL0(avgPrice) + '/BTC' : '—'} sub={avgPrice > 0 ? 'preço efetivo médio' : 'sem dados'} />
-        <SummaryStat icon="%" iconColor="#818CF8"       label="Taxas pagas"    value={totalFees > 0 ? fmt(totalFees) : '—'} sub={totalFees > 0 ? `${feesPct.toFixed(2).replace('.', ',')}% do total` : 'sem registros de taxa'} />
+        <SummaryStat
+          icon="₿" iconColor="#22C55E"
+          label="Total aportado" value={fmt(totalBRL)}
+          sub={totalSats > 0 ? `${totalSats.toLocaleString('pt-BR')} sats acumulados` : undefined}
+        />
+        <SummaryStat
+          icon="₿" iconColor="#F7931A"
+          label="Sats comprados" value={`${totalSats.toLocaleString('pt-BR')} sats`}
+          sub={totalSats > 0 ? `≈ ${(totalSats / 1e8).toFixed(8).replace(/\.?0+$/, '')} BTC` : undefined}
+        />
+        <SummaryStat
+          icon="◈" iconColor="var(--orange)"
+          label="Preço médio" value={avgPrice > 0 ? fmtBRL0(avgPrice) + '/BTC' : '—'}
+          sub="preço efetivo acumulado"
+        />
+        <SummaryStat
+          icon="%" iconColor="#818CF8"
+          label="Taxas pagas" value={totalFees > 0 ? fmt(totalFees) : '—'}
+          sub={totalFees > 0 ? `${feesPct.toFixed(2).replace('.', ',')}% do total` : 'sem registros'}
+        />
       </div>
 
-      {/* ── Chart ──────────────────────────────────────────────────────────── */}
-      <DcaPatrimonyChart contributions={periodFiltered} compact={chartCompact} />
+      {/* ── Chart — all contributions, chart manages own period ────────── */}
+      <DcaPatrimonyChart contributions={contributions} compact={chartCompact} />
 
-      {/* ── Filters bar ────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', margin: '20px 0 14px' }}>
+      {/* ── Filters bar ────────────────────────────────────────────────── */}
+      <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap', margin: '4px 0 16px' }}>
 
         {/* Period navigator */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
@@ -366,12 +380,12 @@ export default function DcaContributionHistory({ initialContributions, chartComp
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
             <button onClick={() => setSelectedPreset('thisMonth')} style={{ padding: '7px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
-            <button onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }} style={{ padding: '7px 16px', background: '#6366F1', border: 'none', borderRadius: '6px', color: 'var(--text)', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Aplicar</button>
+            <button onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }} style={{ padding: '7px 16px', background: '#6366F1', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Aplicar</button>
           </div>
         </div>
       )}
 
-      {/* ── Timeline ───────────────────────────────────────────────────────── */}
+      {/* ── Timeline ───────────────────────────────────────────────────── */}
       {monthKeys.length === 0 ? (
         <div style={{ padding: '60px 24px', textAlign: 'center', color: 'var(--text-muted)', fontSize: '14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px' }}>
           {searchText ? `Nenhum aporte para "${searchText}"` : 'Nenhum aporte no período selecionado.'}
@@ -385,57 +399,60 @@ export default function DcaContributionHistory({ initialContributions, chartComp
           const monthFees  = items.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
 
           return (
-            <div key={monthKey} style={{ marginBottom: '32px' }}>
-              {/* Month group header */}
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', padding: '0 2px' }}>
-                <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'capitalize', letterSpacing: '0.06em' }}>
+            <div key={monthKey} style={{ marginBottom: '28px' }}>
+
+              {/* Month header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', padding: '0 2px' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'capitalize', letterSpacing: '0.04em' }}>
                   {monthKey}
                 </span>
-                <div style={{ display: 'flex', gap: '14px', fontSize: '11px' }}>
+                <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
                   <span style={{ color: '#F7931A', fontWeight: 600, fontFamily: "'Courier New', monospace" }}>{fmt(monthTotal)}</span>
-                  {monthSats > 0 && <span style={{ color: '#F7931A', fontFamily: "'Courier New', monospace" }}>{monthSats.toLocaleString('pt-BR')} sats</span>}
-                  {monthFees > 0 && <span style={{ color: 'var(--text-muted)' }}>taxa {fmt(monthFees)}</span>}
+                  {monthSats > 0 && <span style={{ fontFamily: "'Courier New', monospace" }}>{monthSats.toLocaleString('pt-BR')} sats</span>}
+                  {monthFees > 0 && <span>taxa {fmt(monthFees)}</span>}
                 </div>
               </div>
 
-              {/* Entry rows */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-                {items.map(c => {
-                  const meta         = TYPE_META[c.contribution_type]
-                  const d            = new Date(c.contribution_date + 'T00:00:00')
-                  const isExpanded   = expandedId === c.id
-                  const isVenda      = c.notes?.includes('Venda') ?? false
-                  const fee          = extractFee(c.notes)
+              {/* Entries — all inside one card */}
+              <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', overflow: 'hidden' }}>
+                {items.map((c, idx) => {
+                  const meta        = TYPE_META[c.contribution_type]
+                  const d           = new Date(c.contribution_date + 'T00:00:00')
+                  const isExpanded  = expandedId === c.id
+                  const isVenda     = c.notes?.includes('Venda') ?? false
+                  const fee         = extractFee(c.notes)
                   const hasPriceData = !!(c.effective_price_brl && c.btc_price_brl)
-                  const diffPct      = hasPriceData ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100 : null
-                  const efficiency   = diffPct !== null ? efficiencyLabel(diffPct) : null
-                  const description  = c.notes?.split(' · taxa')[0] ?? ''
+                  const diffPct     = hasPriceData ? ((c.effective_price_brl! - c.btc_price_brl!) / c.btc_price_brl!) * 100 : null
+                  const description = c.notes?.split(' · taxa')[0] ?? ''
                   const avatarLetter = description ? description.charAt(0).toUpperCase() : c.contribution_type.charAt(0)
 
                   return (
                     <div key={c.id}>
                       <div
-                        className="timeline-row"
+                        className="entry-row"
                         style={{
-                          display: 'flex', alignItems: 'center', gap: '14px',
-                          padding: '14px 16px',
-                          background: isExpanded ? 'rgba(99,102,241,0.05)' : 'var(--surface)',
-                          borderRadius: '10px',
-                          borderLeft: `3px solid ${meta.color}`,
-                          cursor: 'pointer',
-                          transition: 'background 0.12s',
+                          display:      'flex',
+                          alignItems:   'center',
+                          gap:          '14px',
+                          padding:      '14px 20px',
+                          borderTop:    idx > 0 ? '1px solid var(--border-dim)' : 'none',
+                          background:   isExpanded ? 'var(--surface2)' : 'var(--surface)',
+                          cursor:       'pointer',
+                          transition:   'background 0.12s',
                         }}
                         onClick={() => setExpandedId(isExpanded ? null : c.id)}
                       >
                         {/* Day number */}
                         <div style={{ minWidth: '28px', textAlign: 'center', flexShrink: 0 }}>
-                          <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text)', lineHeight: 1 }}>{d.getDate()}</span>
+                          <span style={{ fontSize: '20px', fontWeight: 800, color: 'var(--text)', lineHeight: 1, fontVariantNumeric: 'tabular-nums' }}>
+                            {d.getDate()}
+                          </span>
                         </div>
 
-                        {/* Avatar */}
+                        {/* Avatar circle */}
                         <div style={{
                           width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-                          background: meta.bg, border: `1px solid ${meta.color}40`,
+                          background: meta.bg, border: `1.5px solid ${meta.color}50`,
                           display: 'flex', alignItems: 'center', justifyContent: 'center',
                           fontSize: '13px', fontWeight: 700, color: meta.color,
                         }}>
@@ -444,15 +461,17 @@ export default function DcaContributionHistory({ initialContributions, chartComp
 
                         {/* Description */}
                         <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
+                          {/* Line 1: description + type badge */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px', flexWrap: 'wrap' }}>
                             {description
-                              ? <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '340px' }}>{description}</span>
+                              ? <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '320px' }}>{description}</span>
                               : <span style={{ fontSize: '13px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Sem descrição</span>
                             }
-                            <span style={{ padding: '2px 8px', background: meta.bg, color: meta.color, borderRadius: '12px', fontSize: '10px', fontWeight: 600, whiteSpace: 'nowrap', flexShrink: 0 }}>
+                            <span style={{ flexShrink: 0, padding: '2px 8px', background: meta.bg, color: meta.color, borderRadius: '20px', fontSize: '10px', fontWeight: 700, letterSpacing: '0.02em', whiteSpace: 'nowrap' }}>
                               {meta.label}
                             </span>
                           </div>
+                          {/* Line 2: date + context */}
                           <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                             <span>{d.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}</span>
                             {c.market_state_snapshot && (
@@ -465,7 +484,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
                         </div>
 
                         {/* BTC + Value */}
-                        <div style={{ textAlign: 'right', flexShrink: 0 }}>
+                        <div style={{ textAlign: 'right', flexShrink: 0, minWidth: '130px' }}>
                           {c.sats_purchased && !isVenda ? (
                             <div style={{ fontSize: '12px', fontWeight: 700, color: '#F7931A', fontFamily: "'Courier New', monospace", marginBottom: '3px' }}>
                               {fmtBTC(c.sats_purchased)}
@@ -481,8 +500,8 @@ export default function DcaContributionHistory({ initialContributions, chartComp
                           )}
                         </div>
 
-                        {/* Actions */}
-                        <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
+                        {/* Actions — hidden by default, revealed on hover via CSS */}
+                        <div className="row-actions" style={{ display: 'flex', gap: '6px', flexShrink: 0 }} onClick={e => e.stopPropagation()}>
                           <button
                             onClick={() => setEditingContribution(c)}
                             style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', borderRadius: '6px', color: '#818cf8', cursor: 'pointer', fontSize: '11px', fontWeight: 600, padding: '4px 8px', lineHeight: 1 }}
@@ -495,16 +514,15 @@ export default function DcaContributionHistory({ initialContributions, chartComp
                         </div>
                       </div>
 
-                      {/* Expanded fee details */}
+                      {/* Expanded fee breakdown */}
                       {isExpanded && hasPriceData && (
-                        <div style={{ padding: '12px 20px 14px 80px', background: 'rgba(99,102,241,0.03)', borderRadius: '0 0 10px 10px', borderLeft: `3px solid ${meta.color}30`, marginTop: '-3px', marginBottom: '3px' }}>
+                        <div style={{ padding: '12px 20px 14px 80px', background: 'var(--surface2)', borderTop: '1px solid var(--border-dim)' }}>
                           <table style={{ fontSize: '11px', borderCollapse: 'collapse' }}>
                             <tbody>
                               <FeeRow label="Cotação BTC"   value={fmtBRL0(c.btc_price_brl!)} />
                               <FeeRow label="Preço efetivo" value={fmtBRL0(c.effective_price_brl!)} valueColor="#F59E0B" />
                               {diffPct !== null && <FeeRow label="Diferença" value={`+${diffPct.toFixed(2).replace('.', ',')}%`} valueColor={diffPct > 8 ? '#EF4444' : diffPct > 4 ? '#F59E0B' : '#22C55E'} />}
-                              {fee !== null && <FeeRow label="Taxa paga" value={fmt(fee)} valueColor="#F97316" />}
-                              {efficiency && <FeeRow label="Eficiência" value={efficiency.label} valueColor={efficiency.color} />}
+                              {fee !== null && <FeeRow label="Taxa paga"    value={fmt(fee)} valueColor="#F97316" />}
                             </tbody>
                           </table>
                         </div>
@@ -518,40 +536,49 @@ export default function DcaContributionHistory({ initialContributions, chartComp
         })
       )}
 
-      {/* ── Pagination ─────────────────────────────────────────────────────── */}
+      {/* ── Global summary footer ───────────────────────────────────────── */}
+      {totalSats > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px',
+          padding: '14px 20px',
+          background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px',
+          marginBottom: '12px',
+        }}>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', marginRight: '4px' }}>Preço médio evolução</span>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#F7931A', fontFamily: "'Courier New', monospace" }}>
+            {(totalSats / 1e8).toFixed(8).replace(/\.?0+$/, '')} BTC
+          </span>
+          <span style={{ fontSize: '11px', color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+          <span style={{ fontSize: '12px', fontWeight: 700, color: '#F7931A', fontFamily: "'Courier New', monospace" }}>
+            {totalSats.toLocaleString('pt-BR')} sats
+          </span>
+          {totalFees > 0 && (
+            <>
+              <span style={{ fontSize: '11px', color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>{fmt(totalFees)}</span>
+            </>
+          )}
+        </div>
+      )}
+
+      {/* ── Pagination ─────────────────────────────────────────────────── */}
       {totalItems > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', padding: '14px 20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px', marginTop: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', padding: '12px 20px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '10px' }}>
           <span style={{ fontSize: '12px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
             Mostrando <strong style={{ color: 'var(--text)' }}>{startIdx + 1}–{endIdx}</strong> de <strong style={{ color: 'var(--text)' }}>{totalItems}</strong>
           </span>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <PageBtn onClick={() => setCurrentPage(1)}            disabled={safePage === 1}          label="«" />
-            <PageBtn onClick={() => setCurrentPage(p => p - 1)}   disabled={safePage === 1}          label="‹" />
-            <span style={{ fontSize: '12px', color: 'var(--text)', padding: '0 8px', whiteSpace: 'nowrap' }}>
-              <strong>{safePage}</strong> / <strong>{totalPages}</strong>
-            </span>
-            <PageBtn onClick={() => setCurrentPage(p => p + 1)}   disabled={safePage === totalPages} label="›" />
-            <PageBtn onClick={() => setCurrentPage(totalPages)}    disabled={safePage === totalPages} label="»" />
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-            <form onSubmit={handleGoToPage} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Ir para</label>
-              <input type="number" min={1} max={totalPages} value={goToPageInput} onChange={e => setGoToPageInput(e.target.value)} placeholder={String(safePage)} style={{ width: '52px', padding: '4px 8px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px', textAlign: 'center' }} />
-              <button type="submit" style={{ padding: '4px 10px', background: 'var(--surface3)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-sec)', fontSize: '11px', cursor: 'pointer' }}>Ir</button>
-            </form>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              <label style={{ fontSize: '11px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>Por página</label>
-              <select value={pageSize} onChange={e => { setPageSize(Number(e.target.value) as PageSize); setCurrentPage(1) }} style={{ padding: '4px 8px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '12px', cursor: 'pointer' }}>
-                {PAGE_SIZE_OPTIONS.map(n => <option key={n} value={n}>{n}</option>)}
-              </select>
-            </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <PageBtn onClick={() => setCurrentPage(p => p - 1)} disabled={safePage === 1} label="‹" />
+            {getPageNumbers().map((p, i) =>
+              p === '...'
+                ? <span key={`e${i}`} style={{ padding: '0 4px', color: 'var(--text-muted)', fontSize: '12px' }}>…</span>
+                : <PageBtn key={p} onClick={() => setCurrentPage(p)} disabled={false} label={String(p)} active={p === safePage} />
+            )}
+            <PageBtn onClick={() => setCurrentPage(p => p + 1)} disabled={safePage === totalPages} label="›" />
           </div>
         </div>
       )}
 
-      <style>{`
-        .timeline-row:hover { background: rgba(255,255,255,0.03) !important; }
-      `}</style>
     </div>
   )
 }
@@ -567,7 +594,7 @@ function SummaryStat({ icon, iconColor, label, value, sub }: {
         {icon}
       </div>
       <div style={{ minWidth: 0 }}>
-        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '4px', whiteSpace: 'nowrap' }}>{label}</div>
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', fontWeight: 500, marginBottom: '4px' }}>{label}</div>
         <div style={{ fontSize: '15px', fontWeight: 700, color: 'var(--text)', fontFamily: "'Courier New', monospace", lineHeight: 1.2 }}>{value}</div>
         {sub && <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginTop: '3px' }}>{sub}</div>}
       </div>
@@ -584,11 +611,21 @@ function FeeRow({ label, value, valueColor }: { label: string; value: string; va
   )
 }
 
-function PageBtn({ onClick, disabled, label }: { onClick: () => void; disabled: boolean; label: string }) {
+function PageBtn({ onClick, disabled, label, active }: { onClick: () => void; disabled: boolean; label: string; active?: boolean }) {
   return (
-    <button onClick={onClick} disabled={disabled} style={{ padding: '4px 10px', minWidth: '32px', background: disabled ? 'transparent' : 'var(--surface3)', border: '1px solid var(--border)', borderRadius: '6px', color: disabled ? 'var(--text-muted)' : 'var(--text)', fontSize: '14px', cursor: disabled ? 'not-allowed' : 'pointer', opacity: disabled ? 0.4 : 1 }}>
-      {label}
-    </button>
+    <button
+      onClick={onClick} disabled={disabled}
+      style={{
+        padding: '5px 10px', minWidth: '32px',
+        background: active ? 'var(--orange)' : disabled ? 'transparent' : 'var(--surface3)',
+        border: `1px solid ${active ? 'var(--orange)' : 'var(--border)'}`,
+        borderRadius: '6px',
+        color: active ? '#000' : disabled ? 'var(--text-muted)' : 'var(--text)',
+        fontSize: '13px', fontWeight: active ? 700 : 400,
+        cursor: disabled ? 'not-allowed' : 'pointer',
+        opacity: disabled ? 0.4 : 1,
+      }}
+    >{label}</button>
   )
 }
 
@@ -646,7 +683,7 @@ function EditContributionModal({ contribution, onClose, onSave }: {
     <div style={{ position: 'fixed', inset: 0, zIndex: 1000, background: 'rgba(0,0,0,0.65)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px' }} onClick={onClose}>
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px', width: '100%', maxWidth: '500px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>Editar aporte</h3>
+          <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Editar aporte</h3>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '2px 6px' }}>✕</button>
         </div>
         <form onSubmit={handleSubmit}>
@@ -659,7 +696,7 @@ function EditContributionModal({ contribution, onClose, onSave }: {
             <div><label style={lbl}>BTC comprado</label><input type="text" inputMode="decimal" value={btcInput} onChange={e => setBtcInput(e.target.value)} placeholder="0.00000000" style={inp} /></div>
             <div><label style={lbl}>Cotação do mercado</label><input type="text" inputMode="numeric" value={btcPriceMask} onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           </div>
-          <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos (opcional)</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
+          <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           {calcEffective !== null && (
             <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)' }}>
               Preço efetivo: <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>{fmtBRL0(calcEffective)}/BTC</strong>
@@ -669,7 +706,7 @@ function EditContributionModal({ contribution, onClose, onSave }: {
           {error && <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '14px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>{error}</div>}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
             <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
-            <button type="submit" disabled={saving} style={{ padding: '9px 20px', background: '#6366F1', border: 'none', borderRadius: '8px', color: 'var(--text)', fontSize: '13px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Salvando…' : 'Salvar'}</button>
+            <button type="submit" disabled={saving} style={{ padding: '9px 20px', background: '#6366F1', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Salvando…' : 'Salvar'}</button>
           </div>
         </form>
       </div>
@@ -684,7 +721,6 @@ function RegisterContributionModal({ onClose, onCreate }: {
   onClose: () => void; onCreate: (c: DcaContributionRow) => void
 }) {
   const today = new Date().toISOString().slice(0, 10)
-
   const [amountMask,       setAmountMask]       = useState('')
   const [date,             setDate]             = useState(today)
   const [type,             setType]             = useState<ContributionType>('TACTICAL')
@@ -734,7 +770,7 @@ function RegisterContributionModal({ onClose, onCreate }: {
       <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '14px', padding: '24px', width: '100%', maxWidth: '520px', maxHeight: '90vh', overflowY: 'auto' }} onClick={e => e.stopPropagation()}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
           <div>
-            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700, color: 'var(--text)' }}>Registrar aporte</h3>
+            <h3 style={{ margin: 0, fontSize: '16px', fontWeight: 700 }}>Registrar aporte</h3>
             <p style={{ margin: '4px 0 0', fontSize: '12px', color: 'var(--text-muted)' }}>Novo lançamento de compra de Bitcoin.</p>
           </div>
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '2px 6px' }}>✕</button>
@@ -753,7 +789,7 @@ function RegisterContributionModal({ onClose, onCreate }: {
             </div>
             <div><label style={lbl}>Cotação do mercado</label><input type="text" inputMode="numeric" value={btcPriceMask} onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           </div>
-          <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos (opcional)</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00 — taxas, spread…" style={inp} /></div>
+          <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00 — taxas, spread…" style={inp} /></div>
           {calcEffective !== null && (
             <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)' }}>
               Preço efetivo: <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>{fmtBRL0(calcEffective)}/BTC</strong>
