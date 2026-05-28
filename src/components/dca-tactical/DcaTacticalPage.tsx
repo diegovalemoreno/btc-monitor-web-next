@@ -326,6 +326,10 @@ export default function DcaTacticalPage({ plan }: Props) {
     )
   }
 
+  function handleContributionUpdate(updated: DcaContributionRow) {
+    setContributions(prev => prev.map(c => c.id === updated.id ? updated : c))
+  }
+
   // ── Main render ───────────────────────────────────────────────────────────────
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -473,6 +477,7 @@ export default function DcaTacticalPage({ plan }: Props) {
         tacticalPool={tacticalPool}
         contributions={contributions}
         usedThisMonth={usedThisMonth}
+        onUpdate={handleContributionUpdate}
       />
 
       {/* Indicators breakdown */}
