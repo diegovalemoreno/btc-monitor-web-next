@@ -114,8 +114,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
   if (data.length === 0) return null
 
   const n       = data.length
-  const BAR_SLOT = Math.max(28, Math.min(56, 680 / n))
-  const W        = Math.max(600, n * BAR_SLOT + 120)
+  const W        = 800
   const H        = compact ? 180 : 264
   const pad      = { top: 28, right: 68, bottom: 42, left: 58 }
   const plotW    = W - pad.left - pad.right
@@ -224,7 +223,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
         onMouseMove={handleMouseMove}
         onMouseLeave={() => { setTooltip(null); setHoveredYm(null) }}
       >
-        <svg viewBox={`0 0 ${W} ${H}`} style={{ display: 'block', width: `${W}px`, height: `${H}px` }}>
+        <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" style={{ display: 'block', width: '100%', height: `${H}px` }}>
           <defs>
             <linearGradient id="dca-grad-green" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%"   stopColor="#22C55E" stopOpacity="1"   />
