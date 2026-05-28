@@ -1,6 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import type { DcaContributionRow } from '@/lib/db/types'
+import { EditContributionModal } from './DcaContributionHistory'
 
 const fmt = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
@@ -25,14 +27,22 @@ interface Props {
   tacticalPool:  number
   contributions: DcaContributionRow[]
   usedThisMonth: number
+  onUpdate?:     (updated: DcaContributionRow) => void
 }
 
-export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedThisMonth }: Props) {
+export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedThisMonth, onUpdate }: Props) {
+  const [editingContribution, setEditingContribution] = useState<DcaContributionRow | null>(null)
+
   const status     = getMonthStatus(usedThisMonth, tacticalPool)
   const meta       = STATUS_META[status]
   const pctUsed    = tacticalPool > 0 ? Math.min(100, (usedThisMonth / tacticalPool) * 100) : 0
   const excedido   = Math.max(0, usedThisMonth - tacticalPool)
   const disponivel = Math.max(0, tacticalPool - usedThisMonth)
+
+  function handleSaveEdit(updated: DcaContributionRow) {
+    setEditingContribution(null)
+    onUpdate?.(updated)
+  }
 
   return (
     <div style={{
@@ -131,8 +141,16 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
         </div>
       </div>
 
-      {/* Contributions list — read-only */}
+      {/* Contributions list */}
       <div style={{ padding: '16px 24px' }}>
+        {editingContribution && typeof document !== 'undefined' && (
+          <EditContributionModal
+            contribution={editingContribution}
+            onClose={() => setEditingContribution(null)}
+            onSave={handleSaveEdit}
+          />
+        )}
+
         <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '12px' }}>
           Aportes este mês
         </div>
@@ -165,6 +183,21 @@ export default function DcaStatusDoMesCard({ tacticalPool, contributions, usedTh
                   <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', flexShrink: 0 }}>
                     {fmt(c.amount)}
                   </span>
+                  <button
+                    onClick={() => setEditingContribution(c)}
+                    style={{
+                      background:   'rgba(99,102,241,0.12)',
+                      border:       '1px solid rgba(99,102,241,0.3)',
+                      borderRadius: '6px',
+                      color:        '#818cf8',
+                      cursor:       'pointer',
+                      fontSize:     '11px',
+                      fontWeight:   600,
+                      padding:      '4px 8px',
+                      lineHeight:   1,
+                      flexShrink:   0,
+                    }}
+                  >✎</button>
                 </div>
               )
             })}
