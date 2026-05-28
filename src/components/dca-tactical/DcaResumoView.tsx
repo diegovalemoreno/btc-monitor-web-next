@@ -123,14 +123,6 @@ export default function DcaResumoView({ initialContributions }: Props) {
           tooltip={"Diferença percentual entre o preço atual do BTC e seu preço médio de aquisição.\n\n✅ Positivo: BTC acima do custo médio — portfólio no lucro.\n🔴 Negativo: BTC abaixo do custo médio — portfólio no prejuízo.\n\nFonte do preço: CoinGecko (atualizado a cada 2 min)."}
         />
 
-        <KPICard
-          accent="#F7931A"
-          label="Preço BTC agora"
-          value={btcPriceBrl !== null ? fmtBRL0(btcPriceBrl) : 'Carregando…'}
-          valueColor="#F7931A"
-          sub1="atualizado a cada 2 min"
-          tooltip={"Preço atual do Bitcoin em reais.\n\nFonte: CoinGecko (fallback: Mercado Bitcoin).\nAtualizado a cada 2 minutos."}
-        />
 
       </div>
 

@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { listDcaContributions } from '@/repositories/dca-contributions'
 import AppNav from '@/components/shared/AppNav'
 import DcaResumoView from '@/components/dca-tactical/DcaResumoView'
+import BtcPriceInline from '@/components/shared/BtcPriceInline'
 
 export const metadata = { title: 'Resumo — BTC Monitor' }
 
@@ -25,10 +26,15 @@ export default async function ResumoPage() {
           <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
             Portfólio
           </div>
-          <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Resumo</h1>
-          <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
-            Visão consolidada do portfólio, análise de custos e evolução de patrimônio.
-          </p>
+          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+            <div>
+              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Resumo</h1>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+                Visão consolidada do portfólio, análise de custos e evolução de patrimônio.
+              </p>
+            </div>
+            <BtcPriceInline />
+          </div>
         </div>
 
         <DcaResumoView initialContributions={contributions} />
