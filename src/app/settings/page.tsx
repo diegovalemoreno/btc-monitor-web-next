@@ -2,6 +2,8 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AppNav from '@/components/shared/AppNav'
 import ThemePicker from '@/components/shared/ThemePicker'
+import SubscriptionSettings from '@/components/alerts/SubscriptionSettings'
+import { getSubscription } from '@/repositories/alert-subscriptions'
 
 export const metadata = { title: 'Configurações — BTC Monitor' }
 
@@ -10,7 +12,8 @@ export default async function SettingsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
+  const avatarUrl    = (user.user_metadata?.avatar_url ?? null) as string | null
+  const subscription = await getSubscription(supabase, user.id)
 
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
@@ -50,6 +53,14 @@ export default async function SettingsPage() {
             Tema visual
           </h2>
           <ThemePicker />
+        </section>
+
+        {/* Alertas & notificações */}
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+            Alertas & notificações
+          </h2>
+          <SubscriptionSettings initial={subscription} />
         </section>
 
         {/* Quick links */}
