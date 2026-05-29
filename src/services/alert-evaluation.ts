@@ -103,15 +103,23 @@ export async function evaluateAndDispatchAlerts(
   const eventsForDispatch: AlertEventRow[] = []
 
   for (const sub of subscriptions as AlertSubscriptionRow[]) {
-    // Per-user dedup: skip if this alert type was already sent in the dedup window
+    // Per-user dedup: skip if a CHANGE ALERT of the same type was already sent in the dedup window.
+    // Only count events that have context.changeAlert set — old-format alerts don't count.
     const { data: recent } = await client
       .from('alert_events')
-      .select('type')
+      .select('type, context')
       .eq('user_id', sub.user_id)
       .gte('created_at', cutoff)
 
-    const recentTypes = new Set((recent ?? []).map((r: { type: string }) => r.type))
-    if (recentTypes.has(alertType)) { skipped++; continue }
+    const recentChangeTypes = new Set(
+      (recent ?? [])
+        .filter((r: { type: string; context: unknown }) => {
+          const ctx = r.context as Record<string, unknown> | null
+          return ctx != null && 'changeAlert' in ctx
+        })
+        .map((r: { type: string }) => r.type)
+    )
+    if (recentChangeTypes.has(alertType)) { skipped++; continue }
 
     // Build DCA recommendation from user's active plan (if any)
     const plan = planByUser.get(sub.user_id) as DcaPlanRow | undefined
