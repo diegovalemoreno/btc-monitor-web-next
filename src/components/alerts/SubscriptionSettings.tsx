@@ -29,7 +29,6 @@ interface Props { initial: AlertSubscriptionRow | null }
 export default function SubscriptionSettings({ initial }: Props) {
   const [profile,         setProfile]         = useState<RiskProfile>(initial?.profile       ?? 'MODERATE')
   const [enabled,         setEnabled]         = useState(initial?.enabled                    ?? true)
-  const [emailEnabled,    setEmailEnabled]    = useState(initial?.email_enabled              ?? true)
   const [telegramEnabled, setTelegramEnabled] = useState(initial?.telegram_enabled           ?? false)
   const [telegramChatId,  setTelegramChatId]  = useState(initial?.telegram_chat_id           ?? '')
   const [minSeverity,     setMinSeverity]     = useState<Severity>(initial?.min_severity     ?? 'MEDIUM')
@@ -57,7 +56,6 @@ export default function SubscriptionSettings({ initial }: Props) {
         body:    JSON.stringify({
           profile,
           enabled,
-          email_enabled:    emailEnabled,
           telegram_enabled: telegramEnabled,
           telegram_chat_id: telegramChatId || null,
           min_severity:     minSeverity,
@@ -116,13 +114,6 @@ export default function SubscriptionSettings({ initial }: Props) {
               desc="Receba alertas dentro da plataforma"
               value={enabled}
               onChange={setEnabled}
-            />
-            <ChannelToggle
-              icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>}
-              label="E-mail"
-              desc="Receba alertas por e-mail"
-              value={emailEnabled}
-              onChange={setEmailEnabled}
             />
             <ChannelToggle
               icon={<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>}
