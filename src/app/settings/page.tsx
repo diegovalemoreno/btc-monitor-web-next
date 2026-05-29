@@ -2,6 +2,10 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import AppNav from '@/components/shared/AppNav'
 import ThemePicker from '@/components/shared/ThemePicker'
+import DcaPlanForm from '@/components/dca/DcaPlanForm'
+import SubscriptionSettings from '@/components/alerts/SubscriptionSettings'
+import { getDcaPlan } from '@/repositories/dca-plans'
+import { getSubscription } from '@/repositories/alert-subscriptions'
 
 export const metadata = { title: 'Configurações — BTC Monitor' }
 
@@ -11,6 +15,10 @@ export default async function SettingsPage() {
   if (!user) redirect('/login')
 
   const avatarUrl = (user.user_metadata?.avatar_url ?? null) as string | null
+  const [plan, subscription] = await Promise.all([
+    getDcaPlan(supabase, user.id),
+    getSubscription(supabase, user.id),
+  ])
 
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
@@ -52,39 +60,20 @@ export default async function SettingsPage() {
           <ThemePicker />
         </section>
 
-        {/* Quick links */}
+        {/* DCA Plan */}
         <section style={{ marginBottom: '32px' }}>
           <h2 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
-            Configurações avançadas
+            Plano DCA
           </h2>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-            {[
-              { href: '/alerts', label: 'Alertas & notificações', desc: 'Assinaturas, perfil de risco, Telegram e email' },
-              { href: '/dca',    label: 'Plano DCA',               desc: 'Valor mensal, reserva estratégica e perfil de risco' },
-            ].map(({ href, label, desc }) => (
-              <a
-                key={href}
-                href={href}
-                style={{
-                  display:        'flex',
-                  alignItems:     'center',
-                  justifyContent: 'space-between',
-                  padding:        '16px 20px',
-                  background:     'var(--surface)',
-                  border:         '1px solid var(--border-dim)',
-                  borderRadius:   '10px',
-                  textDecoration: 'none',
-                  gap:            '12px',
-                }}
-              >
-                <div>
-                  <div style={{ fontSize: '14px', fontWeight: 500, color: 'var(--text)', marginBottom: '2px' }}>{label}</div>
-                  <div style={{ fontSize: '12px', color: 'var(--text-muted)' }}>{desc}</div>
-                </div>
-                <span style={{ color: 'var(--text-muted)', fontSize: '16px', flexShrink: 0 }}>›</span>
-              </a>
-            ))}
-          </div>
+          <DcaPlanForm initial={plan} />
+        </section>
+
+        {/* Alertas */}
+        <section style={{ marginBottom: '32px' }}>
+          <h2 style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.1em', margin: '0 0 12px' }}>
+            Alertas & notificações
+          </h2>
+          <SubscriptionSettings initial={subscription} />
         </section>
 
       </div>
