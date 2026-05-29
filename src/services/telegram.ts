@@ -184,3 +184,109 @@ export async function sendTelegramDcaAlert(
     clearTimeout(timer)
   }
 }
+
+// ── Change detection format ──────────────────────────────────────────────────
+
+export interface ChangeAlertParams {
+  category:        string
+  prevOpportunity: number
+  currOpportunity: number
+  prevRegimeLabel: string
+  currRegimeLabel: string
+  drivers:         string[]
+  appUrl:          string
+}
+
+const CHANGE_EMOJI: Record<string, string> = {
+  EUPHORIA_WARNING:     '⚠️',
+  RARE_EVENT:           '🔥',
+  REGIME_CHANGE:        '🟡',
+  OPPORTUNITY_IMPROVED: '📈',
+  OPPORTUNITY_WORSENED: '📉',
+}
+
+const CHANGE_TITLE: Record<string, string> = {
+  EUPHORIA_WARNING:     'ZONA DE EUFORIA',
+  RARE_EVENT:           'EVENTO RARO DETECTADO',
+  REGIME_CHANGE:        'MUDANÇA DE REGIME',
+  OPPORTUNITY_IMPROVED: 'OPORTUNIDADE MELHOROU',
+  OPPORTUNITY_WORSENED: 'OPORTUNIDADE PIOROU',
+}
+
+function buildChangeAlertHtml(p: ChangeAlertParams): string {
+  const emoji = CHANGE_EMOJI[p.category] ?? '📊'
+  const title = CHANGE_TITLE[p.category] ?? p.category
+  const lines: string[] = [`${emoji} <b>BTC Monitor</b>`, '', `<b>${title}</b>`, '']
+
+  if (p.category === 'REGIME_CHANGE') {
+    lines.push(`Mercado transitou de <b>${esc(p.prevRegimeLabel)}</b> para <b>${esc(p.currRegimeLabel)}</b>.`, '')
+  } else if (p.category === 'OPPORTUNITY_IMPROVED') {
+    lines.push('Score de oportunidade:', `<b>${p.prevOpportunity} → ${p.currOpportunity}</b>`, '')
+    lines.push('O mercado está mais atrativo agora do que no ciclo anterior.', '')
+  } else if (p.category === 'OPPORTUNITY_WORSENED') {
+    lines.push('Score de oportunidade:', `<b>${p.prevOpportunity} → ${p.currOpportunity}</b>`, '')
+    lines.push('A assimetria de compra reduziu.', '')
+  } else if (p.category === 'RARE_EVENT') {
+    lines.push('Conjunto incomum de condições favoráveis identificado.', '')
+  } else if (p.category === 'EUPHORIA_WARNING') {
+    lines.push('O mercado entrou em zona historicamente perigosa para novas compras.', '')
+    lines.push('Considere reduzir exposição ou aguardar.', '')
+  }
+
+  if (p.drivers.length > 0) {
+    const label = p.category === 'EUPHORIA_WARNING' || p.category === 'OPPORTUNITY_WORSENED'
+      ? 'Fatores de atenção:'
+      : p.category === 'RARE_EVENT'
+      ? 'Condições identificadas:'
+      : 'Principais indicadores:'
+    lines.push(label)
+    for (const d of p.drivers) lines.push(`• ${esc(d)}`)
+    lines.push('')
+  }
+
+  lines.push(
+    `🔗 <a href="${p.appUrl}/dashboard">Ver análise completa</a>`,
+    '',
+    `<blockquote>⚠️ Não é recomendação financeira.</blockquote>`,
+  )
+  return lines.join('\n')
+}
+
+export async function sendTelegramChangeAlert(
+  chatId: string,
+  params: ChangeAlertParams,
+): Promise<TelegramResult | TelegramError> {
+  const token = process.env.TELEGRAM_BOT_TOKEN
+  if (!token) return { ok: false, error: 'TELEGRAM_BOT_TOKEN not set', chatId }
+
+  const text = buildChangeAlertHtml(params)
+
+  const controller = new AbortController()
+  const timer = setTimeout(() => controller.abort(), SEND_TIMEOUT_MS)
+
+  try {
+    const res = await fetch(`${TELEGRAM_API}/bot${token}/sendMessage`, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({
+        chat_id:                  chatId,
+        text,
+        parse_mode:               'HTML',
+        disable_web_page_preview: false,
+      }),
+      signal: controller.signal,
+    })
+
+    if (!res.ok) {
+      const body = await res.text()
+      return { ok: false, error: `HTTP ${res.status}: ${body}`, chatId }
+    }
+
+    return { ok: true, chatId }
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'Unknown error'
+    return { ok: false, error: message, chatId }
+  } finally {
+    clearTimeout(timer)
+  }
+}

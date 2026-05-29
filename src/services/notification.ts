@@ -6,7 +6,7 @@
 // ================================================================
 
 import { getServiceClient } from '@/lib/supabase/service'
-import { sendTelegramAlert, sendTelegramDcaAlert, type DcaRecommendationParams } from './telegram'
+import { sendTelegramAlert, sendTelegramDcaAlert, sendTelegramChangeAlert, type DcaRecommendationParams, type ChangeAlertParams } from './telegram'
 import { sendEmailAlert } from './email'
 import { insertNotificationLogs } from '@/repositories/notification-logs'
 import type { AlertEventRow, AlertSubscriptionRow, InsertNotificationLog } from '@/lib/db/types'
@@ -42,8 +42,11 @@ export async function dispatchAlertNotification({
 
   // ── Telegram ─────────────────────────────────────────────────
   if (subscription.telegram_enabled && subscription.telegram_chat_id) {
-    const dcaRec = ctx.dcaRec as DcaRecommendationParams | null | undefined
-    const result = dcaRec
+    const changeAlert = ctx.changeAlert as Omit<ChangeAlertParams, 'appUrl'> | null | undefined
+    const dcaRec      = ctx.dcaRec      as DcaRecommendationParams            | null | undefined
+    const result = changeAlert
+      ? await sendTelegramChangeAlert(subscription.telegram_chat_id, { ...changeAlert, appUrl: APP_URL })
+      : dcaRec
       ? await sendTelegramDcaAlert(subscription.telegram_chat_id, { ...dcaRec, appUrl: APP_URL })
       : await sendTelegramAlert(subscription.telegram_chat_id, sharedParams)
     if (result.ok) {
