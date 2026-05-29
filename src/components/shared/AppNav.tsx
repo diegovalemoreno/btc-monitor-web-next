@@ -9,8 +9,7 @@ const NAV_ITEMS = [
   { label: 'Análise Tática', href: '/dashboard'    },
   { label: 'Rentabilidade',  href: '/rentabilidade' },
   { label: 'Alertas',        href: '/alerts'        },
-  { label: 'DCA Estratégico', href: '/dca'           },
-  { label: 'DCA Tático',     href: '/dca/tatico'    },
+  { label: 'DCA',            href: '/dca'           },
   { label: 'Lançamento',     href: '/lancamento'    },
   { label: 'Configurações',  href: '/settings'      },
 ]
