@@ -7,11 +7,30 @@
 import type { TacticalSignal } from '@lib/shared/types/signal'
 import { getServiceClient } from '@/lib/supabase/service'
 import { deriveSnapshotScores } from '@/domain/snapshot-scores'
-import { evaluateAlertsForSignal, filterAlertsForSubscription } from '@/domain/alert-engine'
-import type { AlertSubscriptionRow, AlertEventRow, InsertAlertEvent } from '@/lib/db/types'
+import { evaluateAlertsForSignal, filterAlertsForSubscription, meetsMinSeverity } from '@/domain/alert-engine'
+import { determineDcaAction } from '@/domain/dca-rules'
+import { computeDcaAmounts } from '@/domain/dca-engine'
+import type { AlertSubscriptionRow, AlertEventRow, InsertAlertEvent, DcaPlanRow } from '@/lib/db/types'
 import { dispatchBulkAlerts } from './notification'
 
-const DEDUP_WINDOW_HOURS = 2
+const DEDUP_WINDOW_HOURS    = 2
+const DISPATCH_MIN_SEVERITY = 'HIGH' // Below HIGH: save to DB history only, no Telegram
+
+const SEVERITY_ORDER = ['LOW', 'MEDIUM', 'HIGH', 'CRITICAL'] as const
+
+const MARKET_LABEL: Record<string, string> = {
+  AGGRESSIVE_DCA: 'Excepcional',
+  REINFORCED_DCA: 'Favorável',
+  NORMAL_DCA:     'Neutro',
+  REDUCED_DCA:    'Cauteloso',
+  WAIT:           'Em cautela',
+}
+
+const CONF_LABEL: Record<string, string> = {
+  HIGH:   'Alta',
+  MEDIUM: 'Média',
+  LOW:    'Baixa',
+}
 
 export interface AlertEvaluationResult {
   created: number
@@ -38,17 +57,21 @@ export async function evaluateAndDispatchAlerts(
   const triggered = evaluateAlertsForSignal(signal, previousRegime)
   if (!triggered.length) return { created: 0, skipped: 0, subscribers: 0 }
 
-  // All active subscribers
-  const { data: subscriptions, error: subError } = await client
-    .from('alert_subscriptions')
-    .select('*')
-    .eq('enabled', true)
+  // Fetch subscriptions and active DCA plans in parallel
+  const [{ data: subscriptions, error: subError }, { data: plans }] = await Promise.all([
+    client.from('alert_subscriptions').select('*').eq('enabled', true),
+    client.from('dca_plans')
+      .select('user_id, monthly_amount_brl, reserve_percentage, risk_profile')
+      .eq('enabled', true),
+  ])
 
   if (subError || !subscriptions?.length) return { created: 0, skipped: 0, subscribers: 0 }
 
-  const scores  = deriveSnapshotScores(signal)
-  const cutoff  = new Date(Date.now() - DEDUP_WINDOW_HOURS * 3_600_000).toISOString()
-  const context = {
+  const scores     = deriveSnapshotScores(signal)
+  const cutoff     = new Date(Date.now() - DEDUP_WINDOW_HOURS * 3_600_000).toISOString()
+  const planByUser = new Map((plans ?? []).map(p => [p.user_id as string, p as unknown as import('@/lib/db/types').DcaPlanRow]))
+
+  const baseContext = {
     regime:            signal.regime,
     opportunityScore:  scores.opportunityScore,
     riskScore:         scores.riskScore,
@@ -59,13 +82,13 @@ export async function evaluateAndDispatchAlerts(
 
   let created = 0
   let skipped = 0
-  const insertedEvents: AlertEventRow[] = []
+  const eventsForDispatch: AlertEventRow[] = []
 
   for (const sub of subscriptions as AlertSubscriptionRow[]) {
     const eligible = filterAlertsForSubscription(triggered, sub)
     if (!eligible.length) continue
 
-    // Per-user dedup: skip types already sent in the last 6h
+    // Per-user dedup: skip types already sent in the dedup window
     const { data: recent } = await client
       .from('alert_events')
       .select('type')
@@ -73,38 +96,64 @@ export async function evaluateAndDispatchAlerts(
       .gte('created_at', cutoff)
 
     const recentTypes = new Set((recent ?? []).map((r: { type: string }) => r.type))
+    const unsent      = eligible.filter(a => !recentTypes.has(a.type))
 
-    const toInsert: InsertAlertEvent[] = eligible
-      .filter((a) => !recentTypes.has(a.type))
-      .map((a) => ({
-        user_id:     sub.user_id,
-        snapshot_id: snapshotId,
-        type:        a.type,
-        severity:    a.severity,
-        title:       a.title,
-        message:     a.message,
-        context,
-      }))
+    if (!unsent.length) { skipped += eligible.length; continue }
 
-    skipped += eligible.length - toInsert.length
-    if (!toInsert.length) continue
+    // Consolidate: pick the single highest-severity alert
+    const best = unsent.reduce((acc, a) =>
+      SEVERITY_ORDER.indexOf(a.severity as typeof SEVERITY_ORDER[number]) >
+      SEVERITY_ORDER.indexOf(acc.severity as typeof SEVERITY_ORDER[number]) ? a : acc
+    )
+
+    skipped += eligible.length - 1
+
+    // Build DCA recommendation from user's active plan (if any)
+    const plan = planByUser.get(sub.user_id) as DcaPlanRow | undefined
+    let dcaRec = null
+    if (plan) {
+      const decision = determineDcaAction(scores, plan.risk_profile)
+      const amounts  = computeDcaAmounts(plan, decision.action)
+      dcaRec = {
+        monthlyBrl:  plan.monthly_amount_brl,
+        suggestBrl:  amounts.recommendedAmountBrl,
+        reserveBrl:  amounts.reserveAmountBrl,
+        marketLabel: MARKET_LABEL[decision.action] ?? 'Neutro',
+        conviction:  CONF_LABEL[decision.confidence] ?? 'Média',
+        rationale:   decision.rationale,
+      }
+    }
+
+    const toInsert: InsertAlertEvent = {
+      user_id:     sub.user_id,
+      snapshot_id: snapshotId,
+      type:        best.type,
+      severity:    best.severity,
+      title:       best.title,
+      message:     best.message,
+      context:     { ...baseContext, dcaRec },
+    }
 
     const { data: inserted, error } = await client
       .from('alert_events')
-      .insert(toInsert)
+      .insert([toInsert])
       .select()
 
     if (error) {
       console.error('[alert-evaluation] insert failed:', error.message)
     } else {
-      created += inserted.length
-      insertedEvents.push(...(inserted as AlertEventRow[]))
+      created++
+      const event = (inserted as AlertEventRow[])[0]
+      // Only dispatch HIGH+ via Telegram — LOW/MEDIUM saved as DB history only
+      if (meetsMinSeverity(best.severity, DISPATCH_MIN_SEVERITY)) {
+        eventsForDispatch.push(event)
+      }
     }
   }
 
   // Dispatch notifications — awaited so serverless function doesn't terminate early
   try {
-    await dispatchBulkAlerts(insertedEvents, subscriptions as AlertSubscriptionRow[])
+    await dispatchBulkAlerts(eventsForDispatch, subscriptions as AlertSubscriptionRow[])
   } catch (err) {
     console.error('[alert-evaluation] notification dispatch error:', err)
   }
