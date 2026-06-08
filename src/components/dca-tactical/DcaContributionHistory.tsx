@@ -753,7 +753,8 @@ function RegisterContributionModal({ onClose, onCreate }: {
   const calcEffective      = parsedSats && parsedSats > 0 && parsedAmount > 0 ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8) : null
 
   useEffect(() => {
-    if (!date || !time) return
+    setPriceAutoFilled(false)
+    if (!date) return
     const id = setTimeout(async () => {
       setFetchingPrice(true)
       try {
