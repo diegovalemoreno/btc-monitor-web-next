@@ -51,27 +51,44 @@ function computeMacd(closes: number[]): { hist: number; positive: boolean; growi
   return { hist: h[L], positive: h[L] > 0, growing: h[L] > h[L - 1] }
 }
 
+function computePiCycle(closes: number[]): { ratioPct: number; score: number; label: string } | null {
+  if (closes.length < 350) return null
+  const mm111 = sma(closes.slice(-111))
+  const mm350 = sma(closes.slice(-350))
+  const ratioPct = (mm111 / (2 * mm350)) * 100
+  const score = ratioPct < 55 ? 2 : ratioPct < 70 ? 1 : ratioPct < 85 ? -1 : -2
+  const label  = ratioPct < 55 ? 'Longe do Topo — Fase de Acumulação'
+               : ratioPct < 70 ? 'Meio de Ciclo — Atenção Crescente'
+               : ratioPct < 85 ? 'Aproximando do Topo — Reduzir Risco'
+               :                 'Sinal Histórico de Topo'
+  return { ratioPct: parseFloat(ratioPct.toFixed(1)), score, label }
+}
+
 export async function GET() {
   try {
-    const closes = await fetchCloses(200)
+    const closes = await fetchCloses(400)
     if (closes.length < 50) throw new Error('Binance: dados insuficientes')
     const current = closes[closes.length - 1]
 
     const rsi14 = computeRsi(closes)
     const macd  = computeMacd(closes)
-    const ma200 = sma(closes)
+    const ma200 = sma(closes.slice(-200))
     const ma50  = sma(closes.slice(-50))
     const ma200DistPct = ((current - ma200) / ma200) * 100
+    const piCycle = computePiCycle(closes)
 
     return NextResponse.json({
-      rsi14:        parseFloat(rsi14.toFixed(1)),
-      macdHist:     parseFloat(macd.hist.toFixed(0)),
-      macdPositive: macd.positive,
-      macdGrowing:  macd.growing,
-      ma200:        parseFloat(ma200.toFixed(0)),
-      ma50:         parseFloat(ma50.toFixed(0)),
-      ma200DistPct: parseFloat(ma200DistPct.toFixed(1)),
-      crossType:    ma50 > ma200 ? 'golden' : 'death',
+      rsi14:           parseFloat(rsi14.toFixed(1)),
+      macdHist:        parseFloat(macd.hist.toFixed(0)),
+      macdPositive:    macd.positive,
+      macdGrowing:     macd.growing,
+      ma200:           parseFloat(ma200.toFixed(0)),
+      ma50:            parseFloat(ma50.toFixed(0)),
+      ma200DistPct:    parseFloat(ma200DistPct.toFixed(1)),
+      crossType:       ma50 > ma200 ? 'golden' : 'death',
+      piCycleRatioPct: piCycle?.ratioPct ?? null,
+      piCycleScore:    piCycle?.score    ?? null,
+      piCycleLabel:    piCycle?.label    ?? null,
     })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 503 })
