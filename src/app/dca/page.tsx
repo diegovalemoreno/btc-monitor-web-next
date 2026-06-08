@@ -1,7 +1,6 @@
 import { redirect }               from 'next/navigation'
 import { createClient }           from '@/lib/supabase/server'
 import { getDcaPlan }             from '@/repositories/dca-plans'
-import { listDcaContributions }   from '@/repositories/dca-contributions'
 import { getCurrentMarketData }   from '@/services/market-data'
 import AppNav                     from '@/components/shared/AppNav'
 import DcaRecommendationHero      from '@/components/dca/DcaRecommendationHero'
@@ -9,7 +8,6 @@ import DcaTacticalAlert           from '@/components/dca/DcaTacticalAlert'
 import DcaWhyNow                  from '@/components/dca/DcaWhyNow'
 import DcaHistoricalReturns       from '@/components/dca/DcaHistoricalReturns'
 import DcaPlanForm                from '@/components/dca/DcaPlanForm'
-import DcaContributionHistory     from '@/components/dca-tactical/DcaContributionHistory'
 import { buildRecommendation }    from '@/lib/dca/recommendation'
 import { buildWhyNow }            from '@/lib/dca/why-now'
 import { detectTacticalPatterns } from '@/lib/dca/tactical-patterns'
@@ -29,10 +27,6 @@ export default async function DcaPage() {
     getDcaPlan(supabase, user.id),
     getCurrentMarketData(),
   ])
-
-  const contributions = plan
-    ? await listDcaContributions(supabase, user.id)
-    : []
 
   const score = signal.explanation.smoothedScore
 
@@ -68,12 +62,6 @@ export default async function DcaPage() {
           <DcaWhyNow items={whyNow} />
 
           <DcaHistoricalReturns rows={historicalRows} />
-
-          {plan && (
-            <div style={{ marginTop: '32px' }}>
-              <DcaContributionHistory initialContributions={contributions} />
-            </div>
-          )}
 
         </div>
       </main>
