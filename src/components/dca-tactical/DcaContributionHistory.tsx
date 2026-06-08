@@ -673,21 +673,22 @@ export function EditContributionModal({ contribution, onClose, onSave }: {
   useEffect(() => {
     setPriceAutoFilled(false)
     if (!date || date === initialDate.current) return
+    const controller = new AbortController()
     const id = setTimeout(async () => {
       setFetchingPrice(true)
       try {
-        const res = await fetch(`/api/btc-price-at?ts=${date}T${time}`)
+        const res = await fetch(`/api/btc-price-at?ts=${new Date(`${date}T${time}`).toISOString()}`, { signal: controller.signal })
         if (!res.ok) return
         const { btcPriceBrl } = await res.json() as { btcPriceBrl: number }
         setBtcPriceMask(applyBRLMask(String(Math.round(btcPriceBrl * 100))))
         setPriceAutoFilled(true)
-      } catch {
-        // silencioso
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') { /* silencioso */ }
       } finally {
         setFetchingPrice(false)
       }
     }, 500)
-    return () => clearTimeout(id)
+    return () => { clearTimeout(id); controller.abort() }
   }, [date, time])
 
   async function handleSubmit(e: React.FormEvent) {
@@ -799,21 +800,22 @@ function RegisterContributionModal({ onClose, onCreate }: {
   useEffect(() => {
     setPriceAutoFilled(false)
     if (!date) return
+    const controller = new AbortController()
     const id = setTimeout(async () => {
       setFetchingPrice(true)
       try {
-        const res = await fetch(`/api/btc-price-at?ts=${date}T${time}`)
+        const res = await fetch(`/api/btc-price-at?ts=${new Date(`${date}T${time}`).toISOString()}`, { signal: controller.signal })
         if (!res.ok) return
         const { btcPriceBrl } = await res.json() as { btcPriceBrl: number }
         setBtcPriceMask(applyBRLMask(String(Math.round(btcPriceBrl * 100))))
         setPriceAutoFilled(true)
-      } catch {
-        // silencioso — campo fica editável
+      } catch (e) {
+        if ((e as Error).name !== 'AbortError') { /* silencioso — campo fica editável */ }
       } finally {
         setFetchingPrice(false)
       }
     }, 500)
-    return () => clearTimeout(id)
+    return () => { clearTimeout(id); controller.abort() }
   }, [date, time])
 
   async function handleSubmit(e: React.FormEvent) {
