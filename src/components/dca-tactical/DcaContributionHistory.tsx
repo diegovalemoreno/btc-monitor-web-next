@@ -663,6 +663,7 @@ export function EditContributionModal({ contribution, onClose, onSave }: {
   const [error,            setError]            = useState<string | null>(null)
 
   const initialDate = useRef(contribution.contribution_date)
+  const initialTime = useRef(currentHour())
 
   const parsedAmount       = parseBRLMask(amountMask) ?? 0
   const parsedSats         = btcInput ? Math.round(parseFloat(btcInput.replace(',', '.')) * 1e8) : null
@@ -672,7 +673,7 @@ export function EditContributionModal({ contribution, onClose, onSave }: {
 
   useEffect(() => {
     setPriceAutoFilled(false)
-    if (!date || date === initialDate.current) return
+    if (!date || (date === initialDate.current && time === initialTime.current)) return
     const controller = new AbortController()
     const id = setTimeout(async () => {
       setFetchingPrice(true)

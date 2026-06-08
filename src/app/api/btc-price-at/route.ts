@@ -20,7 +20,9 @@ export async function GET(req: NextRequest) {
       const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCBRL')
       if (!res.ok) throw new Error(`binance ticker: erro ${res.status}`)
       const data = await res.json() as { price: string }
-      return NextResponse.json({ btcPriceBrl: parseFloat(data.price), source: 'binance-ticker' })
+      const price = parseFloat(data.price)
+      if (!price || price <= 0) return NextResponse.json({ error: 'binance: preço inválido' }, { status: 503 })
+      return NextResponse.json({ btcPriceBrl: price, source: 'binance-ticker' })
     }
 
     const alignedMs = Math.floor(targetMs / 3_600_000) * 3_600_000
