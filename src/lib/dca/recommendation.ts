@@ -13,7 +13,7 @@ const SCORE_BUCKETS: Array<{ max: number; multiplier: number; label: string }> =
   { max: 55,  multiplier: 1.1, label: 'Compra tática — condições favoráveis' },
   { max: 70,  multiplier: 1.0, label: 'Neutro — manter DCA padrão' },
   { max: 85,  multiplier: 0.7, label: 'Alta madura — reduzir aporte' },
-  { max: 101, multiplier: 0.4, label: 'Euforia — preservar capital' },
+  { max: 101, multiplier: 0.4, label: 'Euforia — preservar capital' }, // 101 so score=100 matches this bucket via score < max
 ]
 
 const PROFILE_MODIFIER: Record<RiskProfile, number> = {
@@ -30,6 +30,7 @@ export function buildRecommendation(
   const bucket     = SCORE_BUCKETS.find(b => score < b.max) ?? SCORE_BUCKETS[SCORE_BUCKETS.length - 1]
   const modifier   = PROFILE_MODIFIER[riskProfile]
   const raw        = monthlyAmountBrl * bucket.multiplier * modifier
+  // cap at 1.8× to avoid suggesting more than 80% above monthly in extreme markets
   const capped     = Math.min(raw, monthlyAmountBrl * 1.8)
   return {
     recommendedAmount: Math.round(capped),

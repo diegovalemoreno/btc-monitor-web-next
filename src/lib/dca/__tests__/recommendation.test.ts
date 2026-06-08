@@ -46,4 +46,29 @@ describe('buildRecommendation', () => {
     const r = buildRecommendation(45, 333, 'MODERATE')
     expect(Number.isInteger(r.recommendedAmount)).toBe(true)
   })
+
+  it('score 20 → multiplier 1.3 (not 1.5)', () => {
+    const r = buildRecommendation(20, 1000, 'MODERATE')
+    expect(r.multiplier).toBe(1.3)
+  })
+
+  it('score 35 → multiplier 1.1 (not 1.3)', () => {
+    const r = buildRecommendation(35, 1000, 'MODERATE')
+    expect(r.multiplier).toBe(1.1)
+  })
+
+  it('score 55 → multiplier 1.0 (not 1.1)', () => {
+    const r = buildRecommendation(55, 1000, 'MODERATE')
+    expect(r.multiplier).toBe(1.0)
+  })
+
+  it('score 70 → multiplier 0.7 (not 1.0)', () => {
+    const r = buildRecommendation(70, 1000, 'MODERATE')
+    expect(r.multiplier).toBe(0.7)
+  })
+
+  it('score 85 → multiplier 0.4 (not 0.7)', () => {
+    const r = buildRecommendation(85, 1000, 'MODERATE')
+    expect(r.multiplier).toBe(0.4)
+  })
 })
