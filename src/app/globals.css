@@ -258,3 +258,14 @@ html, body {
   .contrib-notes  { grid-area: notes;  overflow: hidden; }
   .contrib-btc    { display: none !important; }
 }
+
+/* ── KPI grid — responsive ───────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .kpi-grid { grid-template-columns: repeat(2, 1fr) !important; }
+}
+
+@media (max-width: 400px) {
+  .kpi-grid { grid-template-columns: 1fr !important; }
+}
+}
