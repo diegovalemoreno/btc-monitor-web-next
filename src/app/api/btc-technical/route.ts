@@ -54,6 +54,7 @@ function computeMacd(closes: number[]): { hist: number; positive: boolean; growi
 export async function GET() {
   try {
     const closes = await fetchCloses(200)
+    if (closes.length < 50) throw new Error('Binance: dados insuficientes')
     const current = closes[closes.length - 1]
 
     const rsi14 = computeRsi(closes)
