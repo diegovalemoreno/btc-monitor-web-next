@@ -13,7 +13,7 @@ export async function GET(req: NextRequest) {
 
   const now = Date.now()
   const targetMs = date.getTime()
-  if (targetMs > now) return NextResponse.json({ error: 'ts futuro' }, { status: 400 })
+  if (targetMs > now + 3_600_000) return NextResponse.json({ error: 'ts futuro' }, { status: 400 })
 
   try {
     if (now - targetMs < TICKER_THRESHOLD_MS) {
