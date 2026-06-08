@@ -268,4 +268,3 @@ html, body {
 @media (max-width: 400px) {
   .kpi-grid { grid-template-columns: 1fr !important; }
 }
-}
