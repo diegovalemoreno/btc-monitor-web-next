@@ -140,6 +140,13 @@ html, body {
 }
 .nav-links::-webkit-scrollbar { display: none; }
 
+/* ── Fade-in ─────────────────────────────────────────────────── */
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
 /* ── Skeleton pulse ──────────────────────────────────────────── */
 
 @keyframes skeleton-pulse {
@@ -177,6 +184,23 @@ html, body {
   .mobile-stack   { flex-direction: column !important; align-items: flex-start !important; }
   .mobile-full    { width: 100% !important; }
   .mobile-text-sm { font-size: 12px !important; }
+}
+
+/* ── Indicator cards — mobile collapse ───────────────────────── */
+
+@media (max-width: 600px) {
+  .ind-card {
+    grid-template-columns: 1fr !important;
+  }
+  .ind-card-right {
+    flex-direction: row !important;
+    align-items:    center !important;
+    flex-wrap:      wrap;
+    gap:            10px !important;
+  }
+  .ind-card-value {
+    font-size: 24px !important;
+  }
 }
 
 /* ── Dashboard dimension grid ─────────────────────────────── */
