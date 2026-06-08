@@ -651,19 +651,44 @@ export function EditContributionModal({ contribution, onClose, onSave }: {
 
   const [amountMask,       setAmountMask]       = useState(contribution.amount ? applyBRLMask(String(Math.round(contribution.amount * 100))) : '')
   const [date,             setDate]             = useState(contribution.contribution_date)
+  const [time,             setTime]             = useState(currentHour)
   const [type,             setType]             = useState<ContributionType>(contribution.contribution_type)
   const [btcInput,         setBtcInput]         = useState(contribution.sats_purchased ? (contribution.sats_purchased / 1e8).toFixed(8).replace(/\.?0+$/, '') : '')
   const [btcPriceMask,     setBtcPriceMask]     = useState(contribution.btc_price_brl ? applyBRLMask(String(Math.round(contribution.btc_price_brl * 100))) : '')
+  const [priceAutoFilled,  setPriceAutoFilled]  = useState(false)
+  const [fetchingPrice,    setFetchingPrice]    = useState(false)
   const [outrosCustosMask, setOutrosCustosMask] = useState(fee ? applyBRLMask(String(Math.round(fee * 100))) : '')
   const [notes,            setNotes]            = useState(baseNotes)
   const [saving,           setSaving]           = useState(false)
   const [error,            setError]            = useState<string | null>(null)
+
+  const initialDate = useRef(contribution.contribution_date)
 
   const parsedAmount       = parseBRLMask(amountMask) ?? 0
   const parsedSats         = btcInput ? Math.round(parseFloat(btcInput.replace(',', '.')) * 1e8) : null
   const parsedBtcPrice     = parseBRLMask(btcPriceMask) ?? 0
   const parsedOutrosCustos = parseBRLMask(outrosCustosMask) ?? 0
   const calcEffective      = parsedSats && parsedSats > 0 && parsedAmount > 0 ? (parsedAmount + parsedOutrosCustos) / (parsedSats / 1e8) : null
+
+  useEffect(() => {
+    setPriceAutoFilled(false)
+    if (!date || date === initialDate.current) return
+    const id = setTimeout(async () => {
+      setFetchingPrice(true)
+      try {
+        const res = await fetch(`/api/btc-price-at?ts=${date}T${time}`)
+        if (!res.ok) return
+        const { btcPriceBrl } = await res.json() as { btcPriceBrl: number }
+        setBtcPriceMask(applyBRLMask(String(Math.round(btcPriceBrl * 100))))
+        setPriceAutoFilled(true)
+      } catch {
+        // silencioso
+      } finally {
+        setFetchingPrice(false)
+      }
+    }, 500)
+    return () => clearTimeout(id)
+  }, [date, time])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -699,14 +724,33 @@ export function EditContributionModal({ contribution, onClose, onSave }: {
           <button onClick={onClose} style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '18px', cursor: 'pointer', padding: '2px 6px' }}>✕</button>
         </div>
         <form onSubmit={handleSubmit}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 120px', gap: '14px', marginBottom: '14px' }}>
             <div><label style={lbl}>Valor *</label><input type="text" inputMode="numeric" value={amountMask} onChange={e => setAmountMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
             <div><label style={lbl}>Data *</label><input type="date" value={date} onChange={e => setDate(e.target.value)} style={inp} /></div>
+            <div><label style={lbl}>Hora</label><input type="time" step="3600" value={time} onChange={e => setTime(e.target.value)} style={inp} /></div>
           </div>
           <div style={{ marginBottom: '14px' }}><label style={lbl}>Tipo</label><select value={type} onChange={e => setType(e.target.value as ContributionType)} style={{ ...inp, cursor: 'pointer' }}>{(Object.entries(TYPE_META) as [ContributionType, { label: string }][]).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}</select></div>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px', marginBottom: '14px' }}>
             <div><label style={lbl}>BTC comprado</label><input type="text" inputMode="decimal" value={btcInput} onChange={e => setBtcInput(e.target.value)} placeholder="0.00000000" style={inp} /></div>
-            <div><label style={lbl}>Cotação do mercado</label><input type="text" inputMode="numeric" value={btcPriceMask} onChange={e => setBtcPriceMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
+            <div>
+              <label style={lbl}>Cotação do mercado</label>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  value={fetchingPrice ? '' : btcPriceMask}
+                  onChange={e => { setBtcPriceMask(applyBRLMask(e.target.value)); setPriceAutoFilled(false) }}
+                  placeholder={fetchingPrice ? 'Buscando...' : 'R$ 0,00'}
+                  disabled={fetchingPrice}
+                  style={{ ...inp, paddingRight: priceAutoFilled && !fetchingPrice ? '52px' : '12px' }}
+                />
+                {priceAutoFilled && !fetchingPrice && (
+                  <span style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', fontSize: '10px', fontWeight: 700, color: 'var(--orange)', background: 'rgba(249,115,22,0.12)', padding: '2px 6px', borderRadius: '4px', pointerEvents: 'none' }}>
+                    auto
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
           <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           {calcEffective !== null && (
