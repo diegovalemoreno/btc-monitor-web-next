@@ -123,7 +123,7 @@ function buildTrendExtraCards(tech: BtcTechnical | null): TacticalCardData[] {
     cards.push({ name: 'Cruz MM50 / MM200', statusLabel: isGolden ? 'Cruz Dourada — Preço Já Recuperado' : 'Cruz da Morte — Zona de Fundo Histórico', description: `MM50 = $${tech.ma50?.toLocaleString('en-US') ?? '—'} | MM200 = $${tech.ma200?.toLocaleString('en-US') ?? '—'}. Para 1+ ano: Cruz da Morte = zona de fundo histórico = comprar. Cruz Dourada = preço já subiu = entrada menos vantajosa.`, value: isGolden ? 'Dourada' : 'Morte', score: s, dotLevel: dl(s) })
   }
   if (tech.piCycleRatioPct !== null && tech.piCycleScore !== null && tech.piCycleLabel !== null) {
-    cards.push({ name: 'Pi Cycle — Fase do Ciclo', statusLabel: tech.piCycleLabel, description: `MM111 ÷ (2×MM350) = ${tech.piCycleRatioPct}%. Abaixo de 55% = ciclo longe do topo = boa fase para comprar. Acima de 90–100% = indicador histórico de topo de ciclo: hora de vender.`, value: `${tech.piCycleRatioPct}%`, score: tech.piCycleScore, dotLevel: dl(tech.piCycleScore) })
+    cards.push({ name: 'Pi Cycle — Fase do Ciclo', statusLabel: tech.piCycleLabel, description: `MM111 ÷ (2×MM350) = ${tech.piCycleRatioPct}%. Abaixo de 55% = ciclo longe do topo = boa fase pra comprar. Acima de 90-100% = indicador histórico de topo de ciclo: hora de vender.`, value: `${tech.piCycleRatioPct}%`, score: tech.piCycleScore, dotLevel: dl(tech.piCycleScore) })
   }
   return cards
 }

@@ -56,11 +56,11 @@ function computePiCycle(closes: number[]): { ratioPct: number; score: number; la
   const mm111 = sma(closes.slice(-111))
   const mm350 = sma(closes.slice(-350))
   const ratioPct = (mm111 / (2 * mm350)) * 100
-  const score = ratioPct < 55 ? 2 : ratioPct < 70 ? 1 : ratioPct < 85 ? -1 : -2
-  const label  = ratioPct < 55 ? 'Longe do Topo — Fase de Acumulação'
-               : ratioPct < 70 ? 'Meio de Ciclo — Atenção Crescente'
-               : ratioPct < 85 ? 'Aproximando do Topo — Reduzir Risco'
-               :                 'Sinal Histórico de Topo'
+  const score = ratioPct < 55 ? 1 : ratioPct < 75 ? 0 : ratioPct < 90 ? -1 : -2
+  const label  = ratioPct < 55 ? 'Início do ciclo de alta'
+               : ratioPct < 75 ? 'Meio do ciclo — Atenção'
+               : ratioPct < 90 ? 'Aproximando do Topo — Reduzir Risco'
+               :                 'Sinal Histórico de Topo — Hora de Vender'
   return { ratioPct: parseFloat(ratioPct.toFixed(1)), score, label }
 }
 
