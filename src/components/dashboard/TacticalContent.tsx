@@ -87,7 +87,7 @@ const INDICATOR_WHAT: Record<string, string> = {
 
 function indicatorToCard(ind: { name: string; score: number; summary: string }): TacticalCardData {
   const { rawValue, specificLabel } = parseSummary(ind.summary)
-  const level = dl(Math.round(ind.score / 5))
+  const level = dl(ind.score)
   return {
     name:        ind.name,
     statusLabel: specificLabel ?? impactLabelOf(level),
