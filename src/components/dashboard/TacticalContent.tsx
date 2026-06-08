@@ -4,13 +4,14 @@ import { useState, useEffect } from 'react'
 import type { TacticalSignal } from '@lib/shared/types/signal'
 import type { TacticalCardData } from '../dca-tactical/tactical/TacticalCard'
 
-import TacticalCard         from '../dca-tactical/tactical/TacticalCard'
-import TacticalHero         from '../dca-tactical/tactical/TacticalHero'
-import OpportunityBar       from '../dca-tactical/tactical/OpportunityBar'
-import MarketKPIRow         from '../dca-tactical/tactical/MarketKPIRow'
-import TacticalSectionHeader from '../dca-tactical/tactical/TacticalSectionHeader'
-import TacticalConsensus    from '../dca-tactical/tactical/TacticalConsensus'
-import TacticalInsights     from '../dca-tactical/tactical/TacticalInsights'
+import TacticalCard              from '../dca-tactical/tactical/TacticalCard'
+import TacticalHero              from '../dca-tactical/tactical/TacticalHero'
+import OpportunityBar            from '../dca-tactical/tactical/OpportunityBar'
+import MarketKPIRow              from '../dca-tactical/tactical/MarketKPIRow'
+import TacticalSectionHeader     from '../dca-tactical/tactical/TacticalSectionHeader'
+import TacticalConsensus         from '../dca-tactical/tactical/TacticalConsensus'
+import TacticalInsights          from '../dca-tactical/tactical/TacticalInsights'
+import TacticalOpportunityBanner from './TacticalOpportunityBanner'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -183,7 +184,10 @@ export default function TacticalContent({ signal, opportunityScore }: Props) {
       {/* 2. Opportunity bar */}
       <OpportunityBar score={opportunityScore} />
 
-      {/* 3. KPI row */}
+      {/* 3. Historical opportunity banner — shown only when score < 55 */}
+      <TacticalOpportunityBanner score={opportunityScore} />
+
+      {/* 4. KPI row */}
       <MarketKPIRow
         marketCapUsd={kpis?.marketCapUsd ?? null}
         volume24hUsd={kpis?.volume24hUsd ?? null}
