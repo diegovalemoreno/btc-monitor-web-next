@@ -19,8 +19,8 @@ export default async function DashboardPage() {
   return (
     <div style={{ minHeight: '100dvh', backgroundColor: 'var(--bg)', color: 'var(--text)' }}>
       <AppNav userEmail={user.email ?? ''} userAvatarUrl={avatarUrl} />
-      <main style={{ padding: '24px 16px' }}>
-        <div style={{ maxWidth: '800px', margin: '0 auto' }}>
+      <main style={{ padding: '32px 24px' }}>
+        <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
           <TacticalContent
             signal={signal}
             opportunityScore={signal.explanation.smoothedScore}
