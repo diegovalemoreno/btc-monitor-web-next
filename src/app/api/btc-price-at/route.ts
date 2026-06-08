@@ -18,7 +18,7 @@ export async function GET(req: NextRequest) {
   try {
     if (now - targetMs < TICKER_THRESHOLD_MS) {
       const res = await fetch('https://api.binance.com/api/v3/ticker/price?symbol=BTCBRL')
-      if (!res.ok) throw new Error(`binance ticker ${res.status}`)
+      if (!res.ok) throw new Error(`binance ticker: erro ${res.status}`)
       const data = await res.json() as { price: string }
       return NextResponse.json({ btcPriceBrl: parseFloat(data.price), source: 'binance-ticker' })
     }
@@ -26,11 +26,11 @@ export async function GET(req: NextRequest) {
     const alignedMs = Math.floor(targetMs / 3_600_000) * 3_600_000
     const url = `https://api.binance.com/api/v3/klines?symbol=BTCBRL&interval=1h&startTime=${alignedMs}&limit=1`
     const res = await fetch(url)
-    if (!res.ok) throw new Error(`binance klines ${res.status}`)
+    if (!res.ok) throw new Error(`binance klines: erro ${res.status}`)
     const data = await res.json() as unknown[][]
     if (!data.length) return NextResponse.json({ error: 'sem-dados' }, { status: 404 })
     const close = parseFloat(data[0][4] as string)
-    if (!close || close <= 0) return NextResponse.json({ error: 'binance: invalid price' }, { status: 503 })
+    if (!close || close <= 0) return NextResponse.json({ error: 'binance: preço inválido' }, { status: 503 })
     return NextResponse.json({ btcPriceBrl: close, source: 'binance-klines' })
   } catch (err) {
     return NextResponse.json({ error: (err as Error).message }, { status: 503 })
