@@ -39,7 +39,7 @@ const PATTERNS: PatternDef[] = [
       const conds: string[] = []
       if (mayer >= 1) conds.push('Mayer Multiple < 1.0 — BTC historicamente barato')
       if (mvrv >= 1) conds.push('MVRV < 1.5 — preço próximo ao custo dos holders')
-      if (score < 35) conds.push(`Score de oportunidade ${score} — fundo de ciclo`)
+      if (score >= 50) conds.push(`Score de oportunidade ${score} — zona de acumulação confirmada`)
       return conds.length === 3 ? conds : []
     },
   },
@@ -54,7 +54,7 @@ const PATTERNS: PatternDef[] = [
       const conds: string[] = []
       if (fear >= 2) conds.push('Medo & Ganância em nível extremo — pânico no mercado')
       if (funding >= 1) conds.push('Taxa de Funding negativa — shorts dominam, reversão próxima')
-      if (score < 20) conds.push(`Score ${score} — capitulação extrema`)
+      if (score >= 65) conds.push(`Score ${score} — capitulação extrema detectada`)
       return conds.length === 3 ? conds : []
     },
   },
@@ -69,7 +69,7 @@ const PATTERNS: PatternDef[] = [
       const conds: string[] = []
       if (bollinger >= 1) conds.push('Bollinger %B sobrevendido — abaixo da banda inferior')
       if (mas >= 2) conds.push('Abaixo de múltiplas médias móveis — desconto histórico')
-      if (score < 35) conds.push(`Score ${score} — mercado em território de acumulação`)
+      if (score >= 50) conds.push(`Score ${score} — mercado em território de acumulação`)
       return conds.length === 3 ? conds : []
     },
   },
@@ -82,7 +82,7 @@ const PATTERNS: PatternDef[] = [
       const score = explanation.smoothedScore
       const conds: string[] = []
       if (hash >= 1) conds.push('Hash Ribbon cruzando para cima — mineradores se recuperando')
-      if (score < 40) conds.push(`Score ${score} — fase de acumulação confirmada`)
+      if (score >= 50) conds.push(`Score ${score} — fase de acumulação confirmada`)
       return conds.length === 2 ? conds : []
     },
   },
@@ -112,7 +112,7 @@ const PATTERNS: PatternDef[] = [
       const conds: string[] = []
       if (mas >= 2) conds.push('Preço abaixo de múltiplas MAs — alinhamento de fundo')
       if (mayer >= 2) conds.push('Mayer Multiple < 0.85 — zona de desconto extremo histórico')
-      if (score < 35) conds.push(`Score ${score} — condições de fundo de ciclo`)
+      if (score >= 50) conds.push(`Score ${score} — condições de fundo de ciclo`)
       return conds.length === 3 ? conds : []
     },
   },

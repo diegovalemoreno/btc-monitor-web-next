@@ -7,13 +7,15 @@ export interface DcaRecommendation {
   score: number
 }
 
-const SCORE_BUCKETS: Array<{ max: number; multiplier: number; label: string }> = [
-  { max: 20,  multiplier: 1.5, label: 'Capitulação — momento raro' },
-  { max: 35,  multiplier: 1.3, label: 'Fundo de ciclo — oportunidade forte' },
-  { max: 55,  multiplier: 1.1, label: 'Compra tática — condições favoráveis' },
-  { max: 70,  multiplier: 1.0, label: 'Neutro — manter DCA padrão' },
-  { max: 85,  multiplier: 0.7, label: 'Alta madura — reduzir aporte' },
-  { max: 101, multiplier: 0.4, label: 'Euforia — preservar capital' }, // 101 so score=100 matches this bucket via score < max
+// Ordered highest-first: find() returns first bucket where score >= min
+// High score = many positive indicators firing = buying opportunity
+const SCORE_BUCKETS: Array<{ min: number; multiplier: number; label: string }> = [
+  { min: 65, multiplier: 1.5, label: 'Oportunidade Única — momento raro' },
+  { min: 50, multiplier: 1.3, label: 'Oportunidade Forte — acumular mais' },
+  { min: 35, multiplier: 1.1, label: 'Compra Tática — condições favoráveis' },
+  { min: 20, multiplier: 1.0, label: 'Neutro — manter DCA padrão' },
+  { min: 10, multiplier: 0.7, label: 'Mercado Aquecido — reduzir aporte' },
+  { min:  0, multiplier: 0.4, label: 'Euforia / Péssimo — preservar capital' },
 ]
 
 const PROFILE_MODIFIER: Record<RiskProfile, number> = {
@@ -27,7 +29,7 @@ export function buildRecommendation(
   monthlyAmountBrl: number,
   riskProfile: RiskProfile,
 ): DcaRecommendation {
-  const bucket     = SCORE_BUCKETS.find(b => score < b.max) ?? SCORE_BUCKETS[SCORE_BUCKETS.length - 1]
+  const bucket     = SCORE_BUCKETS.find(b => score >= b.min) ?? SCORE_BUCKETS[SCORE_BUCKETS.length - 1]
   const modifier   = PROFILE_MODIFIER[riskProfile]
   const raw        = monthlyAmountBrl * bucket.multiplier * modifier
   // cap at 1.8× to avoid suggesting more than 80% above monthly in extreme markets

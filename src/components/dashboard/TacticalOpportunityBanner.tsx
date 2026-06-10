@@ -1,30 +1,31 @@
 'use client'
 
 interface BucketConfig {
-  maxScore:  number
+  minScore:  number
   title:     string
   subtitle:  string
   winRate:   number
   avgReturn: number
 }
 
+// Ordered highest-first: high score = many positive indicators = buying opportunity
 const BUCKETS: BucketConfig[] = [
   {
-    maxScore:  20,
+    minScore:  65,
     title:     'OPORTUNIDADE ÚNICA',
     subtitle:  'Confluência rara — histórico mostra retornos excepcionais em 12 meses a partir deste ponto',
     winRate:   92,
     avgReturn: 190,
   },
   {
-    maxScore:  35,
+    minScore:  50,
     title:     'OPORTUNIDADE FORTE',
     subtitle:  'Fundo de ciclo detectado — janela histórica de acumulação confirmada pelos indicadores',
     winRate:   87,
     avgReturn: 130,
   },
   {
-    maxScore:  55,
+    minScore:  35,
     title:     'MOMENTO FAVORÁVEL',
     subtitle:  'Condições táticas favoráveis — historicamente bom ponto de entrada em 12 meses',
     winRate:   78,
@@ -35,10 +36,10 @@ const BUCKETS: BucketConfig[] = [
 interface Props { score: number }
 
 export default function TacticalOpportunityBanner({ score }: Props) {
-  const config = BUCKETS.find(b => score < b.maxScore)
+  const config = BUCKETS.find(b => score >= b.minScore)
   if (!config) return null
 
-  const accentColor = score < 20 ? '#22c55e' : '#84cc16'
+  const accentColor = score >= 65 ? '#22c55e' : '#84cc16'
 
   return (
     <div style={{
