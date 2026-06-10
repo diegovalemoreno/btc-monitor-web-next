@@ -12,6 +12,7 @@ import TacticalSectionHeader     from '../dca-tactical/tactical/TacticalSectionH
 import TacticalConsensus         from '../dca-tactical/tactical/TacticalConsensus'
 import TacticalInsights          from '../dca-tactical/tactical/TacticalInsights'
 import TacticalOpportunityBanner from './TacticalOpportunityBanner'
+import MiningStatsRow            from '../dca-tactical/tactical/MiningStatsRow'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -21,6 +22,15 @@ interface MarketKpis {
   athUsd:       number | null
   athDropPct:   number | null
   dominancePct: number | null
+}
+
+interface MiningStats {
+  hashrateEhs:      number | null
+  hashrate7dPct:    number | null
+  difficultyT:      number | null
+  nextAdjustPct:    number | null
+  remainingBlocks:  number | null
+  epochProgressPct: number | null
 }
 
 interface BtcTechnical {
@@ -152,10 +162,12 @@ interface Props {
 export default function TacticalContent({ signal, opportunityScore }: Props) {
   const [kpis,      setKpis]      = useState<MarketKpis | null>(null)
   const [technical, setTechnical] = useState<BtcTechnical | null>(null)
+  const [mining,    setMining]    = useState<MiningStats | null>(null)
 
   useEffect(() => {
     fetch('/api/btc-market-kpis').then(r => r.ok ? r.json() : null).then(d => { if (d) setKpis(d) }).catch(() => {})
     fetch('/api/btc-technical').then(r => r.ok ? r.json() : null).then(d => { if (d) setTechnical(d) }).catch(() => {})
+    fetch('/api/btc-mining').then(r => r.ok ? r.json() : null).then(d => { if (d) setMining(d) }).catch(() => {})
   }, [])
 
   const extraScores = [
@@ -184,7 +196,7 @@ export default function TacticalContent({ signal, opportunityScore }: Props) {
       {/* 2. Opportunity bar */}
       <OpportunityBar score={opportunityScore} />
 
-      {/* 3. Historical opportunity banner — shown only when score < 55 */}
+      {/* 3. Historical opportunity banner — shown when score >= 45 */}
       <TacticalOpportunityBanner score={opportunityScore} />
 
       {/* 4. KPI row */}
@@ -196,7 +208,17 @@ export default function TacticalContent({ signal, opportunityScore }: Props) {
         btcPriceUsd={signal.btcPrice}
       />
 
-      {/* 4. Indicator sections */}
+      {/* 5. Mining stats row */}
+      <MiningStatsRow
+        hashrateEhs={mining?.hashrateEhs ?? null}
+        hashrate7dPct={mining?.hashrate7dPct ?? null}
+        difficultyT={mining?.difficultyT ?? null}
+        nextAdjustPct={mining?.nextAdjustPct ?? null}
+        remainingBlocks={mining?.remainingBlocks ?? null}
+        epochProgressPct={mining?.epochProgressPct ?? null}
+      />
+
+      {/* 6. Indicator sections */}
       {signal.indicatorGroups.map(group => {
         const extra    = extraCardsForGroup(group.key, technical, kpis, signal.btcPrice)
         const allCards = [...group.indicators.map(indicatorToCard), ...extra]
