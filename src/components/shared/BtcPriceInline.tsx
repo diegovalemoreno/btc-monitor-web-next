@@ -27,7 +27,7 @@ export default function BtcPriceInline() {
   return (
     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
       <span style={{ fontSize: '11px', color: 'var(--text-muted)', letterSpacing: '0.04em' }}>₿</span>
-      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-sec)', fontVariantNumeric: 'tabular-nums' }}>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', fontVariantNumeric: 'tabular-nums' }}>
         {fmtBRL(brl)}
       </span>
       {usd !== null && usd > 0 && (

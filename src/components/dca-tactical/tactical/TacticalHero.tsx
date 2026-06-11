@@ -89,20 +89,20 @@ export default function TacticalHero({ score, regime, reading, btcPriceUsd, gene
       </div>
 
       {/* Regime verdict */}
-      <div style={{ position: 'relative', fontSize: '22px', fontWeight: 900, color: '#fff', marginTop: '18px', letterSpacing: '-0.5px' }}>
+      <div style={{ position: 'relative', fontSize: '22px', fontWeight: 900, color: 'var(--text)', marginTop: '18px', letterSpacing: '-0.5px' }}>
         {regimeLabel.toUpperCase()}
       </div>
 
       {/* Reading */}
       {reading && (
-        <div style={{ position: 'relative', fontSize: '15px', color: 'rgba(255,255,255,0.55)', maxWidth: '520px', lineHeight: 1.6, marginTop: '12px' }}>
+        <div style={{ position: 'relative', fontSize: '15px', color: 'var(--text-muted)', maxWidth: '520px', lineHeight: 1.6, marginTop: '12px' }}>
           {reading}
         </div>
       )}
 
       {/* BTC price + timestamp */}
       <div style={{ position: 'relative', fontSize: '13px', color: 'var(--text-muted)', marginTop: '20px', display: 'flex', gap: '16px', alignItems: 'center', flexWrap: 'wrap', justifyContent: 'center' }}>
-        <span>BTC: <strong style={{ color: '#fff' }}>{formatPrice(btcPriceUsd)}</strong></span>
+        <span>BTC: <strong style={{ color: 'var(--text)' }}>{formatPrice(btcPriceUsd)}</strong></span>
         <span style={{ color: 'var(--border)' }}>·</span>
         <span>Atualizado em: {formatTime(generatedAt)}</span>
       </div>

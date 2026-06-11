@@ -52,7 +52,7 @@ export default function MarketKPIRow({ marketCapUsd, volume24hUsd, athUsd, domin
             borderRight: i < kpis.length - 1 ? '1px solid var(--border)' : 'none',
             transition:  'background 0.15s',
           }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)')}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--orange-subtle)')}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
         >
           <div style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.8px', color: 'var(--text-muted)', marginBottom: '4px' }}>

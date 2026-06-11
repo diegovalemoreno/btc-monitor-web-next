@@ -53,7 +53,7 @@ export default function TacticalCard({ data, delay = 0 }: Props) {
         animationDelay:          `${delay}s`,
         animationFillMode:       'both',
       }}
-      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.015)')}
+      onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--orange-subtle)')}
       onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
     >
       {/* Left */}
@@ -61,7 +61,7 @@ export default function TacticalCard({ data, delay = 0 }: Props) {
         <div style={{
           fontSize:      '11px',
           fontWeight:    700,
-          color:         '#fff',
+          color:         'var(--text)',
           textTransform: 'uppercase',
           letterSpacing: '0.9px',
           marginBottom:  '7px',

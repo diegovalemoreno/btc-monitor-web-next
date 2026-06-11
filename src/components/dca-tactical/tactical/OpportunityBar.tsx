@@ -33,9 +33,9 @@ export default function OpportunityBar({ score }: Props) {
         <div style={{
           width:      '22px',
           height:     '22px',
-          background: '#fff',
+          background: 'var(--surface)',
           borderRadius:  '50%',
-          border:        '3px solid rgba(0,0,0,0.35)',
+          border:        '3px solid rgba(0,0,0,0.2)',
           position:      'absolute',
           top:           '50%',
           left:          `${thumbPct}%`,
@@ -46,7 +46,7 @@ export default function OpportunityBar({ score }: Props) {
       </div>
 
       <div style={{ marginTop: '10px', fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center' }}>
-        Score <strong style={{ color: '#fff' }}>{Math.round(score)}</strong> / 100
+        Score <strong style={{ color: 'var(--text)' }}>{Math.round(score)}</strong> / 100
       </div>
     </div>
   )

@@ -26,7 +26,7 @@ function fPct(v: number | null, sign = true): string {
 }
 
 function adjColor(v: number | null): string {
-  if (v == null) return 'var(--text-primary)'
+  if (v == null) return 'var(--text)'
   if (v > 3)  return '#4ade80'
   if (v > 0)  return '#86efac'
   if (v > -3) return '#fca5a5'
@@ -87,7 +87,7 @@ export default function MiningStatsRow({
             borderRight: i < kpis.length - 1 ? '1px solid var(--border)' : 'none',
             transition:  'background 0.15s',
           }}
-          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'rgba(255,255,255,0.02)')}
+          onMouseEnter={e => ((e.currentTarget as HTMLElement).style.background = 'var(--orange-subtle)')}
           onMouseLeave={e => ((e.currentTarget as HTMLElement).style.background = 'transparent')}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
@@ -95,7 +95,7 @@ export default function MiningStatsRow({
               {label}
             </div>
           </div>
-          <div style={{ fontSize: '16px', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: valueColor ?? 'var(--text-primary)' }}>
+          <div style={{ fontSize: '16px', fontWeight: 700, fontVariantNumeric: 'tabular-nums', color: valueColor ?? 'var(--text)' }}>
             {value}
           </div>
           {sub && (
