@@ -17,9 +17,9 @@ const CHART_PERIODS: { id: ChartPeriod; label: string }[] = [
 
 function filterByPeriod(contributions: DcaContributionRow[], period: ChartPeriod): DcaContributionRow[] {
   if (period === 'all') return contributions
-  const now  = new Date()
+  const now    = new Date()
   const months: Record<ChartPeriod, number> = { all: 0, '12m': 12, '2y': 24, '5y': 60, '10y': 120 }
-  const from = new Date(now.getFullYear(), now.getMonth() - months[period] + 1, 1)
+  const from   = new Date(now.getFullYear(), now.getMonth() - months[period] + 1, 1)
   return contributions.filter(c => new Date(c.contribution_date + 'T00:00:00') >= from)
 }
 
@@ -41,8 +41,8 @@ function extractFee(notes: string | null): number | null {
 interface Props { initialContributions: DcaContributionRow[] }
 
 export default function DcaResumoView({ initialContributions }: Props) {
-  const [btcPriceBrl,  setBtcPriceBrl]  = useState<number | null>(null)
-  const [chartPeriod,  setChartPeriod]  = useState<ChartPeriod>('all')
+  const [btcPriceBrl, setBtcPriceBrl] = useState<number | null>(null)
+  const [chartPeriod, setChartPeriod] = useState<ChartPeriod>('all')
 
   useEffect(() => {
     fetch('/api/btc-price-brl')
@@ -67,22 +67,21 @@ export default function DcaResumoView({ initialContributions }: Props) {
   const priceDiffPct    = priceDiffAbs !== null && avgPriceBrl !== null ? (priceDiffAbs / avgPriceBrl) * 100 : null
 
   const last12 = useMemo(() => {
-    const from12 = new Date(now.getFullYear(), now.getMonth() - 11, 1)
-    const data   = contributions.filter(c => new Date(c.contribution_date + 'T00:00:00') >= from12)
+    const from12    = new Date(now.getFullYear(), now.getMonth() - 11, 1)
+    const data      = contributions.filter(c => new Date(c.contribution_date + 'T00:00:00') >= from12)
     const purchases = data.filter(c => c.sats_purchased && c.sats_purchased > 0 && !c.notes?.includes('Venda'))
-    const fk     = purchases.filter(c => extractFee(c.notes) !== null)
-    const fees   = fk.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
-    const spread = purchases.filter(c => c.effective_price_brl && c.btc_price_brl)
+    const fk        = purchases.filter(c => extractFee(c.notes) !== null)
+    const fees      = fk.reduce((s, c) => s + (extractFee(c.notes) ?? 0), 0)
+    const spread    = purchases.filter(c => c.effective_price_brl && c.btc_price_brl)
       .reduce((s, c) => s + (c.effective_price_brl! - c.btc_price_brl!) * (c.sats_purchased! / 1e8), 0)
     return { feesKnown: fk, totalFees: fees, totalSpread: spread, totalImpact: fees + Math.max(0, spread - fees) }
   }, [contributions]) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
 
       {/* KPI cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '36px' }}>
-
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
         <KPICard
           accent="var(--orange)"
           label="Total investido"
@@ -92,7 +91,6 @@ export default function DcaResumoView({ initialContributions }: Props) {
           sub2={withSats.length > 0 ? `${withSats.length} com BTC registrado` : undefined}
           tooltip="Soma de todos os valores aportados em reais ao longo de todo o histórico. Inclui todos os tipos de aporte."
         />
-
         <KPICard
           accent="#F7931A"
           label="Bitcoin acumulado"
@@ -102,7 +100,6 @@ export default function DcaResumoView({ initialContributions }: Props) {
           sub1Color="#22C55E"
           tooltip={"Total de Bitcoin acumulado em compras, expresso em BTC.\n\nPM = Preço médio ponderado de aquisição.\n\n1 BTC = 100.000.000 satoshis. Vendas são excluídas."}
         />
-
         <KPICard
           accent={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : '#22C55E'}
           label="Valor atual do portfólio"
@@ -112,7 +109,6 @@ export default function DcaResumoView({ initialContributions }: Props) {
           sub1Color={rentabilidade !== null ? (rentabilidade >= 0 ? '#22C55E' : '#EF4444') : 'var(--text-muted)'}
           tooltip={"Valor atual do seu portfólio de Bitcoin ao preço de mercado.\n\nCálculo: Total de BTC × Preço atual do BTC em R$\n\nA rentabilidade mostra o retorno não realizado sobre o total investido."}
         />
-
         <KPICard
           accent={priceDiffPct !== null ? (priceDiffPct >= 0 ? '#22C55E' : '#EF4444') : '#6366F1'}
           label="Variação vs. Preço Médio"
@@ -122,48 +118,71 @@ export default function DcaResumoView({ initialContributions }: Props) {
           sub2={priceDiffAbs !== null ? `Diferença: ${priceDiffAbs >= 0 ? '+' : ''}${fmtBRL0(priceDiffAbs)}/BTC` : undefined}
           tooltip={"Diferença percentual entre o preço atual do BTC e seu preço médio de aquisição.\n\n✅ Positivo: BTC acima do custo médio — portfólio no lucro.\n🔴 Negativo: BTC abaixo do custo médio — portfólio no prejuízo.\n\nFonte do preço: CoinGecko (atualizado a cada 2 min)."}
         />
-
-
       </div>
 
       {/* Cost analysis — last 12 months */}
-      <div style={{ marginBottom: '36px' }}>
-        <div style={{ display: 'flex', alignItems: 'baseline', gap: '10px', marginBottom: '16px' }}>
-          <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Análise de custos</span>
-          <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Últimos 12 meses</span>
-        </div>
-
+      <div>
+        <SectionHeader label="Análise de Custos" sub="Últimos 12 meses" />
         {last12.feesKnown.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px' }}>
-            <CostCard accent="#F59E0B" label="Taxas pagas"      value={fmt(last12.totalFees)} valueColor="#F59E0B" hint={`${last12.feesKnown.length} aportes com taxa`} tooltip={'Soma das taxas explícitas pagas à plataforma nos últimos 12 meses.'} />
-            <CostCard accent="#F97316" label="Spread acumulado" value={fmt(Math.max(0, last12.totalSpread - last12.totalFees))} valueColor="#F97316" hint="Custo oculto embutido no preço" tooltip={"Diferença entre cotação de referência e preço efetivo pago, excluindo taxas."} />
-            <CostCard accent="#EF4444" label="Impacto total"    value={fmt(last12.totalImpact)} valueColor="#EF4444" hint="Taxas + spread" tooltip={"Custo total pago acima do preço de mercado."} />
-            <CostCard accent="var(--text-muted)" label="Aportes analisados" value={String(last12.feesKnown.length)} hint="Com dados de custo" tooltip={"Aportes com taxa registrada nos últimos 12 meses."} />
+          <div style={{
+            background:   'var(--surface)',
+            border:       '1px solid var(--border)',
+            borderRadius: '12px',
+            overflow:     'hidden',
+          }}>
+            <CostRow
+              accent="#F59E0B" label="Taxas pagas"
+              value={fmt(last12.totalFees)} valueColor="#F59E0B"
+              hint={`${last12.feesKnown.length} aportes com taxa`}
+              tooltip="Soma das taxas explícitas pagas à plataforma nos últimos 12 meses."
+            />
+            <CostRow
+              accent="#F97316" label="Spread acumulado"
+              value={fmt(Math.max(0, last12.totalSpread - last12.totalFees))} valueColor="#F97316"
+              hint="Custo oculto embutido no preço"
+              tooltip="Diferença entre cotação de referência e preço efetivo pago, excluindo taxas."
+            />
+            <CostRow
+              accent="#EF4444" label="Impacto total"
+              value={fmt(last12.totalImpact)} valueColor="#EF4444"
+              hint="Taxas + spread"
+              tooltip="Custo total pago acima do preço de mercado."
+              isTotal
+            />
+            <CostRow
+              accent="var(--border-strong)" label="Aportes analisados"
+              value={String(last12.feesKnown.length)}
+              hint="Com dados de custo"
+              tooltip="Aportes com taxa registrada nos últimos 12 meses."
+            />
           </div>
         ) : (
-          <div style={{ padding: '24px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center' }}>
-            Nenhum aporte com dados de taxa nos últimos 12 meses. Registre os custos nos aportes para análise.
+          <div style={{ padding: '28px 24px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '12px', fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', lineHeight: 1.7 }}>
+            Nenhum aporte com dados de taxa nos últimos 12 meses.<br />
+            Registre os custos nos aportes para análise.
           </div>
         )}
       </div>
 
       {/* Patrimony evolution chart */}
-      <div style={{ marginBottom: '8px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '16px' }}>
-          <div style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text)' }}>Evolução de Patrimônio</div>
-          {/* Period filter pills */}
+      <div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
+            Evolução de Patrimônio
+          </span>
+          <div style={{ flex: 1, height: '1px', background: 'var(--border)', minWidth: '20px' }} />
           <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
             {CHART_PERIODS.map(p => (
               <button
                 key={p.id}
                 onClick={() => setChartPeriod(p.id)}
                 style={{
-                  padding:      '5px 12px',
-                  background:   chartPeriod === p.id ? 'var(--orange-dim)' : 'var(--surface)',
+                  padding:      '4px 12px',
+                  background:   chartPeriod === p.id ? 'var(--orange-dim)' : 'transparent',
                   border:       `1px solid ${chartPeriod === p.id ? 'var(--orange)' : 'var(--border)'}`,
                   borderRadius: '20px',
                   color:        chartPeriod === p.id ? 'var(--orange)' : 'var(--text-muted)',
-                  fontSize:     '12px',
+                  fontSize:     '11px',
                   fontWeight:   chartPeriod === p.id ? 600 : 400,
                   cursor:       'pointer',
                   whiteSpace:   'nowrap',
@@ -182,34 +201,133 @@ export default function DcaResumoView({ initialContributions }: Props) {
   )
 }
 
+function SectionHeader({ label, sub }: { label: string; sub?: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+      <span style={{
+        fontSize:      '11px',
+        fontWeight:    700,
+        color:         'var(--text)',
+        textTransform: 'uppercase',
+        letterSpacing: '0.1em',
+        whiteSpace:    'nowrap',
+      }}>
+        {label}
+      </span>
+      {sub && (
+        <span style={{ fontSize: '10px', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>
+          {sub}
+        </span>
+      )}
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+    </div>
+  )
+}
+
 function KPICard({ accent, label, value, valueColor, sub1, sub1Color, sub2, tooltip }: {
   accent: string; label: string; value: string; valueColor?: string
   sub1?: string; sub1Color?: string; sub2?: string; tooltip?: string
 }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '20px 22px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.09em' }}>{label}</span>
+    <div style={{
+      position:            'relative',
+      background:          'var(--surface)',
+      border:              '1px solid var(--border)',
+      borderTop:           `2px solid ${accent}`,
+      borderRadius:        '12px',
+      padding:             '20px 22px',
+      overflow:            'hidden',
+      animationName:       'fadeIn',
+      animationDuration:   '0.4s',
+      animationFillMode:   'both',
+    }}>
+      <div style={{
+        position:      'absolute',
+        top:            0,
+        right:          0,
+        width:          '90px',
+        height:         '90px',
+        background:     `radial-gradient(circle at top right, ${accent}18 0%, transparent 70%)`,
+        pointerEvents:  'none',
+      }} />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '12px' }}>
+        <span style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.11em' }}>
+          {label}
+        </span>
         {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
       </div>
-      <div style={{ fontSize: '22px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace", marginBottom: sub1 ? '6px' : '0', lineHeight: 1.2 }}>{value}</div>
-      {sub1 && <div style={{ fontSize: '12px', color: sub1Color ?? 'var(--text-muted)', marginTop: '4px' }}>{sub1}</div>}
-      {sub2 && <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>{sub2}</div>}
+      <div style={{
+        fontSize:           '24px',
+        fontWeight:         800,
+        color:              valueColor ?? 'var(--text)',
+        letterSpacing:      '-0.5px',
+        fontVariantNumeric: 'tabular-nums',
+        lineHeight:         1.1,
+        marginBottom:       sub1 ? '8px' : 0,
+      }}>
+        {value}
+      </div>
+      {sub1 && (
+        <div style={{ fontSize: '12px', color: sub1Color ?? 'var(--text-muted)', marginTop: '6px' }}>
+          {sub1}
+        </div>
+      )}
+      {sub2 && (
+        <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+          {sub2}
+        </div>
+      )}
     </div>
   )
 }
 
-function CostCard({ accent, label, value, valueColor, hint, tooltip }: {
-  accent: string; label: string; value: string; valueColor?: string; hint?: string; tooltip?: string
+function CostRow({ accent, label, value, valueColor, hint, tooltip, isTotal }: {
+  accent: string; label: string; value: string; valueColor?: string
+  hint?: string; tooltip?: string; isTotal?: boolean
 }) {
   return (
-    <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderLeft: `3px solid ${accent}`, borderRadius: '12px', padding: '18px 20px' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-        <span style={{ fontSize: '10px', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.08em' }}>{label}</span>
-        {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+    <div style={{
+      display:      'flex',
+      alignItems:   'center',
+      gap:          '16px',
+      padding:      '14px 20px',
+      borderBottom: '1px solid var(--border-dim)',
+      background:   isTotal ? 'var(--orange-subtle)' : 'transparent',
+    }}>
+      <div style={{
+        width:        '3px',
+        height:       '22px',
+        borderRadius: '2px',
+        background:   accent,
+        flexShrink:   0,
+      }} />
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{
+            fontSize:   '12px',
+            fontWeight: isTotal ? 700 : 500,
+            color:      isTotal ? 'var(--text)' : 'var(--text-sec)',
+          }}>
+            {label}
+          </span>
+          {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
+        </div>
+        {hint && (
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>
+            {hint}
+          </div>
+        )}
       </div>
-      <div style={{ fontSize: '20px', fontWeight: 700, color: valueColor ?? 'var(--text)', fontFamily: "'Courier New', monospace", marginBottom: hint ? '4px' : '0' }}>{value}</div>
-      {hint && <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{hint}</div>}
+      <div style={{
+        fontSize:           isTotal ? '18px' : '15px',
+        fontWeight:         isTotal ? 800 : 600,
+        color:              valueColor ?? 'var(--text)',
+        fontVariantNumeric: 'tabular-nums',
+        letterSpacing:      '-0.3px',
+        flexShrink:         0,
+      }}>
+        {value}
+      </div>
     </div>
   )
 }

@@ -22,19 +22,20 @@ export default async function ResumoPage() {
       <main style={{ padding: '32px 24px' }}>
       <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
-        <div style={{ marginBottom: '32px' }}>
-          <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
-            Portfólio
-          </div>
-          <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap' }}>
+        <div style={{ marginBottom: '36px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
             <div>
-              <h1 style={{ margin: 0, fontSize: '22px', fontWeight: 700 }}>Resumo</h1>
-              <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)' }}>
+              <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                Portfólio
+              </div>
+              <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1 }}>Resumo</h1>
+              <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
                 Visão consolidada do portfólio, análise de custos e evolução de patrimônio.
               </p>
             </div>
             <BtcPriceInline />
           </div>
+          <div style={{ height: '1px', background: 'var(--border)' }} />
         </div>
 
         <DcaResumoView initialContributions={contributions} />
