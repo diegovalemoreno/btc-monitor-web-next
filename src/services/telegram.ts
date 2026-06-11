@@ -245,7 +245,7 @@ function buildChangeAlertHtml(p: ChangeAlertParams): string {
   }
 
   lines.push(
-    `🔗 <a href="${p.appUrl}/dashboard">Ver análise completa</a>`,
+    `🔗 <a href="${p.appUrl}/analise-tatica">Ver análise completa</a>`,
     '',
     `<blockquote>⚠️ Não é recomendação financeira.</blockquote>`,
   )

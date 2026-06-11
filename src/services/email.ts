@@ -69,8 +69,8 @@ function buildAlertHtml(params: {
 
         <!-- CTA -->
         <tr><td style="padding:0 32px 24px;">
-          <a href="${params.appUrl}/dashboard" style="display:inline-block;padding:12px 24px;background:#e08a3a;color:#0a0a0a;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
-            Ver Dashboard
+          <a href="${params.appUrl}/analise-tatica" style="display:inline-block;padding:12px 24px;background:#e08a3a;color:#0a0a0a;border-radius:8px;font-size:13px;font-weight:600;text-decoration:none;">
+            Ver Análise Tática
           </a>
         </td></tr>
 

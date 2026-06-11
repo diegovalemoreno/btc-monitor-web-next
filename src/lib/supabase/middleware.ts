@@ -1,7 +1,7 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 
-const PROTECTED_PATHS = ['/dashboard', '/alerts', '/dca', '/settings']
+const PROTECTED_PATHS = ['/analise-tatica', '/alerts', '/dca', '/settings']
 
 export async function updateSession(request: NextRequest) {
   if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) {
@@ -44,7 +44,7 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (pathname === '/login' && user) {
-    const next = request.nextUrl.searchParams.get('next') ?? '/dashboard'
+    const next = request.nextUrl.searchParams.get('next') ?? '/analise-tatica'
     const url = request.nextUrl.clone()
     url.pathname = next
     url.searchParams.delete('next')

@@ -5,8 +5,8 @@ interface LandingHeroProps {
 }
 
 export default function LandingHero({ isAuthenticated }: LandingHeroProps) {
-  const ctaHref  = isAuthenticated ? '/dashboard' : '/login'
-  const ctaLabel = isAuthenticated ? 'Ir ao dashboard →' : 'Acessar o app'
+  const ctaHref  = isAuthenticated ? '/analise-tatica' : '/login'
+  const ctaLabel = isAuthenticated ? 'Ir à análise tática →' : 'Acessar o app'
 
   return (
     <section style={{

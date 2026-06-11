@@ -7,7 +7,7 @@ import { Suspense } from 'react'
 function LoginForm() {
   const searchParams = useSearchParams()
   const error = searchParams.get('error')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') ?? '/analise-tatica'
 
   async function handleGoogleLogin() {
     try {

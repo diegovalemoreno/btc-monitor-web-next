@@ -6,7 +6,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 
 const NAV_ITEMS = [
   { label: 'Resumo',         href: '/resumo'        },
-  { label: 'Análise Tática', href: '/dashboard'    },
+  { label: 'Análise Tática', href: '/analise-tatica' },
   { label: 'Rentabilidade',  href: '/rentabilidade' },
   { label: 'Alertas',        href: '/alerts'        },
   { label: 'DCA',            href: '/dca'           },
@@ -63,7 +63,7 @@ export default function AppNav({ userEmail, userAvatarUrl }: AppNavProps) {
           </span>
           <div className="nav-links">
             {NAV_ITEMS.map(({ label, href }) => {
-              const active = pathname === href || (href !== '/dashboard' && href !== '/resumo' && pathname.startsWith(href))
+              const active = pathname === href || (href !== '/analise-tatica' && href !== '/resumo' && pathname.startsWith(href))
               return (
                 <a
                   key={href}
