@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import type { DcaContributionRow, ContributionType } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
+import BtcPriceInline from '@/components/shared/BtcPriceInline'
 import Tooltip from '@/components/shared/Tooltip'
 
 // ─── Formatters ───────────────────────────────────────────────────────────────
@@ -242,7 +243,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
       <style>{`
         .entry-row .row-actions { opacity: 0; transition: opacity 0.15s; }
         .entry-row:hover .row-actions { opacity: 1; }
-        .entry-row:hover { background: var(--surface2) !important; }
+        .entry-row:hover { background: var(--surface3) !important; }
       `}</style>
 
       {editingContribution && typeof document !== 'undefined' && (
@@ -253,29 +254,35 @@ export default function DcaContributionHistory({ initialContributions, chartComp
       )}
 
       {/* ── Header ─────────────────────────────────────────────────────── */}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', marginBottom: '28px', gap: '16px' }}>
-        <div>
-          <div style={{ fontSize: '11px', fontWeight: 600, letterSpacing: '0.15em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
-            Registro
+      <div style={{ marginBottom: '36px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+          <div>
+            <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '8px' }}>
+              Portfólio
+            </div>
+            <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1, color: 'var(--text)' }}>Lançamentos</h1>
+            <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+              Consolidação e evolução dos aportes registrados.
+            </p>
           </div>
-          <h1 style={{ margin: 0, fontSize: '24px', fontWeight: 700, color: 'var(--text)' }}>Lançamentos</h1>
-          <p style={{ margin: '6px 0 0', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.5 }}>
-            Consolidação e evolução dos aportes registrados.
-          </p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexShrink: 0 }}>
+            <BtcPriceInline />
+            <button
+              onClick={() => setShowRegisterModal(true)}
+              style={{ padding: '10px 20px', background: 'var(--orange)', color: '#000', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer', whiteSpace: 'nowrap' }}
+            >
+              + Registrar aporte
+            </button>
+          </div>
         </div>
-        <button
-          onClick={() => setShowRegisterModal(true)}
-          style={{ flexShrink: 0, padding: '10px 20px', background: 'var(--orange)', color: '#000', border: 'none', borderRadius: '10px', fontSize: '13px', fontWeight: 700, cursor: 'pointer' }}
-        >
-          + Registrar aporte
-        </button>
+        <div style={{ height: '1px', background: 'var(--border)' }} />
       </div>
 
       {/* ── Summary bar — 4 stats ──────────────────────────────────────── */}
       <div style={{
         display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
         background: 'var(--border)', gap: '1px',
-        border: '1px solid var(--border)', borderRadius: '14px',
+        border: '1px solid var(--border)', borderRadius: '12px',
         overflow: 'hidden', marginBottom: '24px',
       }}>
         <SummaryStat
@@ -313,17 +320,17 @@ export default function DcaContributionHistory({ initialContributions, chartComp
         {/* Period navigator */}
         <div ref={dropdownRef} style={{ position: 'relative' }}>
           <div style={{ display: 'flex', alignItems: 'stretch', border: '1px solid var(--border)', borderRadius: '8px', overflow: 'hidden', background: 'var(--surface)' }}>
-            <button onClick={prevMonth} style={{ padding: '7px 11px', background: 'transparent', border: 'none', borderRight: '1px solid var(--border-dim)', color: 'var(--text-sec)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>‹</button>
+            <button onClick={prevMonth} style={{ padding: '7px 11px', background: 'transparent', border: 'none', borderRight: '1px solid var(--border-dim)', color: 'var(--text-muted)', fontSize: '16px', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>‹</button>
             <button onClick={() => setShowDropdown(v => !v)} style={{ padding: '7px 13px', background: 'transparent', border: 'none', color: 'var(--text)', fontSize: '13px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap', display: 'flex', alignItems: 'center', gap: '5px' }}>
               {navLabel}
               <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>▾</span>
             </button>
-            <button onClick={nextMonth} disabled={isAtCurrentMonth} style={{ padding: '7px 11px', background: 'transparent', border: 'none', borderLeft: '1px solid var(--border-dim)', color: isAtCurrentMonth ? 'var(--text-muted)' : 'var(--text-sec)', fontSize: '16px', cursor: isAtCurrentMonth ? 'not-allowed' : 'pointer', opacity: isAtCurrentMonth ? 0.3 : 1, display: 'flex', alignItems: 'center' }}>›</button>
+            <button onClick={nextMonth} disabled={isAtCurrentMonth} style={{ padding: '7px 11px', background: 'transparent', border: 'none', borderLeft: '1px solid var(--border-dim)', color: isAtCurrentMonth ? 'var(--text-muted)' : 'var(--text-muted)', fontSize: '16px', cursor: isAtCurrentMonth ? 'not-allowed' : 'pointer', opacity: isAtCurrentMonth ? 0.3 : 1, display: 'flex', alignItems: 'center' }}>›</button>
           </div>
           {showDropdown && (
             <div style={{ position: 'absolute', top: 'calc(100% + 4px)', left: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 200, minWidth: '210px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
               {PRESETS.map(p => (
-                <button key={p.id} onClick={() => selectPreset(p.id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', background: selectedPreset === p.id ? 'rgba(99,102,241,0.1)' : 'transparent', border: 'none', borderBottom: '1px solid var(--border-dim)', color: selectedPreset === p.id ? '#818cf8' : 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>
+                <button key={p.id} onClick={() => selectPreset(p.id)} style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', background: selectedPreset === p.id ? 'rgba(99,102,241,0.1)' : 'transparent', border: 'none', borderBottom: '1px solid var(--border-dim)', color: selectedPreset === p.id ? '#818cf8' : 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}>
                   {p.label}
                 </button>
               ))}
@@ -365,7 +372,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
         <button
           onClick={() => exportToCsv(searchFiltered, getCsvFilename())}
           disabled={searchFiltered.length === 0}
-          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-sec)', fontSize: '12px', fontWeight: 500, cursor: searchFiltered.length === 0 ? 'not-allowed' : 'pointer', opacity: searchFiltered.length === 0 ? 0.4 : 1, whiteSpace: 'nowrap' }}
+          style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '7px 14px', background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '12px', fontWeight: 500, cursor: searchFiltered.length === 0 ? 'not-allowed' : 'pointer', opacity: searchFiltered.length === 0 ? 0.4 : 1, whiteSpace: 'nowrap' }}
         >
           ↓ Exportar
         </button>
@@ -384,7 +391,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
             <input type="date" value={pendingTo} onChange={e => setPendingTo(e.target.value)} style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }} />
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
-            <button onClick={() => setSelectedPreset('thisMonth')} style={{ padding: '7px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
+            <button onClick={() => setSelectedPreset('thisMonth')} style={{ padding: '7px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
             <button onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }} style={{ padding: '7px 16px', background: '#6366F1', border: 'none', borderRadius: '6px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>Aplicar</button>
           </div>
         </div>
@@ -408,7 +415,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
 
               {/* Month header */}
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', padding: '0 2px' }}>
-                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'capitalize', letterSpacing: '0.04em' }}>
+                <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'capitalize', letterSpacing: '0.04em' }}>
                   {monthKey}
                 </span>
                 <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
@@ -441,7 +448,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
                           gap:          '14px',
                           padding:      '14px 20px',
                           borderTop:    idx > 0 ? '1px solid var(--border-dim)' : 'none',
-                          background:   isExpanded ? 'var(--surface2)' : 'var(--surface)',
+                          background:   isExpanded ? 'var(--surface3)' : 'var(--surface)',
                           cursor:       'pointer',
                           transition:   'background 0.12s',
                         }}
@@ -521,7 +528,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
 
                       {/* Expanded fee breakdown */}
                       {isExpanded && hasPriceData && (
-                        <div style={{ padding: '12px 20px 14px 80px', background: 'var(--surface2)', borderTop: '1px solid var(--border-dim)' }}>
+                        <div style={{ padding: '12px 20px 14px 80px', background: 'var(--bg)', borderTop: '1px solid var(--border-dim)' }}>
                           <table style={{ fontSize: '11px', borderCollapse: 'collapse' }}>
                             <tbody>
                               <FeeRow label="Cotação BTC"   value={fmtBRL0(c.btc_price_brl!)} />
@@ -560,7 +567,7 @@ export default function DcaContributionHistory({ initialContributions, chartComp
           {totalFees > 0 && (
             <>
               <span style={{ fontSize: '11px', color: 'var(--text-muted)', opacity: 0.4 }}>·</span>
-              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-sec)', fontFamily: "'Courier New', monospace" }}>{fmt(totalFees)}</span>
+              <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)', fontFamily: "'Courier New', monospace" }}>{fmt(totalFees)}</span>
             </>
           )}
         </div>
@@ -756,14 +763,14 @@ export function EditContributionModal({ contribution, onClose, onSave }: {
           </div>
           <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00" style={inp} /></div>
           {calcEffective !== null && (
-            <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)' }}>
+            <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
               Preço efetivo: <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>{fmtBRL0(calcEffective)}/BTC</strong>
             </div>
           )}
           <div style={{ marginBottom: '20px' }}><label style={lbl}>Observações</label><textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas opcionais…" rows={2} style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} /></div>
           {error && <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '14px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>{error}</div>}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
+            <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
             <button type="submit" disabled={saving} style={{ padding: '9px 20px', background: '#6366F1', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '13px', fontWeight: 600, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Salvando…' : 'Salvar'}</button>
           </div>
         </form>
@@ -892,14 +899,14 @@ function RegisterContributionModal({ onClose, onCreate }: {
           </div>
           <div style={{ marginBottom: '14px' }}><label style={lbl}>Outros custos</label><input type="text" inputMode="numeric" value={outrosCustosMask} onChange={e => setOutrosCustosMask(applyBRLMask(e.target.value))} placeholder="R$ 0,00 — taxas, spread…" style={inp} /></div>
           {calcEffective !== null && (
-            <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-sec)' }}>
+            <div style={{ padding: '10px 14px', marginBottom: '14px', background: 'rgba(34,197,94,0.06)', border: '1px solid rgba(34,197,94,0.2)', borderRadius: '8px', fontSize: '12px', color: 'var(--text-muted)' }}>
               Preço efetivo: <strong style={{ color: '#22C55E', fontFamily: "'Courier New', monospace" }}>{fmtBRL0(calcEffective)}/BTC</strong>
             </div>
           )}
           <div style={{ marginBottom: '20px' }}><label style={lbl}>Observações</label><textarea value={notes} onChange={e => setNotes(e.target.value)} placeholder="Notas opcionais…" rows={2} style={{ ...inp, resize: 'vertical', lineHeight: 1.5 }} /></div>
           {error && <div style={{ color: '#EF4444', fontSize: '12px', marginBottom: '14px', padding: '10px 14px', background: 'rgba(239,68,68,0.08)', borderRadius: '6px' }}>{error}</div>}
           <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end' }}>
-            <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-sec)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
+            <button type="button" onClick={onClose} style={{ padding: '9px 20px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}>Cancelar</button>
             <button type="submit" disabled={saving} style={{ padding: '9px 24px', background: 'var(--orange)', border: 'none', borderRadius: '8px', color: '#000', fontSize: '13px', fontWeight: 700, cursor: saving ? 'not-allowed' : 'pointer', opacity: saving ? 0.7 : 1 }}>{saving ? 'Salvando…' : 'Registrar aporte'}</button>
           </div>
         </form>
