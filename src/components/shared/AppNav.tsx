@@ -11,7 +11,7 @@ const NAV_ITEMS = [
   { label: 'Alertas',        href: '/alerts'        },
   { label: 'DCA',            href: '/dca'           },
   { label: 'Lançamento',     href: '/lancamento'    },
-  { label: 'Configurações',  href: '/settings'      },
+  { label: 'Configurações',  href: '/configuracoes' },
 ]
 
 const THEME_SWATCHES = [

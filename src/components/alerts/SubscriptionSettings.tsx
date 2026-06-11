@@ -9,7 +9,6 @@ const PROFILES: { value: RiskProfile; label: string; desc: string }[] = [
   { value: 'AGGRESSIVE',   label: 'Agressivo',   desc: 'Todos os alertas, incluindo oportunidades táticas' },
 ]
 
-// Severity to min_severity mapping: highest unchecked priority determines the floor
 const SEV_RANK: Record<Severity, number> = { LOW: 0, MEDIUM: 1, HIGH: 2, CRITICAL: 3 }
 
 function sevFromChecks(alta: boolean, media: boolean, baixa: boolean): Severity {
@@ -76,35 +75,17 @@ export default function SubscriptionSettings({ initial }: Props) {
 
   return (
     <div style={{
-      background:   'var(--surface2)',
-      border:       '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '16px',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border)',
+      borderTop:    '2px solid var(--orange)',
+      borderRadius: '12px',
       padding:      '24px 28px',
     }}>
-      {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-        <div style={{
-          width: '32px', height: '32px', borderRadius: '9px',
-          background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.25)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f59e0b" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="3"/>
-            <path d="M19.07 4.93a10 10 0 010 14.14M4.93 4.93a10 10 0 000 14.14"/>
-          </svg>
-        </div>
-        <div>
-          <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Configuração de alertas</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-sec)' }}>Escolha como e quando deseja receber notificações.</div>
-        </div>
-      </div>
-
-      {/* 3-col grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '24px', marginTop: '24px' }}>
+      <div className="sub-settings-grid">
 
         {/* Column 1: Channels */}
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
             Canais de notificação
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -124,7 +105,7 @@ export default function SubscriptionSettings({ initial }: Props) {
             />
             {telegramEnabled && (
               <div style={{ marginTop: '4px' }}>
-                <div style={{ fontSize: '10px', color: 'var(--text-sec)', marginBottom: '5px' }}>Chat ID</div>
+                <div style={{ fontSize: '10px', color: 'var(--text-muted)', marginBottom: '5px' }}>Chat ID</div>
                 <input
                   type="text"
                   value={telegramChatId}
@@ -133,8 +114,8 @@ export default function SubscriptionSettings({ initial }: Props) {
                   style={{
                     width:        '100%',
                     padding:      '7px 10px',
-                    background:   'var(--surface2)',
-                    border: '1px solid var(--border)',
+                    background:   'var(--bg)',
+                    border:       '1px solid var(--border)',
                     borderRadius: '7px',
                     color:        'var(--text)',
                     fontSize:     '12px',
@@ -148,7 +129,7 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Column 2: Profile */}
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
             Perfil de alerta
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -159,11 +140,11 @@ export default function SubscriptionSettings({ initial }: Props) {
                     type="radio" name="profile" value={value}
                     checked={profile === value}
                     onChange={() => setProfile(value)}
-                    style={{ width: '16px', height: '16px', accentColor: '#f59e0b', cursor: 'pointer' }}
+                    style={{ width: '16px', height: '16px', accentColor: 'var(--orange)', cursor: 'pointer' }}
                   />
                 </div>
                 <div>
-                  <div style={{ fontSize: '13px', fontWeight: 500, color: profile === value ? '#fff' : 'var(--text)', marginBottom: '1px' }}>{label}</div>
+                  <div style={{ fontSize: '13px', fontWeight: 500, color: profile === value ? 'var(--orange)' : 'var(--text)', marginBottom: '1px' }}>{label}</div>
                   <div style={{ fontSize: '11px', color: 'var(--text-muted)', lineHeight: 1.4 }}>{desc}</div>
                 </div>
               </label>
@@ -173,7 +154,7 @@ export default function SubscriptionSettings({ initial }: Props) {
 
         {/* Column 3: Priorities */}
         <div>
-          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
+          <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', marginBottom: '14px' }}>
             Prioridades
           </div>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -197,14 +178,14 @@ export default function SubscriptionSettings({ initial }: Props) {
       </div>
 
       {/* Save */}
-      <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
         <button
           onClick={handleSave}
           disabled={saving}
           style={{
             padding:      '10px 24px',
-            background:   saving ? 'rgba(245,158,11,0.4)' : '#f59e0b',
-            color:        '#0a0a0a',
+            background:   saving ? 'var(--orange-dim)' : 'var(--orange)',
+            color:        'var(--bg)',
             border:       'none',
             borderRadius: '9px',
             fontSize:     '13px',
@@ -234,7 +215,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         height:       '22px',
         borderRadius: '11px',
         border:       'none',
-        background:   value ? '#f59e0b' : 'var(--text-dim)',
+        background:   value ? 'var(--orange)' : 'var(--text-dim)',
         cursor:       'pointer',
         flexShrink:   0,
         transition:   'background 0.2s',
@@ -247,7 +228,7 @@ function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) =>
         width:        '16px',
         height:       '16px',
         borderRadius: '50%',
-        background:   '#fff',
+        background:   'var(--surface)',
         transition:   'left 0.2s',
       }} />
     </button>
@@ -260,7 +241,7 @@ function ChannelToggle({ icon, label, desc, value, onChange }: {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '9px', minWidth: 0 }}>
-        <span style={{ color: 'var(--text-sec)', flexShrink: 0 }}>{icon}</span>
+        <span style={{ color: 'var(--text-muted)', flexShrink: 0 }}>{icon}</span>
         <div>
           <div style={{ fontSize: '12px', fontWeight: 500, color: 'var(--text)' }}>{label}</div>
           <div style={{ fontSize: '10px', color: 'var(--text-muted)' }}>{desc}</div>

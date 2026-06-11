@@ -268,3 +268,18 @@ html, body {
 @media (max-width: 400px) {
   .kpi-grid { grid-template-columns: 1fr !important; }
 }
+
+/* ── Subscription settings grid ──────────────────────────────── */
+
+.sub-settings-grid {
+  display:               grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap:                   24px;
+}
+
+@media (max-width: 640px) {
+  .sub-settings-grid {
+    grid-template-columns: 1fr;
+    gap:                   20px;
+  }
+}
