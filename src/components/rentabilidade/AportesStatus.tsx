@@ -22,11 +22,12 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
 
   return (
     <div style={{
-      background:   'var(--surface2)',
-      border:       '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '16px',
-      padding:      '20px 22px',
-      display:      'flex',
+      background:    'var(--surface)',
+      border:        '1px solid var(--border)',
+      borderTop:     '2px solid #22c55e',
+      borderRadius:  '12px',
+      padding:       '20px 22px',
+      display:       'flex',
       flexDirection: 'column',
     }}>
       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '18px' }}>
@@ -96,7 +97,7 @@ export default function AportesStatus({ profitableCount, totalCount, currentBtcP
       <div style={{
         marginTop:  '16px',
         paddingTop: '12px',
-        borderTop:  '1px solid rgba(255,255,255,0.05)',
+        borderTop:  '1px solid var(--border-dim)',
         fontSize:   '9px',
         color:      'var(--text-muted)',
         lineHeight: 1.5,

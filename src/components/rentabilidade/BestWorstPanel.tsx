@@ -28,9 +28,10 @@ interface Props {
 export default function BestWorstPanel({ bestPeriods, worstPeriods }: Props) {
   return (
     <div style={{
-      background:   'var(--surface2)',
-      border:       '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '16px',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border)',
+      borderTop:    '2px solid var(--orange)',
+      borderRadius: '12px',
       padding:      '20px 22px',
     }}>
       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '18px' }}>
@@ -44,7 +45,7 @@ export default function BestWorstPanel({ bestPeriods, worstPeriods }: Props) {
         }}>
           Melhores períodos
         </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ borderTop: '1px solid var(--border-dim)' }}>
           {bestPeriods.map((e, i) => <Row key={i} entry={e} isPositive />)}
         </div>
       </div>
@@ -56,7 +57,7 @@ export default function BestWorstPanel({ bestPeriods, worstPeriods }: Props) {
         }}>
           Piores períodos
         </div>
-        <div style={{ borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+        <div style={{ borderTop: '1px solid var(--border-dim)' }}>
           {worstPeriods.map((e, i) => <Row key={i} entry={e} isPositive={false} />)}
         </div>
       </div>

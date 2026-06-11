@@ -43,18 +43,18 @@ function KpiCol({
   return (
     <div style={{
       paddingLeft: borderLeft ? '20px' : 0,
-      borderLeft:  borderLeft ? '1px solid rgba(255,255,255,0.07)' : 'none',
+      borderLeft:  borderLeft ? '1px solid var(--border)' : 'none',
     }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
         <div style={{
           width: '22px', height: '22px', borderRadius: '50%',
           background: 'var(--bg)', border: '1px solid var(--border)',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '9px', color: 'var(--text-sec)', flexShrink: 0,
+          fontSize: '9px', color: 'var(--text-muted)', flexShrink: 0,
         }}>
           {icon}
         </div>
-        <div style={{ fontSize: '7.5px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1.2 }}>
+        <div style={{ fontSize: '7.5px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1px', lineHeight: 1.2 }}>
           {label}
         </div>
         {tooltip && <Tooltip text={tooltip} position="bottom" wide />}
@@ -80,17 +80,22 @@ export default function PatrimonioHero({ patrimonio }: Props) {
 
   return (
     <div style={{
-      background:   'linear-gradient(135deg, #0d1a27 0%, #0f2236 60%, #0b1820 100%)',
-      border:       '1px solid rgba(255,255,255,0.08)',
-      borderRadius: '16px',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border)',
+      borderTop:    '2px solid var(--orange)',
+      borderRadius: '12px',
       padding:      '24px 28px 20px',
       position:     'relative',
       overflow:     'hidden',
     }}>
       <div style={{
-        position: 'absolute', top: 0, left: '30%',
-        width: '40%', height: '1px',
-        background: 'linear-gradient(90deg, transparent, rgba(251,191,36,0.3), transparent)',
+        position:     'absolute',
+        top:           0,
+        right:         0,
+        width:         '200px',
+        height:        '200px',
+        background:    'radial-gradient(circle at top right, var(--orange-dim) 0%, transparent 65%)',
+        pointerEvents: 'none',
       }} />
 
       <div style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '28px', alignItems: 'center' }}>
@@ -98,7 +103,7 @@ export default function PatrimonioHero({ patrimonio }: Props) {
         {/* Left: value + return + sparkline */}
         <div>
           <div style={{
-            fontSize: '8px', color: 'var(--text-sec)', textTransform: 'uppercase',
+            fontSize: '8px', color: 'var(--text-muted)', textTransform: 'uppercase',
             letterSpacing: '2px', marginBottom: '8px',
           }}>
             Patrimônio atual
@@ -118,7 +123,7 @@ export default function PatrimonioHero({ patrimonio }: Props) {
             }}>
               {arrow} {Math.abs(totalReturn).toFixed(1).replace('.', ',')}%
             </span>
-            <span style={{ fontSize: '11px', color: 'var(--text-sec)' }}>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>
               {totalReturn >= 0 ? '+' : ''}{fmt0(totalReturnBrl)} total
             </span>
           </div>
@@ -129,7 +134,7 @@ export default function PatrimonioHero({ patrimonio }: Props) {
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
           paddingLeft: '28px',
-          borderLeft: '1px solid rgba(255,255,255,0.07)',
+          borderLeft: '1px solid var(--border)',
         }}>
           <KpiCol
             icon="$"

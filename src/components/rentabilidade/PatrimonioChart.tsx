@@ -92,7 +92,7 @@ export default function PatrimonioChart({ evolution }: Props) {
     <div style={{
       background:   'var(--surface)',
       border:       '1px solid var(--border)',
-      borderRadius: '16px',
+      borderRadius: '12px',
       padding:      '20px 22px',
     }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>

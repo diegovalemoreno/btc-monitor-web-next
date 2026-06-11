@@ -56,9 +56,10 @@ export default function InsightsPanel({ patrimonio }: Props) {
 
   return (
     <div style={{
-      background:   'var(--surface2)',
-      border:       '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '16px',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border)',
+      borderTop:    '2px solid #3b82f6',
+      borderRadius: '12px',
       padding:      '20px 22px',
     }}>
       <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)', marginBottom: '18px' }}>

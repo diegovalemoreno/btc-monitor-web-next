@@ -9,15 +9,26 @@ import BestWorstPanel   from './BestWorstPanel'
 const fmt0 = (n: number) =>
   new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(n)
 
+function SectionHeader({ label }: { label: string }) {
+  return (
+    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '14px' }}>
+      <span style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.1em', whiteSpace: 'nowrap' }}>
+        {label}
+      </span>
+      <div style={{ flex: 1, height: '1px', background: 'var(--border)' }} />
+    </div>
+  )
+}
+
 interface Props { patrimonio: PatrimonioData }
 
 export default function RentabilidadeView({ patrimonio }: Props) {
   if (patrimonio.contributionCount === 0) {
     return (
       <div style={{
-        padding: '32px 24px', background: 'var(--surface2)',
-        border: '1px solid rgba(255,255,255,0.07)', borderRadius: '16px',
-        fontSize: '13px', color: 'var(--text-sec)', textAlign: 'center',
+        padding: '32px 24px', background: 'var(--surface)',
+        border: '1px solid var(--border)', borderRadius: '12px',
+        fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center',
       }}>
         Nenhum aporte com BTC registrado encontrado.
       </div>
@@ -27,42 +38,39 @@ export default function RentabilidadeView({ patrimonio }: Props) {
   const { insights, bestPeriods, worstPeriods, evolution, currentBtcPrice } = patrimonio
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div>
-        <h1 style={{ fontSize: '20px', fontWeight: 700, color: 'var(--text)', margin: '0 0 4px' }}>
-          Rentabilidade
-        </h1>
-        <p style={{ fontSize: '12px', color: 'var(--text-muted)', margin: 0 }}>
-          Retorno por aporte, calculado sobre o preço atual do Bitcoin.
-        </p>
-      </div>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '36px' }}>
 
       <PatrimonioHero patrimonio={patrimonio} />
 
-      <PatrimonioChart evolution={evolution} />
+      <div>
+        <SectionHeader label="Evolução do Patrimônio" />
+        <PatrimonioChart evolution={evolution} />
+      </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '16px' }}>
-        <AportesStatus
-          profitableCount={insights.profitableCount}
-          totalCount={insights.totalCount}
-          currentBtcPrice={currentBtcPrice}
-        />
-        <InsightsPanel patrimonio={patrimonio} />
-        <BestWorstPanel bestPeriods={bestPeriods} worstPeriods={worstPeriods} />
+      <div>
+        <SectionHeader label="Análise dos Aportes" />
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+          <AportesStatus
+            profitableCount={insights.profitableCount}
+            totalCount={insights.totalCount}
+            currentBtcPrice={currentBtcPrice}
+          />
+          <InsightsPanel patrimonio={patrimonio} />
+          <BestWorstPanel bestPeriods={bestPeriods} worstPeriods={worstPeriods} />
+        </div>
       </div>
 
       <div style={{
         textAlign:  'center',
         fontSize:   '10px',
         color:      'var(--text-muted)',
-        padding:    '8px 0',
+        padding:    '4px 0 8px',
         display:    'flex',
         alignItems: 'center',
         justifyContent: 'center',
         gap: '6px',
       }}>
-        <span style={{ opacity: 0.6 }}>🔒</span>
-        Dados atualizados com o preço atual do Bitcoin: {fmt0(currentBtcPrice)}
+        Preço atual do Bitcoin: {fmt0(currentBtcPrice)}
       </div>
     </div>
   )
