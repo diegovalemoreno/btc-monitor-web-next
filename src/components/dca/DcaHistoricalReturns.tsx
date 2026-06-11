@@ -13,7 +13,6 @@ export default function DcaHistoricalReturns({ rows }: Props) {
       border:       '1px solid var(--border)',
       borderRadius: '12px',
       overflow:     'hidden',
-      marginBottom: '16px',
     }}>
       <div style={{ padding: '20px 28px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
@@ -42,7 +41,7 @@ export default function DcaHistoricalReturns({ rows }: Props) {
               const border    = highlight ? '1px solid rgba(132, 204, 22, 0.2)' : '1px solid transparent'
               return (
                 <tr key={row.scoreRange} style={{ background: bg, outline: border }}>
-                  <td style={{ padding: '12px 16px', fontWeight: highlight ? 800 : 400, color: highlight ? '#84cc16' : 'var(--text-sec)', whiteSpace: 'nowrap' }}>
+                  <td style={{ padding: '12px 16px', fontWeight: highlight ? 800 : 400, color: highlight ? '#84cc16' : 'var(--text-muted)', whiteSpace: 'nowrap' }}>
                     {row.scoreRange} {highlight && '◀ agora'}
                   </td>
                   {([row.return3m, row.return6m, row.return12m] as number[]).map((v, i) => (

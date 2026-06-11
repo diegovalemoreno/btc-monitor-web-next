@@ -29,7 +29,6 @@ export default function DcaWhyNow({ items }: Props) {
       border:       '1px solid var(--border)',
       borderRadius: '12px',
       overflow:     'hidden',
-      marginBottom: '16px',
     }}>
       <div style={{ padding: '20px 32px 16px', borderBottom: '1px solid var(--border)' }}>
         <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em' }}>
@@ -61,7 +60,7 @@ export default function DcaWhyNow({ items }: Props) {
           >
             {/* Left */}
             <div>
-              <div style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.9px', marginBottom: '7px' }}>
+              <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)', textTransform: 'uppercase', letterSpacing: '0.9px', marginBottom: '7px' }}>
                 {item.indicatorName}
               </div>
               <div style={{ fontSize: '15px', fontWeight: 700, color, marginBottom: '8px', lineHeight: 1.2 }}>

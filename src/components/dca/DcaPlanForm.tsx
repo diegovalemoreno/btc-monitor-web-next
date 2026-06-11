@@ -57,9 +57,10 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
   return (
     <div style={{
-      background:   'var(--surface2)',
-      border:       '1px solid rgba(255,255,255,0.07)',
-      borderRadius: '16px',
+      background:   'var(--surface)',
+      border:       '1px solid var(--border)',
+      borderTop:    '2px solid var(--orange)',
+      borderRadius: '12px',
       padding:      '24px 28px',
     }}>
 
@@ -77,20 +78,20 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
         </div>
         <div>
           <div style={{ fontSize: '14px', fontWeight: 600, color: 'var(--text)' }}>Configuração do plano DCA</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-sec)' }}>Ajuste os parâmetros do seu plano de acumulação.</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Ajuste os parâmetros do seu plano de acumulação.</div>
         </div>
       </div>
 
       {/* Plano ativo */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '14px 16px', background: 'var(--surface2)',
-        border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px',
+        padding: '14px 16px', background: 'var(--bg)',
+        border: '1px solid var(--border)', borderRadius: '10px',
         marginBottom: '20px',
       }}>
         <div>
           <div style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text)' }}>Plano ativo</div>
-          <div style={{ fontSize: '11px', color: 'var(--text-sec)', marginTop: '2px' }}>Gerar recomendações diárias de aporte</div>
+          <div style={{ fontSize: '11px', color: 'var(--text-muted)', marginTop: '2px' }}>Gerar recomendações diárias de aporte</div>
         </div>
         <Toggle value={enabled} onChange={setEnabled} />
       </div>
@@ -99,12 +100,12 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', marginBottom: '20px' }}>
 
         {/* Monthly amount */}
-        <div style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '16px' }}>
-          <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
+        <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
             Valor mensal disponível
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-            <span style={{ fontSize: '13px', color: 'var(--text-sec)' }}>R$</span>
+            <span style={{ fontSize: '13px', color: 'var(--text-muted)' }}>R$</span>
             <input
               type="number"
               value={monthlyAmount}
@@ -122,9 +123,9 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
         </div>
 
         {/* Reserve */}
-        <div style={{ background: 'var(--surface2)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '10px', padding: '16px' }}>
+        <div style={{ background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '10px', padding: '16px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-            <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700 }}>
+            <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700 }}>
               Reserva estratégica
             </div>
             <span style={{ fontSize: '16px', fontWeight: 800, color: '#f59e0b' }}>{reservePct}%</span>
@@ -141,7 +142,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
 
       {/* Risk profile */}
       <div style={{ marginBottom: '20px' }}>
-        <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
+        <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '10px' }}>
           Perfil de risco
         </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px' }}>
@@ -153,7 +154,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
               style={{
                 padding:      '12px 14px',
                 background:   riskProfile === value ? 'rgba(245,158,11,0.1)' : 'var(--text-dim)',
-                border:       riskProfile === value ? '1px solid rgba(245,158,11,0.4)' : '1px solid rgba(255,255,255,0.07)',
+                border:       riskProfile === value ? '1px solid rgba(245,158,11,0.4)' : '1px solid var(--border)',
                 borderRadius: '10px',
                 cursor:       'pointer',
                 textAlign:    'left',
@@ -172,7 +173,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
       {/* Default buy day */}
       <div style={{ display: 'flex', alignItems: 'flex-end', gap: '24px', marginBottom: '24px' }}>
         <div>
-          <div style={{ fontSize: '10px', color: 'var(--text-sec)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '8px' }}>
+          <div style={{ fontSize: '10px', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '1.2px', fontWeight: 700, marginBottom: '8px' }}>
             Dia padrão de compra <span style={{ color: 'var(--text-muted)', fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(opcional)</span>
           </div>
           <input
@@ -192,7 +193,7 @@ export default function DcaPlanForm({ initial, onSaved }: Props) {
       </div>
 
       {/* Save row */}
-      <div style={{ paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ paddingTop: '20px', borderTop: '1px solid var(--border)', display: 'flex', alignItems: 'center', gap: '12px' }}>
         <button
           onClick={handleSave}
           disabled={saving}

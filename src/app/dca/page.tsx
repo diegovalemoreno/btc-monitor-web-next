@@ -3,6 +3,7 @@ import { createClient }           from '@/lib/supabase/server'
 import { getDcaPlan }             from '@/repositories/dca-plans'
 import { getCurrentMarketData }   from '@/services/market-data'
 import AppNav                     from '@/components/shared/AppNav'
+import BtcPriceInline             from '@/components/shared/BtcPriceInline'
 import DcaRecommendationHero      from '@/components/dca/DcaRecommendationHero'
 import DcaTacticalAlert           from '@/components/dca/DcaTacticalAlert'
 import DcaWhyNow                  from '@/components/dca/DcaWhyNow'
@@ -44,24 +45,38 @@ export default async function DcaPage() {
       <main style={{ padding: '32px 24px' }}>
         <div style={{ maxWidth: '1280px', margin: '0 auto' }}>
 
-          {!plan && (
-            <div style={{ marginBottom: '24px' }}>
-              <DcaPlanForm initial={null} />
+          <div style={{ marginBottom: '36px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px', flexWrap: 'wrap', marginBottom: '16px' }}>
+              <div>
+                <div style={{ fontSize: '10px', fontWeight: 700, letterSpacing: '0.16em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '8px' }}>
+                  Estratégia
+                </div>
+                <h1 style={{ margin: 0, fontSize: '28px', fontWeight: 800, letterSpacing: '-0.5px', lineHeight: 1.1 }}>DCA Tático</h1>
+                <p style={{ margin: '8px 0 0', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                  Recomendação de aporte calibrada pelo score de mercado e seu perfil de risco.
+                </p>
+              </div>
+              <BtcPriceInline />
             </div>
-          )}
+            <div style={{ height: '1px', background: 'var(--border)' }} />
+          </div>
 
-          {recommendation && plan && (
-            <DcaRecommendationHero
-              recommendation={recommendation}
-              monthlyAmountBrl={plan.monthly_amount_brl}
-            />
-          )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {!plan && <DcaPlanForm initial={null} />}
 
-          <DcaTacticalAlert patterns={patterns} />
+            {recommendation && plan && (
+              <DcaRecommendationHero
+                recommendation={recommendation}
+                monthlyAmountBrl={plan.monthly_amount_brl}
+              />
+            )}
 
-          <DcaWhyNow items={whyNow} />
+            <DcaTacticalAlert patterns={patterns} />
 
-          <DcaHistoricalReturns rows={historicalRows} />
+            <DcaWhyNow items={whyNow} />
+
+            <DcaHistoricalReturns rows={historicalRows} />
+          </div>
 
         </div>
       </main>

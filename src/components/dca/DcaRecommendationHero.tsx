@@ -30,9 +30,9 @@ export default function DcaRecommendationHero({ recommendation, monthlyAmountBrl
     <div style={{
       background:   'var(--surface)',
       border:       '1px solid var(--border)',
+      borderTop:    '2px solid var(--orange)',
       borderRadius: '12px',
       padding:      '36px 32px',
-      marginBottom: '16px',
     }}>
       <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.12em', marginBottom: '20px' }}>
         Aporte Recomendado
@@ -42,7 +42,7 @@ export default function DcaRecommendationHero({ recommendation, monthlyAmountBrl
         <div style={{ fontSize: 'clamp(36px, 8vw, 64px)', fontWeight: 900, color, letterSpacing: '-2px', lineHeight: 1 }}>
           {fmt(recommendedAmount)}
         </div>
-        <div style={{ paddingBottom: '8px', color: 'var(--text-sec)', fontSize: '15px' }}>
+        <div style={{ paddingBottom: '8px', color: 'var(--text-muted)', fontSize: '15px' }}>
           {multLabel} · seu mensal: {fmt(monthlyAmountBrl)}
         </div>
       </div>
@@ -54,7 +54,7 @@ export default function DcaRecommendationHero({ recommendation, monthlyAmountBrl
         }}>
           Score {score}
         </div>
-        <div style={{ fontSize: '14px', color: 'var(--text-sec)' }}>
+        <div style={{ fontSize: '14px', color: 'var(--text-muted)' }}>
           {label}
         </div>
       </div>

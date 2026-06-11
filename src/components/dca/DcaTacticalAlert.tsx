@@ -8,7 +8,7 @@ export default function DcaTacticalAlert({ patterns }: Props) {
   if (patterns.length === 0) return null
 
   return (
-    <div style={{ marginBottom: '16px' }}>
+    <div>
       {patterns.map(p => (
         <div key={p.name} style={{
           background:   'rgba(132, 204, 22, 0.06)',
@@ -22,14 +22,14 @@ export default function DcaTacticalAlert({ patterns }: Props) {
             <div style={{ fontSize: '13px', fontWeight: 800, color: '#84cc16', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
               Janela Tática Detectada
             </div>
-            <div style={{ fontSize: '13px', fontWeight: 700, color: '#fff' }}>
+            <div style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)' }}>
               {p.name}
             </div>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '16px' }}>
             {p.firedConditions.map((c, i) => (
-              <div key={i} style={{ fontSize: '13px', color: 'var(--text-sec)', display: 'flex', gap: '8px' }}>
+              <div key={i} style={{ fontSize: '13px', color: 'var(--text-muted)', display: 'flex', gap: '8px' }}>
                 <span style={{ color: '#84cc16', flexShrink: 0 }}>✓</span>
                 {c}
               </div>
