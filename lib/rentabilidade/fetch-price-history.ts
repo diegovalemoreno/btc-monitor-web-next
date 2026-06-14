@@ -6,11 +6,11 @@ import type { BinanceKline } from '../types/indicator'
 const BINANCE_BASE = process.env.BINANCE_BASE_URL ?? 'https://data-api.binance.vision'
 
 async function fetchUsdToBrl(): Promise<number> {
-  const data = await fetchJson<{ USDBRL?: { bid?: string } }>(
-    'https://economia.awesomeapi.com.br/json/last/USD-BRL'
+  const data = await fetchJson<{ rates?: { BRL?: number } }>(
+    'https://api.frankfurter.app/latest?from=USD&to=BRL'
   )
-  const rate = parseFloat(data.USDBRL?.bid ?? '')
-  if (!rate || rate <= 0) throw new Error('AwesomeAPI: invalid USD-BRL rate')
+  const rate = data.rates?.BRL
+  if (!rate || rate <= 0) throw new Error('Frankfurter: invalid USD-BRL rate')
   return rate
 }
 
