@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import type { DcaContributionRow } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
+import OrangeDotsChart from './OrangeDotsChart'
 import Tooltip from '@/components/shared/Tooltip'
 
 
@@ -149,6 +150,12 @@ export default function DcaResumoView({ initialContributions }: Props) {
       {/* Patrimony evolution chart */}
       <div>
         <DcaPatrimonyChart contributions={contributions} />
+      </div>
+
+      {/* Orange Dots Chart */}
+      <div>
+        <SectionHeader label="Orange Dots Chart" sub="Compras vs. preço do Bitcoin" />
+        <OrangeDotsChart contributions={contributions} />
       </div>
 
     </div>
