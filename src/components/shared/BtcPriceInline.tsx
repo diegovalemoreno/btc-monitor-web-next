@@ -13,13 +13,18 @@ export default function BtcPriceInline() {
   const [usd, setUsd] = useState<number | null>(null)
 
   useEffect(() => {
-    fetch('/api/btc-price-brl')
-      .then(r => r.ok ? r.json() : null)
-      .then((d: { btcPriceBrl?: number; btcPriceUsd?: number } | null) => {
-        if (d?.btcPriceBrl) setBrl(d.btcPriceBrl)
-        if (d?.btcPriceUsd) setUsd(d.btcPriceUsd)
-      })
-      .catch(() => {})
+    const poll = () => {
+      fetch('/api/btc-price-brl')
+        .then(r => r.ok ? r.json() : null)
+        .then((d: { btcPriceBrl?: number; btcPriceUsd?: number } | null) => {
+          if (d?.btcPriceBrl) setBrl(d.btcPriceBrl)
+          if (d?.btcPriceUsd) setUsd(d.btcPriceUsd)
+        })
+        .catch(() => {})
+    }
+    poll()
+    const id = setInterval(poll, 60_000)
+    return () => clearInterval(id)
   }, [])
 
   if (!brl) return null

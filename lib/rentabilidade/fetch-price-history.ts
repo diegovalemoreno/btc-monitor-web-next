@@ -14,35 +14,39 @@ async function fetchBtcBrlPrice(): Promise<number> {
   return price
 }
 
-async function _fetchBtcPriceHistoryBrl(): Promise<{ history: PricePoint[]; currentPrice: number }> {
-  const url = `${BINANCE_BASE}/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500`
-  const [klines, currentPrice] = await Promise.all([
-    fetchJson<BinanceKline[]>(url),
-    fetchBtcBrlPrice(),
-  ])
+const fetchHistoryOnly = unstable_cache(
+  async (): Promise<PricePoint[]> => {
+    const url = `${BINANCE_BASE}/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500`
+    const [klines, spotBrl] = await Promise.all([
+      fetchJson<BinanceKline[]>(url),
+      fetchBtcBrlPrice(),
+    ])
 
-  const closes = klines.map(k => parseFloat(k[4]))
-  const lastUsdtClose = closes[closes.length - 1]
-  if (!lastUsdtClose || lastUsdtClose <= 0) throw new Error(`Binance: invalid BTCUSDT data (lastClose=${lastUsdtClose})`)
+    const closes = klines.map(k => parseFloat(k[4]))
+    const lastUsdtClose = closes[closes.length - 1]
+    if (!lastUsdtClose || lastUsdtClose <= 0) throw new Error(`Binance: invalid BTCUSDT data (lastClose=${lastUsdtClose})`)
 
-  const usdToBrl = currentPrice / lastUsdtClose
+    const usdToBrl = spotBrl / lastUsdtClose
 
-  const history: PricePoint[] = klines
-    .map(k => {
-      const closeUsdt = parseFloat(k[4])
-      if (isNaN(closeUsdt)) return null
-      return {
-        date:  new Date(k[0]).toISOString().slice(0, 10),
-        price: Math.round(closeUsdt * usdToBrl),
-      }
-    })
-    .filter((p): p is PricePoint => p !== null)
-
-  return { history, currentPrice }
-}
-
-export const fetchBtcPriceHistoryBrl = unstable_cache(
-  _fetchBtcPriceHistoryBrl,
+    return klines
+      .map(k => {
+        const closeUsdt = parseFloat(k[4])
+        if (isNaN(closeUsdt)) return null
+        return {
+          date:  new Date(k[0]).toISOString().slice(0, 10),
+          price: Math.round(closeUsdt * usdToBrl),
+        }
+      })
+      .filter((p): p is PricePoint => p !== null)
+  },
   ['btc-price-history-brl'],
   { revalidate: 3600 },
 )
+
+export async function fetchBtcPriceHistoryBrl(): Promise<{ history: PricePoint[]; currentPrice: number }> {
+  const [history, currentPrice] = await Promise.all([
+    fetchHistoryOnly(),
+    fetchBtcBrlPrice(),
+  ])
+  return { history, currentPrice }
+}
