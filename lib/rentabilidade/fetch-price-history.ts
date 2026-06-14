@@ -5,27 +5,27 @@ import type { BinanceKline } from '../types/indicator'
 
 const BINANCE_BASE = process.env.BINANCE_BASE_URL ?? 'https://data-api.binance.vision'
 
-async function fetchUsdToBrl(): Promise<number> {
-  const data = await fetchJson<{ rates?: { BRL?: number } }>(
-    'https://api.frankfurter.app/latest?from=USD&to=BRL'
+async function fetchBtcBrlPrice(): Promise<number> {
+  const data = await fetchJson<{ data?: { amount?: string } }>(
+    'https://api.coinbase.com/v2/prices/BTC-BRL/spot'
   )
-  const rate = data.rates?.BRL
-  if (!rate || rate <= 0) throw new Error('Frankfurter: invalid USD-BRL rate')
-  return rate
+  const price = parseFloat(data.data?.amount ?? '')
+  if (!price || price <= 0) throw new Error('Coinbase: invalid BTC-BRL price')
+  return price
 }
 
 async function _fetchBtcPriceHistoryBrl(): Promise<{ history: PricePoint[]; currentPrice: number }> {
   const url = `${BINANCE_BASE}/api/v3/klines?symbol=BTCUSDT&interval=1d&limit=1500`
-  const [klines, usdToBrl] = await Promise.all([
+  const [klines, currentPrice] = await Promise.all([
     fetchJson<BinanceKline[]>(url),
-    fetchUsdToBrl(),
+    fetchBtcBrlPrice(),
   ])
 
   const closes = klines.map(k => parseFloat(k[4]))
   const lastUsdtClose = closes[closes.length - 1]
   if (!lastUsdtClose || lastUsdtClose <= 0) throw new Error(`Binance: invalid BTCUSDT data (lastClose=${lastUsdtClose})`)
 
-  const currentPrice = Math.round(lastUsdtClose * usdToBrl)
+  const usdToBrl = currentPrice / lastUsdtClose
 
   const history: PricePoint[] = klines
     .map(k => {
