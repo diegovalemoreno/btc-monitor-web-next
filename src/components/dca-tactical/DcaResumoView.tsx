@@ -5,6 +5,7 @@ import type { DcaContributionRow } from '@/lib/db/types'
 import DcaPatrimonyChart from './DcaPatrimonyChart'
 import OrangeDotsChart from './OrangeDotsChart'
 import Tooltip from '@/components/shared/Tooltip'
+import SthLthChart from './SthLthChart'
 
 
 const fmt     = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -156,6 +157,11 @@ export default function DcaResumoView({ initialContributions }: Props) {
       <div>
         <SectionHeader label="Orange Dots Chart" sub="Compras vs. preço do Bitcoin" />
         <OrangeDotsChart contributions={contributions} />
+      </div>
+
+      {/* STH / LTH Realized Price Chart */}
+      <div>
+        <SthLthChart />
       </div>
 
     </div>
