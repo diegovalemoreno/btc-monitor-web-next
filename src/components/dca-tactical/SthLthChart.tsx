@@ -204,7 +204,7 @@ export default function SthLthChart() {
                         setShowDropdown(false)
                         if (p.id === 'custom') { setPendingFrom(customFrom); setPendingTo(customTo) }
                       }}
-                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', background: period === p.id ? 'rgba(247,147,26,0.1)' : 'transparent', border: 'none', borderBottom: '1px solid var(--border-dim)', color: period === p.id ? 'var(--orange)' : 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}
+                      style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', background: period === p.id ? 'var(--orange-subtle)' : 'transparent', border: 'none', borderBottom: '1px solid var(--border-dim)', color: period === p.id ? 'var(--orange)' : 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}
                     >
                       {p.label}
                     </button>

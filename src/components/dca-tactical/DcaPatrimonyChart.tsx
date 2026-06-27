@@ -126,7 +126,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
     [contributions, period, customFrom, customTo]
   )
 
-  if (data.length === 0) return null
+  if (data.length === 0 && period !== 'custom') return null
 
   const n       = data.length
   const W        = 800
@@ -275,6 +275,11 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
       )}
 
       {/* Chart — scrollable on mobile */}
+      {data.length === 0 ? (
+        <div style={{ height: compact ? 180 : 264, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-muted)', fontSize: '13px' }}>
+          Sem dados para o período selecionado.
+        </div>
+      ) : (
       <div
         style={{ overflowX: 'auto', position: 'relative', cursor: 'crosshair' }}
         onMouseMove={handleMouseMove}
@@ -444,6 +449,7 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
           </div>
         )}
       </div>
+      )}
     </div>
   )
 }
