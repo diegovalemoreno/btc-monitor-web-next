@@ -4,8 +4,8 @@ import { useState, useEffect, useMemo, useRef } from 'react'
 import type { DcaContributionRow } from '@/lib/db/types'
 
 interface PricePoint { date: string; price: number }
-type Period = '1A' | '2A' | '3A' | 'Todos'
-const PERIODS: Period[] = ['1A', '2A', '3A', 'Todos']
+type Period = '1A' | '2A' | '3A' | 'Todos' | 'custom'
+const PERIODS: Period[] = ['1A', '2A', '3A', 'Todos', 'custom']
 const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
 
 function isVenda(c: DcaContributionRow) { return !!c.notes?.includes('Venda') }
@@ -37,6 +37,10 @@ export default function OrangeDotsChart({ contributions }: Props) {
   const [tooltip, setTooltip]         = useState<TooltipState | null>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const [containerW, setContainerW]   = useState(800)
+  const [customFrom,  setCustomFrom]  = useState('')
+  const [customTo,    setCustomTo]    = useState('')
+  const [pendingFrom, setPendingFrom] = useState('')
+  const [pendingTo,   setPendingTo]   = useState('')
 
   useEffect(() => {
     fetch('/api/btc-price-history')
@@ -77,13 +81,19 @@ export default function OrangeDotsChart({ contributions }: Props) {
   // Filtered price history
   const filteredHistory = useMemo(() => {
     if (!priceHistory.length) return []
+    if (period === 'custom') {
+      return priceHistory.filter(p =>
+        (!customFrom || p.date >= customFrom) &&
+        (!customTo   || p.date <= customTo)
+      )
+    }
     if (period === 'Todos') return priceHistory
-    const years   = period === '1A' ? 1 : period === '2A' ? 2 : 3
-    const cutoff  = new Date()
+    const years  = period === '1A' ? 1 : period === '2A' ? 2 : 3
+    const cutoff = new Date()
     cutoff.setFullYear(cutoff.getFullYear() - years)
     const cutoffStr = cutoff.toISOString().slice(0, 10)
     return priceHistory.filter(p => p.date >= cutoffStr)
-  }, [priceHistory, period])
+  }, [priceHistory, period, customFrom, customTo])
 
   // Visible purchase dots (have btc_price_brl + within period range)
   const visibleDots = useMemo(() => {
@@ -191,9 +201,12 @@ export default function OrangeDotsChart({ contributions }: Props) {
     filteredHistory.forEach((p, i) => {
       const [y, m] = p.date.split('-').map(Number)
       let key = '', label = ''
-      if (period === 'Todos' || period === '3A') {
+      const n = filteredHistory.length
+      const isLong   = period === 'Todos' || period === '3A' || (period === 'custom' && n > 365)
+      const isMedium = period === '2A'    || (period === 'custom' && n > 90 && n <= 365)
+      if (isLong) {
         if (m === 1) { key = String(y); label = String(y) }
-      } else if (period === '2A') {
+      } else if (isMedium) {
         if (m === 1 || m === 4 || m === 7 || m === 10) {
           key = `${y}-${m}`; label = `${MONTHS_PT[m - 1]}/${String(y).slice(2)}`
         }
@@ -332,11 +345,53 @@ export default function OrangeDotsChart({ contributions }: Props) {
                 transition:   'all 0.12s',
               }}
             >
-              {p === 'Todos' ? 'Todo período' : p}
+              {p === 'custom' ? 'Personalizado' : p === 'Todos' ? 'Todo período' : p}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Custom date range panel */}
+      {period === 'custom' && (
+        <div style={{
+          padding:    '14px 24px',
+          borderTop:  '1px solid var(--border-dim)',
+          display:    'flex',
+          gap:        '14px',
+          alignItems: 'flex-end',
+          flexWrap:   'wrap',
+        }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>Data inicial</label>
+            <input
+              type="date" value={pendingFrom} onChange={e => setPendingFrom(e.target.value)}
+              style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
+            />
+          </div>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)', paddingBottom: '8px' }}>até</span>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>Data final</label>
+            <input
+              type="date" value={pendingTo} onChange={e => setPendingTo(e.target.value)}
+              style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => { setPeriod('Todos'); setPendingFrom(''); setPendingTo('') }}
+              style={{ padding: '7px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}
+            >
+              Limpar
+            </button>
+            <button
+              onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }}
+              style={{ padding: '7px 16px', background: 'var(--orange)', border: 'none', borderRadius: '6px', color: '#000', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Chart */}
       <div
