@@ -3,8 +3,8 @@
 import { useState, useMemo } from 'react'
 import type { DcaContributionRow } from '@/lib/db/types'
 
-type Period = '3M' | '6M' | '12M' | 'Todos'
-const PERIODS: Period[] = ['3M', '6M', '12M', 'Todos']
+type Period = '3M' | '6M' | '12M' | 'Todos' | 'custom'
+const PERIODS: Period[] = ['3M', '6M', '12M', 'Todos', 'custom']
 
 interface MonthData {
   label:       string
@@ -41,7 +41,7 @@ function smartTicks(max: number, count: number): number[] {
   return Array.from({ length: count + 1 }, (_, i) => Math.round(step * i))
 }
 
-function buildChartData(contributions: DcaContributionRow[], period: Period): MonthData[] {
+function buildChartData(contributions: DcaContributionRow[], period: Period, customFrom?: string, customTo?: string): MonthData[] {
   if (contributions.length === 0) return []
 
   const MONTHS_PT = ['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez']
@@ -61,12 +61,20 @@ function buildChartData(contributions: DcaContributionRow[], period: Period): Mo
 
   // Apply period filter
   let cutoffYm: string | null = null
-  if (period !== 'Todos') {
+  let endYm:    string | null = null
+
+  if (period === 'custom') {
+    cutoffYm = customFrom ? customFrom.slice(0, 7) : null
+    endYm    = customTo   ? customTo.slice(0, 7)   : null
+  } else if (period !== 'Todos') {
     const months = period === '3M' ? 2 : period === '6M' ? 5 : 11
     const d = new Date(); d.setMonth(d.getMonth() - months)
     cutoffYm = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`
   }
-  const displayedYms = cutoffYm ? allYms.filter(ym => ym >= cutoffYm!) : allYms
+  const displayedYms = allYms.filter(ym =>
+    (!cutoffYm || ym >= cutoffYm) &&
+    (!endYm    || ym <= endYm)
+  )
   if (displayedYms.length === 0) return []
 
   return displayedYms.map(ym => {
@@ -108,8 +116,15 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
   const [tooltip,   setTooltip]   = useState<TooltipState | null>(null)
   const [hoveredYm, setHoveredYm] = useState<string | null>(null)
   const [mousePos,  setMousePos]  = useState({ x: 0, y: 0 })
+  const [customFrom,  setCustomFrom]  = useState('')
+  const [customTo,    setCustomTo]    = useState('')
+  const [pendingFrom, setPendingFrom] = useState('')
+  const [pendingTo,   setPendingTo]   = useState('')
 
-  const data = useMemo(() => buildChartData(contributions, period), [contributions, period])
+  const data = useMemo(
+    () => buildChartData(contributions, period, customFrom, customTo),
+    [contributions, period, customFrom, customTo]
+  )
 
   if (data.length === 0) return null
 
@@ -211,11 +226,53 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
                 transition:   'all 0.12s',
               }}
             >
-              {p === 'Todos' ? 'Todo período' : `Últimos ${p}`}
+              {p === 'custom' ? 'Personalizado' : p === 'Todos' ? 'Todo período' : `Últimos ${p}`}
             </button>
           ))}
         </div>
       </div>
+
+      {/* Custom date range panel */}
+      {period === 'custom' && (
+        <div style={{
+          padding:    '14px 20px',
+          borderTop:  '1px solid var(--border-dim)',
+          display:    'flex',
+          gap:        '14px',
+          alignItems: 'flex-end',
+          flexWrap:   'wrap',
+        }}>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>Data inicial</label>
+            <input
+              type="date" value={pendingFrom} onChange={e => setPendingFrom(e.target.value)}
+              style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
+            />
+          </div>
+          <span style={{ fontSize: '13px', color: 'var(--text-muted)', paddingBottom: '8px' }}>até</span>
+          <div>
+            <label style={{ display: 'block', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '5px' }}>Data final</label>
+            <input
+              type="date" value={pendingTo} onChange={e => setPendingTo(e.target.value)}
+              style={{ padding: '7px 10px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text)', fontSize: '13px' }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '8px' }}>
+            <button
+              onClick={() => { setPeriod('Todos'); setPendingFrom(''); setPendingTo('') }}
+              style={{ padding: '7px 16px', background: 'transparent', border: '1px solid var(--border)', borderRadius: '6px', color: 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}
+            >
+              Limpar
+            </button>
+            <button
+              onClick={() => { setCustomFrom(pendingFrom); setCustomTo(pendingTo) }}
+              style={{ padding: '7px 16px', background: 'var(--orange)', border: 'none', borderRadius: '6px', color: '#000', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}
+            >
+              Aplicar
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Chart — scrollable on mobile */}
       <div
