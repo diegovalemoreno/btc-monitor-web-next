@@ -171,14 +171,14 @@ export default function SthLthChart() {
       {/* Header */}
       <div style={{ padding: '20px 24px 14px' }}>
         <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.18em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '12px' }}>
-          STH / LTH Realized Price
+          STH / LTH — Médias Móveis (proxy)
         </div>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
 
           {/* Legend */}
           <div style={{ display: 'flex', gap: '16px', alignItems: 'center', fontSize: '10px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
-            <LegendItem color="#22D3EE"          label="STH Realized Price" />
-            <LegendItem color="var(--orange)"    label="LTH Realized Price" />
+            <LegendItem color="#22D3EE"          label="STH (30d MA)" />
+            <LegendItem color="var(--orange)"    label="LTH (200d MA)" />
             <LegendItem color="var(--text-sec)"  label="BTC Spot" opacity={0.5} />
           </div>
 
@@ -319,8 +319,8 @@ export default function SthLthChart() {
             <div style={{ fontSize: '11px', fontWeight: 700, color: 'var(--text)', marginBottom: '8px' }}>
               {new Date(tooltip.date + 'T12:00:00').toLocaleDateString('pt-BR', { day: '2-digit', month: 'short', year: 'numeric' })}
             </div>
-            <TRow label="STH Realized" value={`${prefix}${fmtK(tooltip.sth)}`}  color="#22D3EE" />
-            <TRow label="LTH Realized" value={`${prefix}${fmtK(tooltip.lth)}`}  color="var(--orange)" />
+            <TRow label="STH (30d MA)" value={`${prefix}${fmtK(tooltip.sth)}`}  color="#22D3EE" />
+            <TRow label="LTH (200d MA)" value={`${prefix}${fmtK(tooltip.lth)}`}  color="var(--orange)" />
             <TRow label="BTC Spot"     value={`${prefix}${fmtK(tooltip.spot)}`} color="var(--text-sec)" />
           </div>
         )}
