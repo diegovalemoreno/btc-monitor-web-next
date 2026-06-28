@@ -2,66 +2,78 @@ import { NextResponse } from 'next/server'
 
 export const revalidate = 3600
 
-interface CoinMetricsRow {
-  asset: string
-  time:  string
-  RealizedPrice_Adj_STH?: string | null
-  RealizedPrice_Adj_LTH?: string | null
-  PriceUSD?:              string | null
+// Glassnode response shape: [{ t: unixSeconds, v: number }, ...]
+type GlassnodePoint = { t: number; v: number }
+
+function unixToDate(t: number): string {
+  return new Date(t * 1000).toISOString().slice(0, 10)
 }
 
 export async function GET() {
+  const apiKey = process.env.GLASSNODE_API_KEY
+
+  if (!apiKey) {
+    return NextResponse.json(
+      { error: 'GLASSNODE_API_KEY não configurado. Crie uma conta em glassnode.com e adicione a chave ao .env.local.' },
+      { status: 503 }
+    )
+  }
+
   try {
-    const [cmRes, fxRes] = await Promise.all([
-      fetch(
-        'https://community-api.coinmetrics.io/v4/timeseries/asset-metrics' +
-        '?assets=btc&metrics=RealizedPrice_Adj_STH,RealizedPrice_Adj_LTH,PriceUSD&frequency=1d',
-        { headers: { Accept: 'application/json' } }
-      ),
+    const base  = 'https://api.glassnode.com/v1/metrics'
+    const q     = `a=BTC&i=24h&api_key=${apiKey}`
+
+    const [sthRes, lthRes, priceRes, fxRes] = await Promise.all([
+      fetch(`${base}/indicators/realized_price_short_term_holder_less_155?${q}`),
+      fetch(`${base}/indicators/realized_price_long_term_holder?${q}`),
+      fetch(`${base}/market/price_usd_close?${q}`),
       fetch('https://api.frankfurter.app/latest?from=USD&to=BRL'),
     ])
 
     if (!fxRes.ok) throw new Error(`Frankfurter: ${fxRes.status}`)
 
-    if (!cmRes.ok) {
-      const cmErr = await cmRes.json().catch(() => ({})) as { error?: { type?: string } }
-      if (cmErr?.error?.type === 'bad_parameter') {
-        return NextResponse.json(
-          { error: 'Métricas STH/LTH não disponíveis no plano community' },
-          { status: 503 }
-        )
-      }
-      throw new Error(`CoinMetrics: ${cmRes.status}`)
+    // Glassnode returns 403 for metrics outside the account's plan tier
+    if (sthRes.status === 403 || lthRes.status === 403) {
+      return NextResponse.json(
+        { error: 'Métricas STH/LTH exigem plano pago no Glassnode (Advanced ~$129/mês). O plano gratuito não inclui esses dados.' },
+        { status: 403 }
+      )
     }
 
-    const cm = await cmRes.json() as { data: CoinMetricsRow[] }
-    const fx = await fxRes.json() as { rates: { BRL: number } }
+    if (!sthRes.ok)   throw new Error(`Glassnode STH: ${sthRes.status}`)
+    if (!lthRes.ok)   throw new Error(`Glassnode LTH: ${lthRes.status}`)
+    if (!priceRes.ok) throw new Error(`Glassnode price: ${priceRes.status}`)
+
+    const [sthData, lthData, priceData, fx] = await Promise.all([
+      sthRes.json()   as Promise<GlassnodePoint[]>,
+      lthRes.json()   as Promise<GlassnodePoint[]>,
+      priceRes.json() as Promise<GlassnodePoint[]>,
+      fxRes.json()    as Promise<{ rates: { BRL: number } }>,
+    ])
 
     const usdBrlRate = fx.rates?.BRL
     if (!usdBrlRate || usdBrlRate <= 0) throw new Error('Frankfurter: taxa USD/BRL inválida')
 
-    const sample = cm.data?.[0]
-    if (!sample || sample.RealizedPrice_Adj_STH == null || sample.RealizedPrice_Adj_LTH == null) {
-      return NextResponse.json(
-        { error: 'Métricas STH/LTH não disponíveis no plano community' },
-        { status: 503 }
-      )
-    }
+    // Index LTH and price by date for O(1) join
+    const lthByDate   = new Map(lthData.map(p   => [unixToDate(p.t), p.v]))
+    const priceByDate = new Map(priceData.map(p  => [unixToDate(p.t), p.v]))
 
-    const data = cm.data
-      .filter(r => r.RealizedPrice_Adj_STH != null && r.RealizedPrice_Adj_LTH != null && r.PriceUSD != null)
-      .map(r => {
-        const sthUsd  = parseFloat(r.RealizedPrice_Adj_STH!)
-        const lthUsd  = parseFloat(r.RealizedPrice_Adj_LTH!)
-        const spotUsd = parseFloat(r.PriceUSD!)
+    const data = sthData
+      .map(p => {
+        const date    = unixToDate(p.t)
+        const sthUsd  = p.v
+        const lthUsd  = lthByDate.get(date)
+        const spotUsd = priceByDate.get(date)
+        if (!lthUsd || !spotUsd) return null
         return {
-          date:    r.time.slice(0, 10),
+          date,
           sthUsd,  lthUsd,  spotUsd,
           sthBrl:  sthUsd  * usdBrlRate,
           lthBrl:  lthUsd  * usdBrlRate,
           spotBrl: spotUsd * usdBrlRate,
         }
       })
+      .filter(Boolean)
 
     return NextResponse.json({ data, usdBrlRate })
   } catch (err) {
