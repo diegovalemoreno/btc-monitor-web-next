@@ -1,10 +1,16 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import type { DcaContributionRow } from '@/lib/db/types'
 
 type Period = '3M' | '6M' | '12M' | 'Todos' | 'custom'
-const PERIODS: Period[] = ['3M', '6M', '12M', 'Todos', 'custom']
+const PRESETS: { id: Period; label: string }[] = [
+  { id: '3M',     label: 'Últimos 3 meses'       },
+  { id: '6M',     label: 'Últimos 6 meses'       },
+  { id: '12M',    label: 'Últimos 12 meses'      },
+  { id: 'Todos',  label: 'Todo o período'        },
+  { id: 'custom', label: 'Período personalizado' },
+]
 
 interface MonthData {
   label:       string
@@ -116,10 +122,22 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
   const [tooltip,   setTooltip]   = useState<TooltipState | null>(null)
   const [hoveredYm, setHoveredYm] = useState<string | null>(null)
   const [mousePos,  setMousePos]  = useState({ x: 0, y: 0 })
-  const [customFrom,  setCustomFrom]  = useState('')
-  const [customTo,    setCustomTo]    = useState('')
-  const [pendingFrom, setPendingFrom] = useState('')
-  const [pendingTo,   setPendingTo]   = useState('')
+  const [customFrom,   setCustomFrom]   = useState('')
+  const [customTo,     setCustomTo]     = useState('')
+  const [pendingFrom,  setPendingFrom]  = useState('')
+  const [pendingTo,    setPendingTo]    = useState('')
+  const [showDropdown, setShowDropdown] = useState(false)
+  const dropdownRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!showDropdown) return
+    const handler = (e: MouseEvent | TouchEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setShowDropdown(false)
+    }
+    document.addEventListener('mousedown', handler)
+    document.addEventListener('touchstart', handler)
+    return () => { document.removeEventListener('mousedown', handler); document.removeEventListener('touchstart', handler) }
+  }, [showDropdown])
 
   const data = useMemo(
     () => buildChartData(contributions, period, customFrom, customTo),
@@ -208,27 +226,32 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
           </div>
         </div>
 
-        {/* Period buttons */}
-        <div style={{ display: 'flex', gap: '3px' }}>
-          {PERIODS.map(p => (
-            <button
-              key={p}
-              onClick={() => setPeriod(p)}
-              style={{
-                padding:      '4px 11px',
-                borderRadius: '6px',
-                fontSize:     '11px',
-                fontWeight:   600,
-                cursor:       'pointer',
-                border:       period === p ? '1px solid var(--border-strong)' : '1px solid transparent',
-                background:   period === p ? 'var(--surface3)' : 'transparent',
-                color:        period === p ? 'var(--text)' : 'var(--text-muted)',
-                transition:   'all 0.12s',
-              }}
-            >
-              {p === 'custom' ? 'Personalizado' : p === 'Todos' ? 'Todo período' : `Últimos ${p}`}
-            </button>
-          ))}
+        {/* Period dropdown */}
+        <div ref={dropdownRef} style={{ position: 'relative' }}>
+          <button
+            onClick={() => setShowDropdown(v => !v)}
+            style={{ padding: '5px 12px', background: 'var(--surface3)', border: '1px solid var(--border-strong)', borderRadius: '6px', color: 'var(--text)', fontSize: '11px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px', whiteSpace: 'nowrap' }}
+          >
+            {PRESETS.find(p => p.id === period)?.label ?? 'Todo o período'}
+            <span style={{ fontSize: '9px', color: 'var(--text-muted)' }}>▾</span>
+          </button>
+          {showDropdown && (
+            <div style={{ position: 'absolute', top: 'calc(100% + 4px)', right: 0, background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: '8px', zIndex: 200, minWidth: '200px', boxShadow: '0 8px 24px rgba(0,0,0,0.3)', overflow: 'hidden' }}>
+              {PRESETS.map(p => (
+                <button
+                  key={p.id}
+                  onClick={() => {
+                    setPeriod(p.id)
+                    setShowDropdown(false)
+                    if (p.id === 'custom') { setPendingFrom(customFrom); setPendingTo(customTo) }
+                  }}
+                  style={{ display: 'block', width: '100%', textAlign: 'left', padding: '10px 16px', background: period === p.id ? 'var(--orange-subtle)' : 'transparent', border: 'none', borderBottom: '1px solid var(--border-dim)', color: period === p.id ? 'var(--orange)' : 'var(--text-muted)', fontSize: '13px', cursor: 'pointer' }}
+                >
+                  {p.label}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
