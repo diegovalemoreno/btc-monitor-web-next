@@ -121,7 +121,7 @@ export default function HalvingCountdown({ compact = false }: Props) {
         ) : (
           <>
             <div style={{
-              fontSize:           '22px',
+              fontSize:           '24px',
               fontWeight:         800,
               color:              'var(--orange)',
               letterSpacing:      '-0.5px',
