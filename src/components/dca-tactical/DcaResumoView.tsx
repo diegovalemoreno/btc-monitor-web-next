@@ -6,6 +6,7 @@ import DcaPatrimonyChart from './DcaPatrimonyChart'
 import OrangeDotsChart from './OrangeDotsChart'
 import Tooltip from '@/components/shared/Tooltip'
 import SthLthChart from './SthLthChart'
+import HalvingCountdown from '@/components/shared/HalvingCountdown'
 
 
 const fmt     = (n: number) => new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(n)
@@ -102,6 +103,7 @@ export default function DcaResumoView({ initialContributions }: Props) {
           sub2={priceDiffAbs !== null ? `Diferença: ${priceDiffAbs >= 0 ? '+' : ''}${fmtBRL0(priceDiffAbs)}/BTC` : undefined}
           tooltip={"Diferença percentual entre o preço atual do BTC e seu preço médio de aquisição.\n\n✅ Positivo: BTC acima do custo médio — portfólio no lucro.\n🔴 Negativo: BTC abaixo do custo médio — portfólio no prejuízo.\n\nFonte do preço: CoinGecko (atualizado a cada 2 min)."}
         />
+        <HalvingCountdown compact />
       </div>
 
       {/* Cost analysis — last 12 months */}
@@ -155,7 +157,6 @@ export default function DcaResumoView({ initialContributions }: Props) {
 
       {/* Orange Dots Chart */}
       <div>
-        <SectionHeader label="Orange Dots Chart" sub="Compras vs. preço do Bitcoin" />
         <OrangeDotsChart contributions={contributions} />
       </div>
 

@@ -202,6 +202,9 @@ export default function DcaPatrimonyChart({ contributions, compact }: Props) {
       {/* Header */}
       <div style={{ padding: '16px 20px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
         <div>
+          <div style={{ fontSize: '9px', fontWeight: 700, letterSpacing: '0.18em', color: 'var(--orange)', textTransform: 'uppercase', marginBottom: '6px' }}>
+            Patrimônio
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
             <span style={{ fontSize: '13px', fontWeight: 700, color: 'var(--text)', letterSpacing: '-0.01em' }}>
               Evolução dos aportes e preço médio

@@ -4,7 +4,6 @@ import { listDcaContributions } from '@/repositories/dca-contributions'
 import AppNav from '@/components/shared/AppNav'
 import DcaResumoView from '@/components/dca-tactical/DcaResumoView'
 import BtcPriceInline from '@/components/shared/BtcPriceInline'
-import HalvingCountdown from '@/components/shared/HalvingCountdown'
 
 export const metadata = { title: 'Resumo — BTC Monitor' }
 export const dynamic  = 'force-dynamic'
@@ -39,8 +38,6 @@ export default async function ResumoPage() {
           </div>
           <div style={{ height: '1px', background: 'var(--border)' }} />
         </div>
-
-        <HalvingCountdown />
 
         <DcaResumoView initialContributions={contributions} />
 
