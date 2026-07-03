@@ -112,7 +112,7 @@ export default function HalvingCountdown() {
         Contagem regressiva até a próxima redução de emissão
       </h2>
 
-      {error ? (
+      {error && !data ? (
         <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
           Estimativa indisponível no momento.
         </p>
