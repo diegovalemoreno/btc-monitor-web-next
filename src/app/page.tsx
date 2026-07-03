@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import LandingHeader          from '@/components/landing/LandingHeader'
 import LandingHero            from '@/components/landing/LandingHero'
+import HalvingCountdown       from '@/components/landing/HalvingCountdown'
 import AppPreviewTabs         from '@/components/landing/AppPreviewTabs'
 import IndicatorsSection      from '@/components/landing/IndicatorsSection'
 import HowItWorksSection      from '@/components/landing/HowItWorksSection'
@@ -24,6 +25,7 @@ export default async function LandingPage() {
 
       <main>
         <LandingHero          isAuthenticated={isAuthenticated} />
+        <HalvingCountdown />
         <AppPreviewTabs />
         <IndicatorsSection />
         <HowItWorksSection />
