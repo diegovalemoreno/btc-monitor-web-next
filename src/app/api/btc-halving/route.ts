@@ -8,9 +8,11 @@ export async function GET() {
     const res = await fetch('https://mempool.space/api/blocks/tip/height', { next: { revalidate: 300 } })
     if (!res.ok) throw new Error('mempool.space indisponível')
 
-    const text = await res.text()
-    const currentHeight = parseInt(text, 10)
-    if (!Number.isFinite(currentHeight)) throw new Error('Altura de bloco inválida')
+    const text = (await res.text()).trim()
+    if (!/^\d+$/.test(text)) throw new Error('Altura de bloco inválida')
+
+    const currentHeight = Number(text)
+    if (!Number.isInteger(currentHeight) || currentHeight <= 0) throw new Error('Altura de bloco inválida')
 
     const estimate = computeHalvingEstimate(currentHeight)
 
