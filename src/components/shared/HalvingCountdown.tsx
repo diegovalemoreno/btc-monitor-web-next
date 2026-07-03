@@ -31,6 +31,10 @@ function pad(n: number): string {
   return n.toString().padStart(2, '0')
 }
 
+function formatCompact(timeLeft: TimeLeft): string {
+  return `${timeLeft.days}d ${pad(timeLeft.hours)}h ${pad(timeLeft.minutes)}m ${pad(timeLeft.seconds)}s`
+}
+
 function DigitCard({ value, label }: { value: string; label: string }) {
   return (
     <div style={{
@@ -62,7 +66,9 @@ function DigitCard({ value, label }: { value: string; label: string }) {
   )
 }
 
-export default function HalvingCountdown() {
+interface Props { compact?: boolean }
+
+export default function HalvingCountdown({ compact = false }: Props) {
   const [data, setData]   = useState<HalvingData | null>(null)
   const [error, setError] = useState(false)
   const [now, setNow]     = useState(() => Date.now())
@@ -95,6 +101,45 @@ export default function HalvingCountdown() {
   }, [])
 
   const timeLeft = data ? diffToTimeLeft(new Date(data.estimatedDate).getTime(), now) : null
+
+  if (compact) {
+    return (
+      <div style={{
+        background:   'var(--surface)',
+        border:       '1px solid var(--border)',
+        borderTop:    '2px solid var(--orange)',
+        borderRadius: '12px',
+        padding:      '20px 22px',
+      }}>
+        <div style={{ fontSize: '10px', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.11em', marginBottom: '12px' }}>
+          Próximo Halving
+        </div>
+        {error && !data ? (
+          <div style={{ fontSize: '13px', color: 'var(--text-muted)' }}>
+            Estimativa indisponível no momento.
+          </div>
+        ) : (
+          <>
+            <div style={{
+              fontSize:           '22px',
+              fontWeight:         800,
+              color:              'var(--orange)',
+              letterSpacing:      '-0.5px',
+              fontVariantNumeric: 'tabular-nums',
+              lineHeight:         1.1,
+            }}>
+              {timeLeft ? formatCompact(timeLeft) : '--'}
+            </div>
+            <div style={{ fontSize: '12px', color: 'var(--text-muted)', marginTop: '8px' }}>
+              {data
+                ? `≈ ${new Date(data.estimatedDate).toLocaleDateString('pt-BR', { day: 'numeric', month: 'long', year: 'numeric' })}`
+                : 'Carregando estimativa...'}
+            </div>
+          </>
+        )}
+      </div>
+    )
+  }
 
   return (
     <section style={{ padding: '80px 24px', maxWidth: '720px', margin: '0 auto', textAlign: 'center' }}>
