@@ -7,7 +7,7 @@ import type { TacticalSignal } from '@lib/shared/types/signal'
 import type { MarketSnapshotRow } from '@/lib/db/types'
 
 const CACHE_TTL_MS  = 120_000  // 2 min — same as legacy handler
-const PIPELINE_TIMEOUT_MS = 9_000
+const PIPELINE_TIMEOUT_MS = 20_000
 
 interface CacheEntry {
   signal:   TacticalSignal
